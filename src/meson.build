@@ -1,23 +1,3 @@
-global_conf = configuration_data()
-global_conf.set_quoted('APP_ID', application_id)
-global_conf.set_quoted('PKGDATADIR', pkgdatadir)
-global_conf.set_quoted('PROFILE', profile)
-global_conf.set_quoted('VERSION', version + version_suffix)
-global_conf.set_quoted('GETTEXT_PACKAGE', gettext_package)
-global_conf.set_quoted('LOCALEDIR', localedir)
-config = configure_file(
-  input: 'config.rs.in',
-  output: 'config.rs',
-  configuration: global_conf
-)
-# Copy the config.rs output to the source directory.
-run_command(
-  'cp',
-  meson.project_build_root() / 'src' / 'config.rs',
-  meson.project_source_root() / 'src' / 'config.rs',
-  check: true
-)
-
 cargo_options = [ '--manifest-path', meson.project_source_root() / 'Cargo.toml' ]
 cargo_options += [ '--target-dir', meson.project_build_root() / 'src' ]
 
@@ -36,7 +16,15 @@ if cargo_home == ''
   cargo_home = meson.project_build_root() / 'cargo-home'
 endif
 
-cargo_env = [ 'CARGO_HOME=' + cargo_home ]
+cargo_env = [
+  'CARGO_HOME=' + cargo_home,
+  'QUIRE_APP_ID=' + application_id,
+  'QUIRE_GETTEXT_PACKAGE=' + gettext_package,
+  'QUIRE_LOCALEDIR=' + localedir,
+  'QUIRE_PKGDATADIR=' + pkgdatadir,
+  'QUIRE_PROFILE=' + profile,
+  'QUIRE_VERSION=' + version + version_suffix,
+]
 
 cargo_build = custom_target(
   'cargo-build',
