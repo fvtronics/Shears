@@ -75,12 +75,18 @@ impl SimpleComponent for App {
                 #[wrap(Some)]
                 set_sidebar =
                     &adw::NavigationPage {
-                        set_title: &gettext("Quire"),
+                        set_title: &gettext("Sidebar"),
 
                         #[wrap(Some)]
                         set_child =
                             &adw::ToolbarView {
                                 add_top_bar = &adw::HeaderBar {
+                                    #[wrap(Some)]
+                                    set_title_widget = &adw::WindowTitle {
+                                        #[watch]
+                                        set_title: &gettext("Quire"),
+                                    },
+
                                     pack_end = &gtk::MenuButton {
                                         set_icon_name: "open-menu-symbolic",
                                         set_menu_model: Some(&primary_menu),
@@ -147,7 +153,16 @@ impl SimpleComponent for App {
                             &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
 
-                                adw::HeaderBar {},
+                                adw::HeaderBar {
+                                    #[wrap(Some)]
+                                    set_title_widget = &adw::WindowTitle {
+                                        #[watch]
+                                        set_title: &model.selected_tool.title(),
+
+                                        #[watch]
+                                        set_subtitle: &model.selected_tool.subtitle(),
+                                    },
+                                },
 
                                 gtk::Stack {
                                     #[watch]

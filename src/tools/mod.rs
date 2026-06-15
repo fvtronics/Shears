@@ -58,6 +58,18 @@ impl Tool {
         }
     }
 
+    pub fn subtitle(self) -> String {
+        match self {
+            Tool::Merge => gettext("No files selected"),
+            Tool::Organize
+            | Tool::Extract
+            | Tool::Split
+            | Tool::Compress
+            | Tool::Watermark
+            | Tool::Metadata => gettext("No file selected"),
+        }
+    }
+
     pub fn icon_name(self) -> &'static str {
         match self {
             Tool::Merge => "view-paged-symbolic",
