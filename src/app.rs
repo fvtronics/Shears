@@ -80,7 +80,12 @@ impl SimpleComponent for App {
                         #[wrap(Some)]
                         set_child =
                             &adw::ToolbarView {
-                                add_top_bar = &adw::HeaderBar {},
+                                add_top_bar = &adw::HeaderBar {
+                                    pack_end = &gtk::MenuButton {
+                                        set_icon_name: "open-menu-symbolic",
+                                        set_menu_model: Some(&primary_menu),
+                                    }
+                                },
 
                                 #[wrap(Some)]
                                 set_content = &adw::Sidebar {
@@ -142,12 +147,7 @@ impl SimpleComponent for App {
                             &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
 
-                                adw::HeaderBar {
-                                    pack_end = &gtk::MenuButton {
-                                        set_icon_name: "open-menu-symbolic",
-                                        set_menu_model: Some(&primary_menu),
-                                    }
-                                },
+                                adw::HeaderBar {},
 
                                 gtk::Stack {
                                     #[watch]
