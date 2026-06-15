@@ -1,5 +1,5 @@
 use gettextrs::gettext;
-use relm4::adw::prelude::{NavigationPageExt, SidebarItemExt};
+use relm4::adw::prelude::{AdwApplicationWindowExt, IsA, NavigationPageExt, SidebarItemExt};
 use relm4::{
     Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
@@ -54,6 +54,7 @@ impl SimpleComponent for App {
     }
 
     view! {
+        #[root]
         main_window = adw::ApplicationWindow::new(&main_application()) {
             set_visible: true,
 
@@ -68,6 +69,7 @@ impl SimpleComponent for App {
                     None
                 },
 
+            #[name(split_view)]
             adw::NavigationSplitView {
 
                 #[wrap(Some)]
@@ -84,8 +86,9 @@ impl SimpleComponent for App {
                                 set_content = &adw::Sidebar {
                                     set_selected: 0,
 
-                                    connect_selected_notify[sender] => move |sidebar| {
+                                    connect_selected_notify[sender, split_view] => move |sidebar| {
                                         sender.input(AppMsg::SelectTool(Tool::from_index(sidebar.selected())));
+                                        split_view.set_show_content(true);
                                     },
 
                                     append = adw::SidebarSection {
@@ -189,6 +192,9 @@ impl SimpleComponent for App {
             _metadata: metadata,
         };
         let widgets = view_output!();
+        widgets
+            .main_window
+            .add_breakpoint(split_view_breakpoint(&widgets.split_view));
 
         let app = root.application().unwrap();
         let mut actions = RelmActionGroup::<WindowActionGroup>::new();
@@ -236,6 +242,17 @@ impl SimpleComponent for App {
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         widgets.save_window_size().unwrap();
     }
+}
+
+fn split_view_breakpoint(split_view: &impl IsA<glib::Object>) -> adw::Breakpoint {
+    let bp = adw::Breakpoint::new(adw::BreakpointCondition::new_length(
+        adw::BreakpointConditionLengthType::MaxWidth,
+        500.0,
+        adw::LengthUnit::Sp,
+    ));
+
+    bp.add_setters(&[(split_view, "collapsed", true)]);
+    bp
 }
 
 impl AppWidgets {
