@@ -1,3 +1,5 @@
+use gettextrs::gettext;
+use relm4::adw::prelude::{NavigationPageExt, SidebarItemExt};
 use relm4::{
     Component, ComponentParts, ComponentSender, SimpleComponent,
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
@@ -55,23 +57,87 @@ impl SimpleComponent for App {
                     None
                 },
 
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
+            adw::NavigationSplitView {
 
-                adw::HeaderBar {
-                    pack_end = &gtk::MenuButton {
-                        set_icon_name: "open-menu-symbolic",
-                        set_menu_model: Some(&primary_menu),
+                #[wrap(Some)]
+                set_sidebar =
+                    &adw::NavigationPage {
+                        set_title: &gettext("Sidebar"),
+
+                        #[wrap(Some)]
+                        set_child =
+                            &adw::ToolbarView {
+                                add_top_bar = &adw::HeaderBar {},
+
+                                #[wrap(Some)]
+                                set_content = &adw::Sidebar {
+                                    set_selected: 0,
+
+                                    append = adw::SidebarSection {
+                                        append = adw::SidebarItem::new(&gettext("Merge PDFs")) {
+                                            set_icon_name: Some("view-paged-symbolic"),
+                                            set_subtitle: Some(gettext("Combine files").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Organize Pages")) {
+                                            set_icon_name: Some("view-grid-symbolic"),
+                                            set_subtitle: Some(gettext("Reorder or remove").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Extract Pages")) {
+                                            set_icon_name: Some("edit-copy-symbolic"),
+                                            set_subtitle: Some(gettext("Save page ranges").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Split PDF")) {
+                                            set_icon_name: Some("edit-cut-symbolic"),
+                                            set_subtitle: Some(gettext("Create separate files").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Compress PDF")) {
+                                            set_icon_name: Some("package-x-generic-symbolic"),
+                                            set_subtitle: Some(gettext("Reduce file size").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Add Watermark")) {
+                                            set_icon_name: Some("insert-image-symbolic"),
+                                            set_subtitle: Some(gettext("Overlay an image").as_str()),
+                                        },
+
+                                        append = adw::SidebarItem::new(&gettext("Edit Metadata")) {
+                                            set_icon_name: Some("document-properties-symbolic"),
+                                            set_subtitle: Some(gettext("Update document details").as_str()),
+                                        },
+                                    }
+                                }
+                            }
+                    },
+
+                #[wrap(Some)]
+                set_content =
+                    &adw::NavigationPage {
+                        set_title: &gettext("Content"),
+
+                        #[wrap(Some)]
+                        set_child =
+                            &gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+
+                                adw::HeaderBar {
+                                    pack_end = &gtk::MenuButton {
+                                        set_icon_name: "open-menu-symbolic",
+                                        set_menu_model: Some(&primary_menu),
+                                    }
+                                },
+
+                                gtk::Label {
+                                    set_label: &gettext("Hello world!"),
+                                    add_css_class: "title-header",
+                                    set_vexpand: true,
+                                }
+                            }
                     }
-                },
-
-                gtk::Label {
-                    set_label: "Hello world!",
-                    add_css_class: "title-header",
-                    set_vexpand: true,
-                }
             }
-
         }
     }
 
