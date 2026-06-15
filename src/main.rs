@@ -2,6 +2,7 @@
 mod config;
 mod app;
 mod modals;
+mod tools;
 
 use config::{APP_ID, GETTEXT_PACKAGE, LOCALEDIR, RESOURCES_FILE};
 use gettextrs::{LocaleCategory, gettext};
@@ -34,6 +35,8 @@ fn main() {
     gio::resources_register(&res);
 
     gtk::Window::set_default_icon_name(APP_ID);
+    gtk::IconTheme::for_display(&gtk::gdk::Display::default().unwrap())
+        .add_resource_path("/com/fvtronics/quire/icons");
 
     let app = main_application();
     app.set_resource_base_path(Some("/com/fvtronics/quire/"));

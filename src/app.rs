@@ -1,7 +1,7 @@
 use gettextrs::gettext;
 use relm4::adw::prelude::{NavigationPageExt, SidebarItemExt};
 use relm4::{
-    Component, ComponentParts, ComponentSender, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
     adw, gtk, main_application,
 };
@@ -11,11 +11,22 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
+use crate::tools::{Tool, page::ToolPage};
 
-pub(super) struct App {}
+pub(super) struct App {
+    selected_tool: Tool,
+    _merge: Controller<ToolPage>,
+    _organize: Controller<ToolPage>,
+    _extract: Controller<ToolPage>,
+    _split: Controller<ToolPage>,
+    _compress: Controller<ToolPage>,
+    _watermark: Controller<ToolPage>,
+    _metadata: Controller<ToolPage>,
+}
 
 #[derive(Debug)]
 pub(super) enum AppMsg {
+    SelectTool(Tool),
     Quit,
 }
 
@@ -62,7 +73,7 @@ impl SimpleComponent for App {
                 #[wrap(Some)]
                 set_sidebar =
                     &adw::NavigationPage {
-                        set_title: &gettext("Sidebar"),
+                        set_title: &gettext("Quire"),
 
                         #[wrap(Some)]
                         set_child =
@@ -73,39 +84,43 @@ impl SimpleComponent for App {
                                 set_content = &adw::Sidebar {
                                     set_selected: 0,
 
+                                    connect_selected_notify[sender] => move |sidebar| {
+                                        sender.input(AppMsg::SelectTool(Tool::from_index(sidebar.selected())));
+                                    },
+
                                     append = adw::SidebarSection {
                                         append = adw::SidebarItem::new(&gettext("Merge PDFs")) {
-                                            set_icon_name: Some("view-paged-symbolic"),
+                                            set_icon_name: Some(Tool::Merge.icon_name()),
                                             set_subtitle: Some(gettext("Combine files").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Organize Pages")) {
-                                            set_icon_name: Some("view-grid-symbolic"),
+                                            set_icon_name: Some(Tool::Organize.icon_name()),
                                             set_subtitle: Some(gettext("Reorder or remove").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Extract Pages")) {
-                                            set_icon_name: Some("edit-copy-symbolic"),
+                                            set_icon_name: Some(Tool::Extract.icon_name()),
                                             set_subtitle: Some(gettext("Save page ranges").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Split PDF")) {
-                                            set_icon_name: Some("edit-cut-symbolic"),
+                                            set_icon_name: Some(Tool::Split.icon_name()),
                                             set_subtitle: Some(gettext("Create separate files").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Compress PDF")) {
-                                            set_icon_name: Some("package-x-generic-symbolic"),
+                                            set_icon_name: Some(Tool::Compress.icon_name()),
                                             set_subtitle: Some(gettext("Reduce file size").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Add Watermark")) {
-                                            set_icon_name: Some("insert-image-symbolic"),
+                                            set_icon_name: Some(Tool::Watermark.icon_name()),
                                             set_subtitle: Some(gettext("Overlay an image").as_str()),
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Edit Metadata")) {
-                                            set_icon_name: Some("document-properties-symbolic"),
+                                            set_icon_name: Some(Tool::Metadata.icon_name()),
                                             set_subtitle: Some(gettext("Update document details").as_str()),
                                         },
                                     }
@@ -116,7 +131,8 @@ impl SimpleComponent for App {
                 #[wrap(Some)]
                 set_content =
                     &adw::NavigationPage {
-                        set_title: &gettext("Content"),
+                        #[watch]
+                        set_title: &model.selected_tool.title(),
 
                         #[wrap(Some)]
                         set_child =
@@ -130,10 +146,18 @@ impl SimpleComponent for App {
                                     }
                                 },
 
-                                gtk::Label {
-                                    set_label: &gettext("Hello world!"),
-                                    add_css_class: "title-header",
-                                    set_vexpand: true,
+                                gtk::Stack {
+                                    #[watch]
+                                    set_visible_child_name: model.selected_tool.stack_name(),
+                                    set_vhomogeneous: false,
+
+                                    add_named: (model._merge.widget(), Some(Tool::Merge.stack_name())),
+                                    add_named: (model._organize.widget(), Some(Tool::Organize.stack_name())),
+                                    add_named: (model._extract.widget(), Some(Tool::Extract.stack_name())),
+                                    add_named: (model._split.widget(), Some(Tool::Split.stack_name())),
+                                    add_named: (model._compress.widget(), Some(Tool::Compress.stack_name())),
+                                    add_named: (model._watermark.widget(), Some(Tool::Watermark.stack_name())),
+                                    add_named: (model._metadata.widget(), Some(Tool::Metadata.stack_name())),
                                 }
                             }
                     }
@@ -146,7 +170,24 @@ impl SimpleComponent for App {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Self {};
+        let merge = ToolPage::builder().launch(Tool::Merge).detach();
+        let organize = ToolPage::builder().launch(Tool::Organize).detach();
+        let extract = ToolPage::builder().launch(Tool::Extract).detach();
+        let split = ToolPage::builder().launch(Tool::Split).detach();
+        let compress = ToolPage::builder().launch(Tool::Compress).detach();
+        let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
+        let metadata = ToolPage::builder().launch(Tool::Metadata).detach();
+
+        let model = Self {
+            selected_tool: Tool::Merge,
+            _merge: merge,
+            _organize: organize,
+            _extract: extract,
+            _split: split,
+            _compress: compress,
+            _watermark: watermark,
+            _metadata: metadata,
+        };
         let widgets = view_output!();
 
         let app = root.application().unwrap();
@@ -185,6 +226,9 @@ impl SimpleComponent for App {
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
+            AppMsg::SelectTool(tool) => {
+                self.selected_tool = tool;
+            }
             AppMsg::Quit => main_application().quit(),
         }
     }

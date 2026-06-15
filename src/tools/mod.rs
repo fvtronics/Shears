@@ -1,0 +1,108 @@
+/* tools/mod.rs
+ *
+ * Copyright 2026 Francisco Vásquez Cuevas
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+pub mod page;
+
+use gettextrs::gettext;
+
+#[derive(Debug, Clone, Copy)]
+pub enum Tool {
+    Merge,
+    Organize,
+    Extract,
+    Split,
+    Compress,
+    Watermark,
+    Metadata,
+}
+
+impl Tool {
+    pub fn from_index(index: u32) -> Self {
+        match index {
+            0 => Self::Merge,
+            1 => Self::Organize,
+            2 => Self::Extract,
+            3 => Self::Split,
+            4 => Self::Compress,
+            5 => Self::Watermark,
+            6 => Self::Metadata,
+            _ => Self::Merge,
+        }
+    }
+
+    pub fn stack_name(self) -> &'static str {
+        match self {
+            Tool::Merge => "merge",
+            Tool::Organize => "organize",
+            Tool::Extract => "extract",
+            Tool::Split => "split",
+            Tool::Compress => "compress",
+            Tool::Watermark => "watermark",
+            Tool::Metadata => "metadata",
+        }
+    }
+
+    pub fn title(self) -> String {
+        match self {
+            Tool::Merge => gettext("Merge PDFs"),
+            Tool::Organize => gettext("Organize Pages"),
+            Tool::Extract => gettext("Extract Pages"),
+            Tool::Split => gettext("Split PDF"),
+            Tool::Compress => gettext("Compress PDF"),
+            Tool::Watermark => gettext("Add Watermark"),
+            Tool::Metadata => gettext("Edit Metadata"),
+        }
+    }
+
+    pub fn icon_name(self) -> &'static str {
+        match self {
+            Tool::Merge => "view-paged-symbolic",
+            Tool::Organize => "view-grid-symbolic",
+            Tool::Extract => "edit-copy-symbolic",
+            Tool::Split => "edit-cut-symbolic",
+            Tool::Compress => "package-x-generic-symbolic",
+            Tool::Watermark => "insert-image-symbolic",
+            Tool::Metadata => "document-properties-symbolic",
+        }
+    }
+
+    pub fn empty_title(self) -> String {
+        match self {
+            Tool::Merge => gettext("No PDFs Added"),
+            Tool::Organize
+            | Tool::Extract
+            | Tool::Split
+            | Tool::Compress
+            | Tool::Watermark
+            | Tool::Metadata => gettext("No PDF Open"),
+        }
+    }
+
+    pub fn empty_description(self) -> String {
+        match self {
+            Tool::Merge => gettext("Add two or more PDFs to merge them"),
+            Tool::Organize => gettext("Open a PDF to reorder or remove pages"),
+            Tool::Extract => gettext("Open a PDF to choose pages to extract"),
+            Tool::Split => gettext("Open a PDF to choose where to split it"),
+            Tool::Compress => gettext("Open a PDF to save a smaller copy"),
+            Tool::Watermark => gettext("Open a PDF to add an image watermark"),
+            Tool::Metadata => gettext("Open a PDF to edit its metadata"),
+        }
+    }
+
+    pub fn action_label(self) -> String {
+        match self {
+            Tool::Merge => gettext("Add PDFs"),
+            Tool::Organize
+            | Tool::Extract
+            | Tool::Split
+            | Tool::Compress
+            | Tool::Watermark
+            | Tool::Metadata => gettext("Open PDF"),
+        }
+    }
+}
