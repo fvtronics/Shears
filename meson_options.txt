@@ -8,3 +8,9 @@ option(
   value: 'default',
   description: 'The build profile for Quire. One of "default" or "development".'
 )
+option(
+  'cargo-home',
+  type: 'string',
+  value: '',
+  description: 'Optional path to CARGO_HOME, used by Flatpak offline builds'
+)

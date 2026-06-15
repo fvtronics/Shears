@@ -30,7 +30,13 @@ else
   message('Building in debug mode')
 endif
 
-cargo_env = [ 'CARGO_HOME=' + meson.project_build_root() / 'cargo-home' ]
+cargo_home = get_option('cargo-home')
+
+if cargo_home == ''
+  cargo_home = meson.project_build_root() / 'cargo-home'
+endif
+
+cargo_env = [ 'CARGO_HOME=' + cargo_home ]
 
 cargo_build = custom_target(
   'cargo-build',

@@ -16,17 +16,13 @@ impl SimpleComponent for AboutDialog {
     fn init_root() -> Self::Root {
         adw::AboutDialog::builder()
             .application_icon(APP_ID)
-            // Insert your license of choice here
-            // .license_type(gtk::License::MitX11)
-            // Insert your website here
-            // .website("https://gitlab.gnome.org/bilelmoussaoui/quire/")
-            // Insert your Issues page
-            // .issue_url("https://gitlab.gnome.org/World/Rust/quire/-/issues")
-            // Insert your application name here
-            .application_name("Relm4-template")
+            .license_type(gtk::License::Gpl30)
+            .website("https://www.fvtronics.com/en/project/quire")
+            .issue_url("https://codeberg.org/FVtronics/Quire/issues")
+            .application_name("Quire")
             .version(VERSION)
             .translator_credits("translator-credits")
-            .copyright("© 2024 Francisco Vásquez Cuevas")
+            .copyright("© 2026 Francisco Vásquez Cuevas")
             .developers(vec!["Francisco Vásquez Cuevas"])
             .designers(vec!["Francisco Vásquez Cuevas"])
             .build()
