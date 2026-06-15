@@ -1,0 +1,6 @@
+data/com.fvtronics.quire.desktop.in.in
+data/com.fvtronics.quire.gschema.xml.in
+data/com.fvtronics.quire.metainfo.xml.in.in
+data/resources/ui/shortcuts.ui
+src/app.rs
+src/main.rs
