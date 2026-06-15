@@ -1,13 +1,25 @@
-# GTK + Rust + Relm4 + Meson + Flatpak = <3
+<p align="center">
+  <img src="data/icons/com.fvtronics.quire.svg" width="128" alt="Quire Logo"/>
+</p>
 
-> This is a fork of [gtk-rust-template](https://gitlab.gnome.org/World/Rust/gtk-rust-template) that adapts the code for Relm4 while trying to change as little as possible.
+<h1 align="center">Quire</h1>
 
-A boilerplate template to get started with GTK, Rust, Meson, Flatpak made for GNOME. It can be adapted for other desktop environments like elementary.
+<p align="center">
+  Simple GNOME utility for working with local PDF files
+</p>
 
 <div align="center">
 
-![Main window](data/resources/screenshots/screenshot1.png "Main window")
+[![Relm4](https://img.shields.io/badge/Relm4-0.11.0-orange)](https://relm4.org)
+[![GTK 4](https://img.shields.io/badge/GTK-4-blue?logo=gtk)](https://gtk.org)
+[![Platform Linux](https://img.shields.io/badge/Platform-Linux-brightgreen)](#how-to-install)
+[![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue)](COPYING)
+
+
 </div>
+
+Merge PDFs, organize pages, extract page ranges, split documents,
+compress files, add watermarks, and edit metadata, all without relying on online services.
 
 ## What does it contains?
 
