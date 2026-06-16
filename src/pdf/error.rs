@@ -4,13 +4,12 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-use std::path::PathBuf;
+
 
 #[derive(Debug)]
 pub enum PdfError {
     Io(std::io::Error),
     Lopdf(lopdf::Error),
-    InvalidPath(PathBuf),
     Other(String),
 }
 
@@ -19,7 +18,6 @@ impl std::fmt::Display for PdfError {
         match self {
             Self::Io(err) => write!(f, "I/O error: {}", err),
             Self::Lopdf(err) => write!(f, "PDF error: {}", err),
-            Self::InvalidPath(path) => write!(f, "Invalid file path: {:?}", path),
             Self::Other(msg) => write!(f, "{}", msg),
         }
     }

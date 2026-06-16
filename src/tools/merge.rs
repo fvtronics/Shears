@@ -81,6 +81,7 @@ struct MergePage {
     modern_pdf_format: bool,
     normalize_page_size: bool,
     remove_metadata: bool,
+    output_file: Option<String>,
 }
 
 #[derive(Debug)]
@@ -96,7 +97,8 @@ enum MergePageMsg {
     SetRemoveMetadata(bool),
     RotateAll,
     MergeTo(gio::File),
-    MergeComplete(Result<(), PdfError>),
+    MergeComplete(Result<std::path::PathBuf, PdfError>),
+    OpenOutput,
 }
 
 #[derive(Debug)]
@@ -133,6 +135,17 @@ impl Component for MergePage {
 
                     connect_clicked[sender] => move |button| {
                         open_pdf_dialog(button, sender.clone());
+                    },
+                },
+
+                gtk::Button {
+                    set_label: &gettext("Open Output"),
+                    #[watch]
+                    set_visible: model.output_file.is_some(),
+                    set_tooltip_text: Some(&gettext("Open Output File")),
+
+                    connect_clicked[sender] => move |_| {
+                        sender.input(MergePageMsg::OpenOutput);
                     },
                 },
 
@@ -242,6 +255,7 @@ impl Component for MergePage {
             modern_pdf_format: false,
             normalize_page_size: false,
             remove_metadata: false,
+            output_file: None,
         };
         let file_list = model.files.widget();
         let widgets = view_output!();
@@ -268,13 +282,15 @@ impl Component for MergePage {
                 if let Some(output_path) = output_file.path() {
                     let sender = sender.clone();
                     std::thread::spawn(move || {
-                        let result = merge_files(&files, output_path, &options);
-                        sender.input(MergePageMsg::MergeComplete(result));
+                        let result = merge_files(&files, output_path.clone(), &options);
+                        let msg_result = result.map(|_| output_path);
+                        sender.input(MergePageMsg::MergeComplete(msg_result));
                     });
                 }
             }
             MergePageMsg::MergeComplete(result) => match result {
-                Ok(_) => {
+                Ok(path) => {
+                    self.output_file = Some(path.to_string_lossy().into_owned());
                     let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
                     root.add_toast(toast);
                     tracing::info!("Merged PDF Saved");
@@ -285,14 +301,35 @@ impl Component for MergePage {
                     tracing::error!("Failed to merge PDFs: {:?}", err);
                 }
             },
+            MergePageMsg::OpenOutput => {
+                if let Some(path_str) = self.output_file.clone() {
+                    let file = gio::File::for_path(&path_str);
+                    if !file.query_exists(gio::Cancellable::NONE) {
+                        let toast = adw::Toast::new(&gettext("Output file not found"));
+                        root.add_toast(toast);
+                        self.output_file = None;
+                        tracing::error!("Output file no longer exists at: {}", path_str);
+                    } else if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                        file.uri().as_str(),
+                        None::<&gio::AppLaunchContext>,
+                    ) {
+                        let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                        root.add_toast(toast);
+                        tracing::error!("Failed to open output file: {:?}", e);
+                    }
+                }
+            }
             MergePageMsg::AddFiles(files) => {
                 let mut files_guard = self.files.guard();
 
                 for file in files {
                     files_guard.push_back(file);
                 }
+                drop(files_guard);
+                self.update_bounds();
             }
             MergePageMsg::ClearFiles => {
+                self.output_file = None;
                 {
                     let mut files_guard = self.files.guard();
                     files_guard.clear();
@@ -305,6 +342,7 @@ impl Component for MergePage {
 
                 if index != 0 {
                     self.files.guard().move_to(index, index - 1);
+                    self.update_bounds();
                 }
             }
             MergePageMsg::MoveFileDown(index) => {
@@ -313,33 +351,45 @@ impl Component for MergePage {
 
                 if new_index < self.files.len() {
                     self.files.guard().move_to(index, new_index);
+                    self.update_bounds();
                 }
             }
             MergePageMsg::MoveFile { from, to } => {
                 let to = to.current_index();
                 if from != to {
                     self.files.guard().move_to(from, to);
+                    self.update_bounds();
                 }
             }
             MergePageMsg::DeleteFile(index) => {
                 self.files.guard().remove(index.current_index());
+                self.update_bounds();
             }
             MergePageMsg::SetModernPdfFormat(active) => {
                 self.modern_pdf_format = active;
+                self.output_file = None;
             }
             MergePageMsg::SetNormalizePageSize(active) => {
                 self.normalize_page_size = active;
+                self.output_file = None;
             }
             MergePageMsg::SetRemoveMetadata(active) => {
                 self.remove_metadata = active;
+                self.output_file = None;
             }
             MergePageMsg::RotateAll => {
+                self.output_file = None;
                 for i in 0..self.files.len() {
                     self.files.send(i, MergeFileRowMsg::RotateClockwise);
                 }
             }
         }
+    }
+}
 
+impl MergePage {
+    fn update_bounds(&mut self) {
+        self.output_file = None;
         let length = self.files.len();
         for i in 0..length {
             let is_last = i == length - 1;
