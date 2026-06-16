@@ -6,7 +6,7 @@ use relm4::{
     SimpleComponent, adw, gtk,
 };
 
-use gtk::gio;
+use gtk::{gio,glib};
 
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, files_from_model, pdf_dialog};
@@ -104,7 +104,7 @@ impl SimpleComponent for MergePage {
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
-                set_spacing: 6,
+                set_spacing: 8,
 
                 gtk::Box {
                     set_hexpand: true,
@@ -112,8 +112,7 @@ impl SimpleComponent for MergePage {
 
                 gtk::Button {
                     set_label: &Tool::Merge.action_label(),
-                    set_tooltip_text: Some(&Tool::Merge.action_label()),
-                    set_halign: gtk::Align::End,
+                    set_tooltip_text: Some(&gettext("Add PDF Files")),
 
                     connect_clicked[sender] => move |button| {
                         open_pdf_dialog(button, sender.clone());
@@ -122,8 +121,7 @@ impl SimpleComponent for MergePage {
 
                 gtk::Button {
                     set_label: &gettext("Clear"),
-                    set_tooltip_text: Some(&gettext("Clear")),
-                    set_halign: gtk::Align::End,
+                    set_tooltip_text: Some(&gettext("Clear File List")),
 
                     connect_clicked[sender] => move |_| {
                         sender.input(MergePageMsg::ClearFiles);
@@ -132,9 +130,43 @@ impl SimpleComponent for MergePage {
 
                 gtk::Button {
                     set_label: &gettext("Merge"),
-                    set_tooltip_text: Some(&gettext("Merge")),
-                    set_halign: gtk::Align::End,
+                    set_tooltip_text: Some(&gettext("Merge Selected PDFs")),
                     add_css_class: "suggested-action"
+                },
+
+                gtk::MenuButton {
+                    set_icon_name: "view-more-symbolic",
+                    add_css_class: "flat",
+                    set_tooltip_text: Some(&gettext("Advanced Options")),
+
+                    #[wrap(Some)]
+                    set_popover = &gtk::Popover {
+                        add_css_class: "menu",
+                        adw::PreferencesGroup {
+                            add = &adw::ActionRow {
+                                set_title: &gettext("Rotate all"),
+                                set_activatable: true,
+                            },
+
+                            add = &adw::SwitchRow {
+                                set_title: &gettext("Modern PDF format"),
+                                set_subtitle: &gettext("Save with PDF 1.5 object streams"),
+                                set_active: false
+                            },
+
+                            add = &adw::SwitchRow {
+                                set_title: &gettext("Normalize page size"),
+                                set_subtitle: &gettext("Resize output pages to the largest page size"),
+                                set_active: false
+                            },
+
+                            add = &adw::SwitchRow {
+                                set_title: &gettext("Remove metadata"),
+                                set_subtitle: &gettext("Remove existing metadata before saving"),
+                                set_active: false
+                            },
+                        }
+                    }
                 },
             },
 
@@ -199,6 +231,7 @@ impl FactoryComponent for MergeFileRow {
     view! {
         adw::ActionRow {
             set_title: &file_title(&self.file),
+            set_subtitle: &file_size_string(&self.file),
             set_title_lines: 1,
             set_activatable: true,
 
@@ -270,4 +303,15 @@ fn file_title(file: &gio::File) -> String {
     file.basename()
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_else(|| file.uri().to_string())
+}
+
+fn file_size_string(file: &gio::File) -> String {
+    match file.query_info(
+        "standard::size",
+        gio::FileQueryInfoFlags::NONE,
+        gio::Cancellable::NONE,
+    ) {
+        Ok(info) => glib::format_size(info.size() as u64).to_string(),
+        Err(_) => String::new(),
+    }
 }
