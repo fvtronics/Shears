@@ -111,31 +111,37 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Organize Pages")) {
                                             set_icon_name: Some(Tool::Organize.icon_name()),
                                             set_subtitle: Some(gettext("Reorder or remove").as_str()),
+                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Extract Pages")) {
                                             set_icon_name: Some(Tool::Extract.icon_name()),
                                             set_subtitle: Some(gettext("Save page ranges").as_str()),
+                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Split PDF")) {
                                             set_icon_name: Some(Tool::Split.icon_name()),
                                             set_subtitle: Some(gettext("Create separate files").as_str()),
+                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Compress PDF")) {
                                             set_icon_name: Some(Tool::Compress.icon_name()),
                                             set_subtitle: Some(gettext("Reduce file size").as_str()),
+                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Add Watermark")) {
                                             set_icon_name: Some(Tool::Watermark.icon_name()),
                                             set_subtitle: Some(gettext("Overlay an image").as_str()),
+                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Edit Metadata")) {
                                             set_icon_name: Some(Tool::Metadata.icon_name()),
                                             set_subtitle: Some(gettext("Update document details").as_str()),
+                                            set_visible: false,
                                         },
                                     }
                                 }
