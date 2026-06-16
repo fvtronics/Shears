@@ -144,6 +144,7 @@ impl SimpleComponent for MergePage {
                 #[local_ref]
                 file_list -> gtk::ListBox {
                     add_css_class: "boxed-list",
+                    set_selection_mode: gtk::SelectionMode::None,
                 }
             }
         }
@@ -198,6 +199,44 @@ impl FactoryComponent for MergeFileRow {
     view! {
         adw::ActionRow {
             set_title: &file_title(&self.file),
+            set_title_lines: 1,
+            set_activatable: true,
+
+            add_prefix = &gtk::Image {
+                set_icon_name: Some("text-x-generic-symbolic"),
+            },
+
+            add_suffix = &gtk::Box {
+                set_orientation: gtk::Orientation::Horizontal,
+
+                append = &gtk::Button {
+                    set_icon_name: "go-up-symbolic",
+                    add_css_class: "flat",
+                    set_vexpand: false,
+                    set_valign: gtk::Align::Center
+                },
+
+                append = &gtk::Button {
+                    set_icon_name: "go-down-symbolic",
+                    add_css_class: "flat",
+                    set_vexpand: false,
+                    set_valign: gtk::Align::Center
+                },
+
+                append = &gtk::Button {
+                    set_icon_name: "object-rotate-right-symbolic",
+                    add_css_class: "flat",
+                    set_vexpand: false,
+                    set_valign: gtk::Align::Center
+                },
+
+                append = &gtk::Button {
+                    set_icon_name: "edit-delete-symbolic",
+                    add_css_class: "flat",
+                    set_vexpand: false,
+                    set_valign: gtk::Align::Center
+                },
+            }
         }
     }
 
