@@ -86,6 +86,9 @@ struct MergePage {
 enum MergePageMsg {
     AddFiles(Vec<gio::File>),
     ClearFiles,
+    MoveFileUp(DynamicIndex),
+    MoveFileDown(DynamicIndex),
+    DeleteFile(DynamicIndex),
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
     SetRemoveMetadata(bool),
@@ -205,7 +208,14 @@ impl SimpleComponent for MergePage {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let files = FactoryVecDeque::builder().launch_default().detach();
+        let files =
+            FactoryVecDeque::builder()
+                .launch_default()
+                .forward(sender.input_sender(), |output| match output {
+                    MergeFileRowOutput::MoveUp(index) => MergePageMsg::MoveFileUp(index),
+                    MergeFileRowOutput::MoveDown(index) => MergePageMsg::MoveFileDown(index),
+                    MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile(index),
+                });
         let model = Self {
             files,
             modern_pdf_format: false,
@@ -235,6 +245,24 @@ impl SimpleComponent for MergePage {
 
                 let _ = sender.output(MergePageOutput::ClearFiles);
             }
+            MergePageMsg::MoveFileUp(index) => {
+                let index = index.current_index();
+
+                if index != 0 {
+                    self.files.guard().move_to(index, index - 1);
+                }
+            }
+            MergePageMsg::MoveFileDown(index) => {
+                let index = index.current_index();
+                let new_index = index + 1;
+
+                if new_index < self.files.len() {
+                    self.files.guard().move_to(index, new_index);
+                }
+            }
+            MergePageMsg::DeleteFile(index) => {
+                self.files.guard().remove(index.current_index());
+            }
             MergePageMsg::SetModernPdfFormat(active) => {
                 self.modern_pdf_format = active;
             }
@@ -245,18 +273,41 @@ impl SimpleComponent for MergePage {
                 self.remove_metadata = active;
             }
         }
+
+        let length = self.files.len();
+        for i in 0..length {
+            let is_last = i == length - 1;
+            self.files
+                .send(i, MergeFileRowMsg::UpdateBounds { is_last });
+        }
     }
 }
 
 struct MergeFileRow {
     file: gio::File,
+    rotation: u16,
+    is_last: bool,
+    index: DynamicIndex,
+}
+
+#[derive(Debug)]
+enum MergeFileRowMsg {
+    RotateClockwise,
+    UpdateBounds { is_last: bool },
+}
+
+#[derive(Debug)]
+enum MergeFileRowOutput {
+    MoveUp(DynamicIndex),
+    MoveDown(DynamicIndex),
+    Delete(DynamicIndex),
 }
 
 #[relm4::factory]
 impl FactoryComponent for MergeFileRow {
     type Init = gio::File;
-    type Input = ();
-    type Output = ();
+    type Input = MergeFileRowMsg;
+    type Output = MergeFileRowOutput;
     type CommandOutput = ();
     type ParentWidget = gtk::ListBox;
 
@@ -288,35 +339,75 @@ impl FactoryComponent for MergeFileRow {
                     set_icon_name: "go-up-symbolic",
                     add_css_class: "flat",
                     set_vexpand: false,
-                    set_valign: gtk::Align::Center
+                    set_valign: gtk::Align::Center,
+                    set_tooltip_text: Some(&gettext("Move Up")),
+                    #[watch]
+                    set_sensitive: self.index.current_index() != 0,
+
+                    connect_clicked[sender, index] => move |_| {
+                        let _ = sender.output(MergeFileRowOutput::MoveUp(index.clone()));
+                    }
                 },
 
                 append = &gtk::Button {
                     set_icon_name: "go-down-symbolic",
                     add_css_class: "flat",
                     set_vexpand: false,
-                    set_valign: gtk::Align::Center
+                    set_valign: gtk::Align::Center,
+                    set_tooltip_text: Some(&gettext("Move Down")),
+                    #[watch]
+                    set_sensitive: !self.is_last,
+
+                    connect_clicked[sender, index] => move |_| {
+                        let _ = sender.output(MergeFileRowOutput::MoveDown(index.clone()));
+                    }
                 },
 
                 append = &gtk::Button {
                     set_icon_name: "object-rotate-right-symbolic",
                     add_css_class: "flat",
                     set_vexpand: false,
-                    set_valign: gtk::Align::Center
+                    set_valign: gtk::Align::Center,
+                    set_tooltip_text: Some(&gettext("Rotate Clockwise")),
+
+                    connect_clicked => MergeFileRowMsg::RotateClockwise
                 },
 
                 append = &gtk::Button {
                     set_icon_name: "edit-delete-symbolic",
                     add_css_class: "flat",
                     set_vexpand: false,
-                    set_valign: gtk::Align::Center
+                    set_valign: gtk::Align::Center,
+                    set_tooltip_text: Some(&gettext("Remove File")),
+                    #[watch]
+                    set_sensitive: !(self.index.current_index() == 0 && self.is_last),
+
+                    connect_clicked[sender, index] => move |_| {
+                        let _ = sender.output(MergeFileRowOutput::Delete(index.clone()));
+                    }
                 },
             }
         }
     }
 
-    fn init_model(file: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
-        Self { file }
+    fn init_model(file: Self::Init, index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
+        Self {
+            file,
+            rotation: 0,
+            is_last: false,
+            index: index.clone(),
+        }
+    }
+
+    fn update(&mut self, message: Self::Input, _sender: FactorySender<Self>) {
+        match message {
+            MergeFileRowMsg::RotateClockwise => {
+                self.rotation = (self.rotation + 90) % 360;
+            }
+            MergeFileRowMsg::UpdateBounds { is_last } => {
+                self.is_last = is_last;
+            }
+        }
     }
 }
 
