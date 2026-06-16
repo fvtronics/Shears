@@ -6,7 +6,7 @@ use relm4::{
     SimpleComponent, adw, gtk,
 };
 
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, files_from_model, pdf_dialog};
@@ -88,6 +88,7 @@ enum MergePageMsg {
     ClearFiles,
     MoveFileUp(DynamicIndex),
     MoveFileDown(DynamicIndex),
+    MoveFile { from: usize, to: DynamicIndex },
     DeleteFile(DynamicIndex),
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
@@ -215,6 +216,7 @@ impl SimpleComponent for MergePage {
                     MergeFileRowOutput::MoveUp(index) => MergePageMsg::MoveFileUp(index),
                     MergeFileRowOutput::MoveDown(index) => MergePageMsg::MoveFileDown(index),
                     MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile(index),
+                    MergeFileRowOutput::Move { from, to } => MergePageMsg::MoveFile { from, to },
                 });
         let model = Self {
             files,
@@ -260,6 +262,12 @@ impl SimpleComponent for MergePage {
                     self.files.guard().move_to(index, new_index);
                 }
             }
+            MergePageMsg::MoveFile { from, to } => {
+                let to = to.current_index();
+                if from != to {
+                    self.files.guard().move_to(from, to);
+                }
+            }
             MergePageMsg::DeleteFile(index) => {
                 self.files.guard().remove(index.current_index());
             }
@@ -301,6 +309,7 @@ enum MergeFileRowOutput {
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
     Delete(DynamicIndex),
+    Move { from: usize, to: DynamicIndex },
 }
 
 #[relm4::factory]
@@ -318,6 +327,7 @@ impl FactoryComponent for MergeFileRow {
             set_title_lines: 1,
             set_activatable: true,
 
+            #[name(preview_frame)]
             add_prefix = &gtk::Frame {
                 set_width_request: 56,
                 set_height_request: 72,
@@ -329,6 +339,35 @@ impl FactoryComponent for MergeFileRow {
                 #[wrap(Some)]
                 set_child = &gtk::Picture {
                     set_content_fit: gtk::ContentFit::Contain,
+                }
+            },
+
+            add_controller = gtk::DragSource {
+                set_actions: gdk::DragAction::MOVE,
+
+                connect_prepare[index] => move |_drag_source, _x, _y| {
+                    let current = index.current_index() as u32;
+                    let value = current.to_value();
+                    Some(gdk::ContentProvider::for_value(&value))
+                },
+
+                connect_drag_begin[preview_frame] => move |_, drag| {
+                    let paintable = gtk::WidgetPaintable::new(Some(&preview_frame));
+                    gtk::DragIcon::set_from_paintable(drag, &paintable, 0, 0);
+                }
+            },
+
+            add_controller = gtk::DropTarget::new(u32::static_type(), gdk::DragAction::MOVE) {
+                connect_drop[sender, index] => move |_drop_target, value, _x, _y| {
+                    if let Ok(from_index) = value.get::<u32>() {
+                        let _ = sender.output(MergeFileRowOutput::Move {
+                            from: from_index as usize,
+                            to: index.clone(),
+                        });
+                        true
+                    } else {
+                        false
+                    }
                 }
             },
 
