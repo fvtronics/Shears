@@ -6,7 +6,7 @@ use relm4::{
     SimpleComponent, adw, gtk,
 };
 
-use gtk::{gio,glib};
+use gtk::{gio, glib};
 
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, files_from_model, pdf_dialog};
@@ -77,12 +77,18 @@ impl SimpleComponent for MergeTool {
 
 struct MergePage {
     files: FactoryVecDeque<MergeFileRow>,
+    modern_pdf_format: bool,
+    normalize_page_size: bool,
+    remove_metadata: bool,
 }
 
 #[derive(Debug)]
 enum MergePageMsg {
     AddFiles(Vec<gio::File>),
     ClearFiles,
+    SetModernPdfFormat(bool),
+    SetNormalizePageSize(bool),
+    SetRemoveMetadata(bool),
 }
 
 #[derive(Debug)]
@@ -151,19 +157,31 @@ impl SimpleComponent for MergePage {
                             add = &adw::SwitchRow {
                                 set_title: &gettext("Modern PDF format"),
                                 set_subtitle: &gettext("Save with PDF 1.5 object streams"),
-                                set_active: false
+                                set_active: model.modern_pdf_format,
+
+                                connect_active_notify[sender] => move |row| {
+                                    sender.input(MergePageMsg::SetModernPdfFormat(row.is_active()));
+                                }
                             },
 
                             add = &adw::SwitchRow {
                                 set_title: &gettext("Normalize page size"),
                                 set_subtitle: &gettext("Resize output pages to the largest page size"),
-                                set_active: false
+                                set_active: model.normalize_page_size,
+
+                                connect_active_notify[sender] => move |row| {
+                                    sender.input(MergePageMsg::SetNormalizePageSize(row.is_active()));
+                                }
                             },
 
                             add = &adw::SwitchRow {
                                 set_title: &gettext("Remove metadata"),
                                 set_subtitle: &gettext("Remove existing metadata before saving"),
-                                set_active: false
+                                set_active: model.remove_metadata,
+
+                                connect_active_notify[sender] => move |row| {
+                                    sender.input(MergePageMsg::SetRemoveMetadata(row.is_active()));
+                                }
                             },
                         }
                     }
@@ -188,7 +206,12 @@ impl SimpleComponent for MergePage {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let files = FactoryVecDeque::builder().launch_default().detach();
-        let model = Self { files };
+        let model = Self {
+            files,
+            modern_pdf_format: false,
+            normalize_page_size: false,
+            remove_metadata: false,
+        };
         let file_list = model.files.widget();
         let widgets = view_output!();
 
@@ -211,6 +234,15 @@ impl SimpleComponent for MergePage {
                 }
 
                 let _ = sender.output(MergePageOutput::ClearFiles);
+            }
+            MergePageMsg::SetModernPdfFormat(active) => {
+                self.modern_pdf_format = active;
+            }
+            MergePageMsg::SetNormalizePageSize(active) => {
+                self.normalize_page_size = active;
+            }
+            MergePageMsg::SetRemoveMetadata(active) => {
+                self.remove_metadata = active;
             }
         }
     }
