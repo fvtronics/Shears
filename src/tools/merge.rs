@@ -93,6 +93,7 @@ enum MergePageMsg {
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
     SetRemoveMetadata(bool),
+    RotateAll,
 }
 
 #[derive(Debug)]
@@ -156,6 +157,10 @@ impl SimpleComponent for MergePage {
                             add = &adw::ActionRow {
                                 set_title: &gettext("Rotate all"),
                                 set_activatable: true,
+
+                                connect_activated[sender] => move |_| {
+                                    sender.input(MergePageMsg::RotateAll);
+                                }
                             },
 
                             add = &adw::SwitchRow {
@@ -279,6 +284,11 @@ impl SimpleComponent for MergePage {
             }
             MergePageMsg::SetRemoveMetadata(active) => {
                 self.remove_metadata = active;
+            }
+            MergePageMsg::RotateAll => {
+                for i in 0..self.files.len() {
+                    self.files.send(i, MergeFileRowMsg::RotateClockwise);
+                }
             }
         }
 
