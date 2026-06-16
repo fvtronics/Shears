@@ -202,8 +202,18 @@ impl FactoryComponent for MergeFileRow {
             set_title_lines: 1,
             set_activatable: true,
 
-            add_prefix = &gtk::Image {
-                set_icon_name: Some("text-x-generic-symbolic"),
+            add_prefix = &gtk::Frame {
+                set_width_request: 56,
+                set_height_request: 72,
+                set_margin_top: 6,
+                set_margin_bottom: 6,
+                set_valign: gtk::Align::Center,
+                set_vexpand: false,
+
+                #[wrap(Some)]
+                set_child = &gtk::Picture {
+                    set_content_fit: gtk::ContentFit::Contain,
+                }
             },
 
             add_suffix = &gtk::Box {
