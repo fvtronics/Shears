@@ -105,14 +105,17 @@ enum MergePageOutput {
 }
 
 #[relm4::component]
-impl SimpleComponent for MergePage {
+impl Component for MergePage {
     type Init = ();
     type Input = MergePageMsg;
     type Output = MergePageOutput;
+    type CommandOutput = ();
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
+        #[root]
+        adw::ToastOverlay {
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
             set_spacing: 12,
             set_margin_all: 24,
 
@@ -217,6 +220,7 @@ impl SimpleComponent for MergePage {
                 }
             }
         }
+        }
     }
 
     fn init(
@@ -245,7 +249,7 @@ impl SimpleComponent for MergePage {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             MergePageMsg::MergeTo(output_file) => {
                 let files: Vec<(std::path::PathBuf, u16)> = self
@@ -269,13 +273,18 @@ impl SimpleComponent for MergePage {
                     });
                 }
             }
-            MergePageMsg::MergeComplete(result) => {
-                if let Err(err) = result {
-                    tracing::error!("Failed to merge PDFs: {:?}", err);
-                } else {
-                    tracing::info!("PDFs merged successfully.");
+            MergePageMsg::MergeComplete(result) => match result {
+                Ok(_) => {
+                    let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
+                    root.add_toast(toast);
+                    tracing::info!("Merged PDF Saved");
                 }
-            }
+                Err(err) => {
+                    let toast = adw::Toast::new(&gettext("Could not save PDF"));
+                    root.add_toast(toast);
+                    tracing::error!("Failed to merge PDFs: {:?}", err);
+                }
+            },
             MergePageMsg::AddFiles(files) => {
                 let mut files_guard = self.files.guard();
 
