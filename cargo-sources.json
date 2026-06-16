@@ -1250,6 +1250,32 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/poppler-rs/poppler-rs-0.26.0.crate",
+        "sha256": "d93d32751326b83aeba757236c7fd2f14ca65309e7b295ba54973fbba338bc43",
+        "dest": "cargo/vendor/poppler-rs-0.26.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"d93d32751326b83aeba757236c7fd2f14ca65309e7b295ba54973fbba338bc43\", \"files\": {}}",
+        "dest": "cargo/vendor/poppler-rs-0.26.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/poppler-sys-rs/poppler-sys-rs-0.26.0.crate",
+        "sha256": "bdab38777c8ba413671b744fdc4a9239d440ff301ddd1d54abb550a4364d6a2e",
+        "dest": "cargo/vendor/poppler-sys-rs-0.26.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"bdab38777c8ba413671b744fdc4a9239d440ff301ddd1d54abb550a4364d6a2e\", \"files\": {}}",
+        "dest": "cargo/vendor/poppler-sys-rs-0.26.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/prettyplease/prettyplease-0.2.37.crate",
         "sha256": "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b",
         "dest": "cargo/vendor/prettyplease-0.2.37"
