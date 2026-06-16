@@ -1,10 +1,9 @@
 use relm4::{ComponentParts, ComponentSender, SimpleComponent, adw, gtk};
 
-use gettextrs::gettext;
 use gtk::gio;
 use gtk::prelude::*;
 
-use crate::tools::Tool;
+use crate::tools::{Tool, files_from_model, pdf_dialog};
 
 pub struct ToolPage {
     tool: Tool,
@@ -14,7 +13,7 @@ pub struct ToolPage {
 impl SimpleComponent for ToolPage {
     type Init = Tool;
     type Input = ();
-    type Output = ();
+    type Output = Vec<gio::File>;
 
     view! {
         adw::StatusPage {
@@ -30,8 +29,8 @@ impl SimpleComponent for ToolPage {
                 set_tooltip_text: Some(&model.tool.action_label()),
                 add_css_class: "suggested-action",
 
-                connect_clicked[tool = model.tool] => move |button| {
-                    open_pdf_dialog(tool, button);
+                connect_clicked[sender, tool = model.tool] => move |button| {
+                    open_pdf_dialog(tool, button, sender.clone());
                 },
             },
         }
@@ -40,7 +39,7 @@ impl SimpleComponent for ToolPage {
     fn init(
         tool: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = Self { tool };
         let widgets = view_output!();
@@ -49,30 +48,17 @@ impl SimpleComponent for ToolPage {
     }
 }
 
-fn open_pdf_dialog(tool: Tool, button: &gtk::Button) {
+fn open_pdf_dialog(tool: Tool, button: &gtk::Button, sender: ComponentSender<ToolPage>) {
     let dialog = pdf_dialog(tool);
     let parent = button.root().and_downcast::<gtk::Window>();
 
     if matches!(tool, Tool::Merge) {
-        dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, |_| {});
+        dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+            if let Ok(files) = result {
+                let _ = sender.output(files_from_model(&files));
+            }
+        });
     } else {
         dialog.open(parent.as_ref(), None::<&gio::Cancellable>, |_| {});
     }
-}
-
-fn pdf_dialog(tool: Tool) -> gtk::FileDialog {
-    let pdf_filter = gtk::FileFilter::new();
-    pdf_filter.set_name(Some(&gettext("PDF Documents")));
-    pdf_filter.add_mime_type("application/pdf");
-    pdf_filter.add_suffix("pdf");
-
-    let filters = gio::ListStore::new::<gtk::FileFilter>();
-    filters.append(&pdf_filter);
-
-    gtk::FileDialog::builder()
-        .title(tool.action_label())
-        .accept_label(tool.action_label())
-        .modal(true)
-        .filters(&filters)
-        .build()
 }

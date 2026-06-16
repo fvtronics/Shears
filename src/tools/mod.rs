@@ -5,9 +5,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+pub mod merge;
 pub mod page;
 
 use gettextrs::gettext;
+use relm4::gtk;
+
+use gtk::gio;
+use gtk::prelude::{Cast, ListModelExt};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Tool {
@@ -117,4 +122,28 @@ impl Tool {
             | Tool::Metadata => gettext("Open PDF"),
         }
     }
+}
+
+pub(super) fn pdf_dialog(tool: Tool) -> gtk::FileDialog {
+    let pdf_filter = gtk::FileFilter::new();
+    pdf_filter.set_name(Some(&gettext("PDF Documents")));
+    pdf_filter.add_mime_type("application/pdf");
+    pdf_filter.add_suffix("pdf");
+
+    let filters = gio::ListStore::new::<gtk::FileFilter>();
+    filters.append(&pdf_filter);
+
+    gtk::FileDialog::builder()
+        .title(tool.action_label())
+        .accept_label(tool.action_label())
+        .modal(true)
+        .filters(&filters)
+        .build()
+}
+
+pub(super) fn files_from_model(model: &gio::ListModel) -> Vec<gio::File> {
+    (0..model.n_items())
+        .filter_map(|index| model.item(index))
+        .filter_map(|item| item.downcast::<gio::File>().ok())
+        .collect()
 }

@@ -11,11 +11,11 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
-use crate::tools::{Tool, page::ToolPage};
+use crate::tools::{Tool, merge::MergeTool, page::ToolPage};
 
 pub(super) struct App {
     selected_tool: Tool,
-    _merge: Controller<ToolPage>,
+    _merge: Controller<MergeTool>,
     _organize: Controller<ToolPage>,
     _extract: Controller<ToolPage>,
     _split: Controller<ToolPage>,
@@ -188,7 +188,7 @@ impl SimpleComponent for App {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let merge = ToolPage::builder().launch(Tool::Merge).detach();
+        let merge = MergeTool::builder().launch(()).detach();
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
         let split = ToolPage::builder().launch(Tool::Split).detach();
