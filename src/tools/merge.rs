@@ -22,13 +22,19 @@ pub struct MergeTool {
 pub enum MergeToolMsg {
     AddFiles(Vec<gio::File>),
     ClearFiles,
+    UpdateFileCount(usize),
+}
+
+#[derive(Debug)]
+pub enum MergeToolOutput {
+    FileCountChanged(usize),
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for MergeTool {
     type Init = ();
     type Input = MergeToolMsg;
-    type Output = ();
+    type Output = MergeToolOutput;
 
     view! {
         gtk::Stack {
@@ -51,7 +57,10 @@ impl SimpleComponent for MergeTool {
             .forward(sender.input_sender(), MergeToolMsg::AddFiles);
         let merge_page = MergePage::builder()
             .launch(())
-            .forward(sender.input_sender(), |_| MergeToolMsg::ClearFiles);
+            .forward(sender.input_sender(), |msg| match msg {
+                MergePageOutput::ClearFiles => MergeToolMsg::ClearFiles,
+                MergePageOutput::FileCountChanged(len) => MergeToolMsg::UpdateFileCount(len),
+            });
 
         let model = Self {
             has_files: false,
@@ -63,7 +72,7 @@ impl SimpleComponent for MergeTool {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             MergeToolMsg::AddFiles(files) => {
                 self.merge_page.emit(MergePageMsg::AddFiles(files));
@@ -71,6 +80,9 @@ impl SimpleComponent for MergeTool {
             }
             MergeToolMsg::ClearFiles => {
                 self.has_files = false;
+            }
+            MergeToolMsg::UpdateFileCount(len) => {
+                let _ = sender.output(MergeToolOutput::FileCountChanged(len));
             }
         }
     }
@@ -102,8 +114,9 @@ enum MergePageMsg {
 }
 
 #[derive(Debug)]
-enum MergePageOutput {
+pub enum MergePageOutput {
     ClearFiles,
+    FileCountChanged(usize),
 }
 
 #[relm4::component]
@@ -325,7 +338,9 @@ impl Component for MergePage {
                 for file in files {
                     files_guard.push_back(file);
                 }
+                let len = files_guard.len();
                 drop(files_guard);
+                let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
             }
             MergePageMsg::ClearFiles => {
@@ -335,6 +350,7 @@ impl Component for MergePage {
                     files_guard.clear();
                 }
 
+                let _ = sender.output(MergePageOutput::FileCountChanged(0));
                 let _ = sender.output(MergePageOutput::ClearFiles);
             }
             MergePageMsg::MoveFileUp(index) => {
@@ -363,6 +379,8 @@ impl Component for MergePage {
             }
             MergePageMsg::DeleteFile(index) => {
                 self.files.guard().remove(index.current_index());
+                let len = self.files.len();
+                let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
             }
             MergePageMsg::SetModernPdfFormat(active) => {

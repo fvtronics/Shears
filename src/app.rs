@@ -1,4 +1,4 @@
-use gettextrs::gettext;
+use gettextrs::{gettext, ngettext};
 use relm4::adw::prelude::{AdwApplicationWindowExt, IsA, NavigationPageExt, SidebarItemExt};
 use relm4::{
     Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
@@ -15,6 +15,7 @@ use crate::tools::{Tool, merge::MergeTool, page::ToolPage};
 
 pub(super) struct App {
     selected_tool: Tool,
+    merge_file_count: usize,
     _merge: Controller<MergeTool>,
     _organize: Controller<ToolPage>,
     _extract: Controller<ToolPage>,
@@ -27,6 +28,7 @@ pub(super) struct App {
 #[derive(Debug)]
 pub(super) enum AppMsg {
     SelectTool(Tool),
+    UpdateMergeFileCount(usize),
     Quit,
 }
 
@@ -166,7 +168,7 @@ impl SimpleComponent for App {
                                         set_title: &model.selected_tool.title(),
 
                                         #[watch]
-                                        set_subtitle: &model.selected_tool.subtitle(),
+                                        set_subtitle: &model.current_subtitle(),
                                     },
                                 },
 
@@ -194,7 +196,9 @@ impl SimpleComponent for App {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let merge = MergeTool::builder().launch(()).detach();
+        let merge = MergeTool::builder().launch(()).forward(sender.input_sender(), |msg| match msg {
+            crate::tools::merge::MergeToolOutput::FileCountChanged(len) => AppMsg::UpdateMergeFileCount(len),
+        });
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
         let split = ToolPage::builder().launch(Tool::Split).detach();
@@ -204,6 +208,7 @@ impl SimpleComponent for App {
 
         let model = Self {
             selected_tool: Tool::Merge,
+            merge_file_count: 0,
             _merge: merge,
             _organize: organize,
             _extract: extract,
@@ -256,6 +261,9 @@ impl SimpleComponent for App {
             AppMsg::SelectTool(tool) => {
                 self.selected_tool = tool;
             }
+            AppMsg::UpdateMergeFileCount(len) => {
+                self.merge_file_count = len;
+            }
             AppMsg::Quit => main_application().quit(),
         }
     }
@@ -300,6 +308,23 @@ impl AppWidgets {
 
         if is_maximized {
             self.main_window.maximize();
+        }
+    }
+}
+
+impl App {
+    fn current_subtitle(&self) -> String {
+        match self.selected_tool {
+            Tool::Merge => {
+                if self.merge_file_count == 0 {
+                    self.selected_tool.subtitle()
+                } else {
+                    let count = self.merge_file_count as u32;
+                    ngettext("{} file selected", "{} files selected", count)
+                        .replace("{}", &count.to_string())
+                }
+            }
+            tool => tool.subtitle(),
         }
     }
 }
