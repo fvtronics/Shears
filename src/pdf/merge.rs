@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+use std::fs::File;
 use std::path::Path;
 
 use lopdf::{Bookmark, Document, Object, ObjectId};
@@ -21,7 +22,7 @@ pub struct MergeOptions {
 pub fn merge_files<P: AsRef<Path>>(
     files: &[(P, u16)],
     output_path: P,
-    _options: &MergeOptions,
+    options: &MergeOptions,
 ) -> Result<(), PdfError> {
     let mut documents = Vec::with_capacity(files.len());
 
@@ -41,7 +42,20 @@ pub fn merge_files<P: AsRef<Path>>(
 
     let mut merged_doc = merge_documents(documents)?;
 
-    merged_doc.save(output_path.as_ref())?;
+    if options.remove_metadata {
+        remove_metadata(&mut merged_doc);
+    }
+
+    if options.normalize_page_size {
+        normalize_page_sizes(&mut merged_doc);
+    }
+
+    if options.modern_format {
+        let mut file = File::create(output_path.as_ref())?;
+        merged_doc.save_modern(&mut file)?;
+    } else {
+        merged_doc.save(output_path.as_ref())?;
+    }
 
     Ok(())
 }
@@ -71,6 +85,86 @@ fn apply_file_rotation(doc: &mut Document, rotation: u16) {
 
         if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(*page_id) {
             page_dict.set("Rotate", Object::Integer(new_rotation));
+        }
+    }
+}
+
+fn remove_metadata(doc: &mut Document) {
+    doc.trailer.remove(b"Info");
+    if let Ok(Object::Reference(root_id)) = doc.trailer.get(b"Root")
+        && let Ok(Object::Dictionary(catalog)) = doc.get_object_mut(*root_id)
+    {
+        catalog.remove(b"Metadata");
+    }
+}
+
+fn get_inherited_mediabox(doc: &Document, page_id: ObjectId) -> Option<Vec<f32>> {
+    let mut current_id = page_id;
+    loop {
+        if let Ok(Object::Dictionary(dict)) = doc.get_object(current_id) {
+            if let Ok(Object::Array(arr)) = dict.get(b"MediaBox") {
+                if arr.len() == 4 {
+                    let get_num = |obj: &Object| -> f32 {
+                        match obj {
+                            Object::Real(f) => *f,
+                            Object::Integer(i) => *i as f32,
+                            _ => 0.0,
+                        }
+                    };
+                    return Some(vec![
+                        get_num(&arr[0]),
+                        get_num(&arr[1]),
+                        get_num(&arr[2]),
+                        get_num(&arr[3]),
+                    ]);
+                }
+            }
+            if let Ok(Object::Reference(parent_id)) = dict.get(b"Parent") {
+                current_id = *parent_id;
+                continue;
+            }
+        }
+        break;
+    }
+    None
+}
+
+fn normalize_page_sizes(doc: &mut Document) {
+    let pages = doc.get_pages();
+
+    let (max_width, max_height) = pages
+        .values()
+        .fold((0.0_f32, 0.0_f32), |(mw, mh), &page_id| {
+            if let Some(media_box) = get_inherited_mediabox(doc, page_id) {
+                let w = (media_box[2] - media_box[0]).abs();
+                let h = (media_box[3] - media_box[1]).abs();
+                return (mw.max(w), mh.max(h));
+            }
+            (mw, mh)
+        });
+
+    if max_width > 0.0 && max_height > 0.0 {
+        for page_id in pages.values() {
+            let original_box = get_inherited_mediabox(doc, *page_id)
+                .unwrap_or_else(|| vec![0.0, 0.0, max_width, max_height]);
+
+            let llx = original_box[0];
+            let lly = original_box[1];
+
+            let new_media_box = vec![
+                Object::Real(llx),
+                Object::Real(lly),
+                Object::Real(llx + max_width),
+                Object::Real(lly + max_height),
+            ];
+
+            if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(*page_id) {
+                page_dict.set("MediaBox", Object::Array(new_media_box));
+                page_dict.remove(b"CropBox");
+                page_dict.remove(b"TrimBox");
+                page_dict.remove(b"BleedBox");
+                page_dict.remove(b"ArtBox");
+            }
         }
     }
 }
