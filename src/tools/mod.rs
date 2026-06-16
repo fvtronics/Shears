@@ -12,7 +12,7 @@ use gettextrs::gettext;
 use relm4::gtk;
 
 use gtk::gio;
-use gtk::prelude::{Cast, ListModelExt};
+use gtk::prelude::{Cast, CastNone, ListModelExt, WidgetExt};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Tool {
@@ -146,4 +146,23 @@ pub(super) fn files_from_model(model: &gio::ListModel) -> Vec<gio::File> {
         .filter_map(|index| model.item(index))
         .filter_map(|item| item.downcast::<gio::File>().ok())
         .collect()
+}
+
+pub(super) fn save_pdf_dialog(
+    button: &gtk::Button,
+    tool: Tool,
+    title: &str,
+    callback: impl FnOnce(gio::File) + 'static,
+) {
+    let dialog = pdf_dialog(tool);
+    dialog.set_title(title);
+    let accept_label = gettext("Save");
+    dialog.set_accept_label(Some(accept_label.as_str()));
+    let parent = button.root().and_downcast::<gtk::Window>();
+
+    dialog.save(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+        if let Ok(file) = result {
+            callback(file);
+        }
+    });
 }

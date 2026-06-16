@@ -8,8 +8,9 @@ use relm4::{
 
 use gtk::{gdk, gio, glib};
 
+use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, files_from_model, pdf_dialog};
+use crate::tools::{Tool, files_from_model, pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
@@ -94,6 +95,8 @@ enum MergePageMsg {
     SetNormalizePageSize(bool),
     SetRemoveMetadata(bool),
     RotateAll,
+    MergeTo(gio::File),
+    MergeComplete(Result<(), PdfError>),
 }
 
 #[derive(Debug)]
@@ -142,7 +145,14 @@ impl SimpleComponent for MergePage {
                 gtk::Button {
                     set_label: &gettext("Merge"),
                     set_tooltip_text: Some(&gettext("Merge Selected PDFs")),
-                    add_css_class: "suggested-action"
+                    add_css_class: "suggested-action",
+
+                    connect_clicked[sender] => move |button| {
+                        let sender_clone = sender.clone();
+                        save_pdf_dialog(button, Tool::Merge, &gettext("Save Merged PDF"), move |file| {
+                            sender_clone.input(MergePageMsg::MergeTo(file));
+                        });
+                    }
                 },
 
                 gtk::MenuButton {
@@ -237,6 +247,35 @@ impl SimpleComponent for MergePage {
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
+            MergePageMsg::MergeTo(output_file) => {
+                let files: Vec<(std::path::PathBuf, u16)> = self
+                    .files
+                    .guard()
+                    .iter()
+                    .filter_map(|row| row.file.path().map(|p| (p, row.rotation)))
+                    .collect();
+
+                let options = MergeOptions {
+                    modern_format: self.modern_pdf_format,
+                    normalize_page_size: self.normalize_page_size,
+                    remove_metadata: self.remove_metadata,
+                };
+
+                if let Some(output_path) = output_file.path() {
+                    let sender = sender.clone();
+                    std::thread::spawn(move || {
+                        let result = merge_files(&files, output_path, &options);
+                        sender.input(MergePageMsg::MergeComplete(result));
+                    });
+                }
+            }
+            MergePageMsg::MergeComplete(result) => {
+                if let Err(err) = result {
+                    tracing::error!("Failed to merge PDFs: {:?}", err);
+                } else {
+                    tracing::info!("PDFs merged successfully.");
+                }
+            }
             MergePageMsg::AddFiles(files) => {
                 let mut files_guard = self.files.guard();
 
