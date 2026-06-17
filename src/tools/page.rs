@@ -7,12 +7,13 @@ use crate::tools::{Tool, files_from_model, pdf_dialog};
 
 pub struct ToolPage {
     tool: Tool,
+    is_loading: bool,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for ToolPage {
     type Init = Tool;
-    type Input = ();
+    type Input = bool;
     type Output = Vec<gio::File>;
 
     view! {
@@ -28,6 +29,8 @@ impl SimpleComponent for ToolPage {
                 set_halign: gtk::Align::Center,
                 set_tooltip_text: Some(&model.tool.action_label()),
                 add_css_class: "suggested-action",
+                #[watch]
+                set_sensitive: !model.is_loading,
 
                 connect_clicked[sender, tool = model.tool] => move |button| {
                     open_pdf_dialog(tool, button, sender.clone());
@@ -41,10 +44,17 @@ impl SimpleComponent for ToolPage {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Self { tool };
+        let model = Self {
+            tool,
+            is_loading: false,
+        };
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, is_loading: Self::Input, _sender: ComponentSender<Self>) {
+        self.is_loading = is_loading;
     }
 }
 

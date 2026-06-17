@@ -1,12 +1,10 @@
-use relm4::gtk::{gdk, gio, glib};
 use relm4::gtk::cairo;
+use relm4::gtk::{gdk, gio, glib};
 use std::sync::OnceLock;
 
 pub fn thread_pool() -> &'static glib::ThreadPool {
     static POOL: OnceLock<glib::ThreadPool> = OnceLock::new();
-    POOL.get_or_init(|| {
-        glib::ThreadPool::exclusive(4).expect("Failed to create thread pool")
-    })
+    POOL.get_or_init(|| glib::ThreadPool::exclusive(4).expect("Failed to create thread pool"))
 }
 
 pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::MemoryTexture> {
@@ -17,7 +15,7 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
             return None;
         }
     };
-    
+
     let page = match doc.page(0) {
         Some(page) => page,
         None => {
@@ -25,26 +23,27 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
             return None;
         }
     };
-    
+
     let (orig_width, orig_height) = page.size();
     let (width, height) = if rotation % 180 != 0 {
         (orig_height, orig_width)
     } else {
         (orig_width, orig_height)
     };
-    
+
     let scale = 150.0 / width.max(height);
     let scaled_width = (width * scale) as i32;
     let scaled_height = (height * scale) as i32;
-    
-    let mut surface = match cairo::ImageSurface::create(cairo::Format::ARgb32, scaled_width, scaled_height) {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("Failed to create surface: {:?}", e);
-            return None;
-        }
-    };
-    
+
+    let mut surface =
+        match cairo::ImageSurface::create(cairo::Format::ARgb32, scaled_width, scaled_height) {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("Failed to create surface: {:?}", e);
+                return None;
+            }
+        };
+
     let cr = match cairo::Context::new(&surface) {
         Ok(c) => c,
         Err(e) => {
@@ -52,16 +51,16 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
             return None;
         }
     };
-    
+
     cr.set_source_rgb(1.0, 1.0, 1.0);
     if let Err(e) = cr.paint() {
         tracing::error!("Failed to paint background: {:?}", e);
         return None;
     }
-    
+
     cr.scale(scale, scale);
     let angle = (rotation as f64) * std::f64::consts::PI / 180.0;
-    
+
     match (rotation % 360 + 360) % 360 {
         90 => {
             cr.translate(orig_height, 0.0);
@@ -77,11 +76,11 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
         }
         _ => {}
     }
-    
+
     page.render(&cr);
     drop(cr);
     surface.flush();
-    
+
     let stride = surface.stride() as usize;
     let data = match surface.data() {
         Ok(d) => d,
@@ -90,9 +89,9 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
             return None;
         }
     };
-    
+
     let bytes = glib::Bytes::from(&data[..]);
-    
+
     Some(gdk::MemoryTexture::new(
         scaled_width,
         scaled_height,

@@ -14,6 +14,8 @@ use crate::tools::{Tool, files_from_model, pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
+    file_count: usize,
+    is_loading: bool,
     _empty_page: Controller<ToolPage>,
     merge_page: Controller<MergePage>,
 }
@@ -23,11 +25,13 @@ pub enum MergeToolMsg {
     AddFiles(Vec<gio::File>),
     ClearFiles,
     UpdateFileCount(usize),
+    Loading(bool),
 }
 
 #[derive(Debug)]
 pub enum MergeToolOutput {
     FileCountChanged(usize),
+    Loading(bool),
 }
 
 #[relm4::component(pub)]
@@ -60,10 +64,13 @@ impl SimpleComponent for MergeTool {
             .forward(sender.input_sender(), |msg| match msg {
                 MergePageOutput::ClearFiles => MergeToolMsg::ClearFiles,
                 MergePageOutput::FileCountChanged(len) => MergeToolMsg::UpdateFileCount(len),
+                MergePageOutput::Loading(is_loading) => MergeToolMsg::Loading(is_loading),
             });
 
         let model = Self {
             has_files: false,
+            file_count: 0,
+            is_loading: false,
             _empty_page: empty_page,
             merge_page,
         };
@@ -76,13 +83,29 @@ impl SimpleComponent for MergeTool {
         match message {
             MergeToolMsg::AddFiles(files) => {
                 self.merge_page.emit(MergePageMsg::AddFiles(files));
-                self.has_files = true;
             }
             MergeToolMsg::ClearFiles => {
                 self.has_files = false;
+                self.file_count = 0;
             }
             MergeToolMsg::UpdateFileCount(len) => {
+                self.file_count = len;
+                if len == 0 {
+                    self.has_files = false;
+                }
+
+                if len > 0 && !self.is_loading {
+                    self.has_files = true;
+                }
                 let _ = sender.output(MergeToolOutput::FileCountChanged(len));
+            }
+            MergeToolMsg::Loading(is_loading) => {
+                self.is_loading = is_loading;
+                self._empty_page.emit(is_loading);
+                if !is_loading && self.file_count > 0 {
+                    self.has_files = true;
+                }
+                let _ = sender.output(MergeToolOutput::Loading(is_loading));
             }
         }
     }
@@ -94,12 +117,21 @@ struct MergePage {
     normalize_page_size: bool,
     remove_metadata: bool,
     output_file: Option<String>,
+    is_loading: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct PreparedFile {
+    pub file: gio::File,
+    pub title: String,
+    pub size_str: String,
 }
 
 #[derive(Debug)]
 enum MergePageMsg {
     AddFiles(Vec<gio::File>),
-    AddFilesBatch(Vec<gio::File>),
+    FilesReady(Vec<PreparedFile>),
+    AddFilesBatch(Vec<PreparedFile>),
     ClearFiles,
     MoveFileUp(DynamicIndex),
     MoveFileDown(DynamicIndex),
@@ -112,12 +144,14 @@ enum MergePageMsg {
     MergeTo(gio::File),
     MergeComplete(Result<std::path::PathBuf, PdfError>),
     OpenOutput,
+    LoadingComplete,
 }
 
 #[derive(Debug)]
 pub enum MergePageOutput {
     ClearFiles,
     FileCountChanged(usize),
+    Loading(bool),
 }
 
 #[relm4::component]
@@ -138,6 +172,8 @@ impl Component for MergePage {
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 8,
+                #[watch]
+                set_sensitive: !model.is_loading,
 
                 gtk::Box {
                     set_hexpand: true,
@@ -244,6 +280,8 @@ impl Component for MergePage {
                 file_list -> gtk::ListBox {
                     add_css_class: "boxed-list",
                     set_selection_mode: gtk::SelectionMode::None,
+                    #[watch]
+                    set_sensitive: !model.is_loading,
                 }
             }
         }
@@ -270,6 +308,7 @@ impl Component for MergePage {
             normalize_page_size: false,
             remove_metadata: false,
             output_file: None,
+            is_loading: false,
         };
         let file_list = model.files.widget();
         let widgets = view_output!();
@@ -280,6 +319,9 @@ impl Component for MergePage {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             MergePageMsg::MergeTo(output_file) => {
+                self.is_loading = true;
+                let _ = sender.output(MergePageOutput::Loading(true));
+
                 let files: Vec<(std::path::PathBuf, u16)> = self
                     .files
                     .guard()
@@ -295,26 +337,31 @@ impl Component for MergePage {
 
                 if let Some(output_path) = output_file.path() {
                     let sender = sender.clone();
-                    std::thread::spawn(move || {
+                    relm4::spawn_blocking(move || {
                         let result = merge_files(&files, output_path.clone(), &options);
                         let msg_result = result.map(|_| output_path);
                         sender.input(MergePageMsg::MergeComplete(msg_result));
                     });
                 }
             }
-            MergePageMsg::MergeComplete(result) => match result {
-                Ok(path) => {
-                    self.output_file = Some(path.to_string_lossy().into_owned());
-                    let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
-                    root.add_toast(toast);
-                    tracing::info!("Merged PDF Saved");
+            MergePageMsg::MergeComplete(result) => {
+                self.is_loading = false;
+                let _ = sender.output(MergePageOutput::Loading(false));
+
+                match result {
+                    Ok(path) => {
+                        self.output_file = Some(path.to_string_lossy().into_owned());
+                        let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
+                        root.add_toast(toast);
+                        tracing::info!("Merged PDF Saved");
+                    }
+                    Err(err) => {
+                        let toast = adw::Toast::new(&gettext("Could not save PDF"));
+                        root.add_toast(toast);
+                        tracing::error!("Failed to merge PDFs: {:?}", err);
+                    }
                 }
-                Err(err) => {
-                    let toast = adw::Toast::new(&gettext("Could not save PDF"));
-                    root.add_toast(toast);
-                    tracing::error!("Failed to merge PDFs: {:?}", err);
-                }
-            },
+            }
             MergePageMsg::OpenOutput => {
                 if let Some(path_str) = self.output_file.clone() {
                     let file = gio::File::for_path(&path_str);
@@ -334,12 +381,34 @@ impl Component for MergePage {
                 }
             }
             MergePageMsg::AddFiles(files) => {
+                self.is_loading = true;
+                let _ = sender.output(MergePageOutput::Loading(true));
+
+                let sender_clone = sender.clone();
+                relm4::spawn_blocking(move || {
+                    let prepared: Vec<PreparedFile> = files
+                        .into_iter()
+                        .map(|file| {
+                            let title = file_title(&file);
+                            let size_str = file_size_string(&file);
+                            PreparedFile {
+                                file,
+                                title,
+                                size_str,
+                            }
+                        })
+                        .collect();
+                    sender_clone.input(MergePageMsg::FilesReady(prepared));
+                });
+            }
+            MergePageMsg::FilesReady(prepared_files) => {
                 let sender_clone = sender.clone();
                 relm4::spawn_local(async move {
-                    for chunk in files.chunks(20) {
+                    for chunk in prepared_files.chunks(20) {
                         sender_clone.input(MergePageMsg::AddFilesBatch(chunk.to_vec()));
                         relm4::gtk::glib::timeout_future(std::time::Duration::from_millis(5)).await;
                     }
+                    sender_clone.input(MergePageMsg::LoadingComplete);
                 });
             }
             MergePageMsg::AddFilesBatch(files) => {
@@ -351,6 +420,10 @@ impl Component for MergePage {
                 drop(files_guard);
                 let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
+            }
+            MergePageMsg::LoadingComplete => {
+                self.is_loading = false;
+                let _ = sender.output(MergePageOutput::Loading(false));
             }
             MergePageMsg::ClearFiles => {
                 self.output_file = None;
@@ -418,26 +491,33 @@ impl MergePage {
     fn update_bounds(&mut self) {
         self.output_file = None;
         let length = self.files.len();
+        let files_guard = self.files.guard();
         for i in 0..length {
+            let is_first = i == 0;
             let is_last = i == length - 1;
-            self.files
-                .send(i, MergeFileRowMsg::UpdateBounds { is_last });
+            if let Some(row) = files_guard.get(i) {
+                if row.is_first != is_first || row.is_last != is_last {
+                    files_guard.send(i, MergeFileRowMsg::UpdateBounds { is_first, is_last });
+                }
+            }
         }
     }
 }
 
 struct MergeFileRow {
     file: gio::File,
+    title: String,
+    size_str: String,
     rotation: u16,
+    is_first: bool,
     is_last: bool,
-    index: DynamicIndex,
     thumbnail: Option<gdk::MemoryTexture>,
 }
 
 #[derive(Debug)]
 enum MergeFileRowMsg {
     RotateClockwise,
-    UpdateBounds { is_last: bool },
+    UpdateBounds { is_first: bool, is_last: bool },
     ThumbnailReady(gdk::MemoryTexture),
 }
 
@@ -451,7 +531,7 @@ enum MergeFileRowOutput {
 
 #[relm4::factory]
 impl FactoryComponent for MergeFileRow {
-    type Init = gio::File;
+    type Init = PreparedFile;
     type Input = MergeFileRowMsg;
     type Output = MergeFileRowOutput;
     type CommandOutput = ();
@@ -459,8 +539,8 @@ impl FactoryComponent for MergeFileRow {
 
     view! {
         adw::ActionRow {
-            set_title: &file_title(&self.file),
-            set_subtitle: &file_size_string(&self.file),
+            set_title: &self.title,
+            set_subtitle: &self.size_str,
             set_title_lines: 1,
             set_activatable: true,
 
@@ -523,7 +603,7 @@ impl FactoryComponent for MergeFileRow {
                     set_valign: gtk::Align::Center,
                     set_tooltip_text: Some(&gettext("Move Up")),
                     #[watch]
-                    set_sensitive: self.index.current_index() != 0,
+                    set_sensitive: !self.is_first,
 
                     connect_clicked[sender, index] => move |_| {
                         let _ = sender.output(MergeFileRowOutput::MoveUp(index.clone()));
@@ -561,7 +641,7 @@ impl FactoryComponent for MergeFileRow {
                     set_valign: gtk::Align::Center,
                     set_tooltip_text: Some(&gettext("Remove File")),
                     #[watch]
-                    set_sensitive: !(self.index.current_index() == 0 && self.is_last),
+                    set_sensitive: !(self.is_first && self.is_last),
 
                     connect_clicked[sender, index] => move |_| {
                         let _ = sender.output(MergeFileRowOutput::Delete(index.clone()));
@@ -571,23 +651,29 @@ impl FactoryComponent for MergeFileRow {
         }
     }
 
-    fn init_model(file: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
-        let file_clone = file.clone();
+    fn init_model(prepared: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+        let file_clone = prepared.file.clone();
         let sender_clone = sender.clone();
-        
+
         let rotation = 0;
-        
-        crate::pdf::preview::thread_pool().push(move || {
-            if let Some(texture) = crate::pdf::preview::generate_thumbnail(&file_clone, rotation) {
-                sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
-            }
-        }).expect("Failed to enqueue thumbnail task");
+
+        crate::pdf::preview::thread_pool()
+            .push(move || {
+                if let Some(texture) =
+                    crate::pdf::preview::generate_thumbnail(&file_clone, rotation)
+                {
+                    sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
+                }
+            })
+            .expect("Failed to enqueue thumbnail task");
 
         Self {
-            file,
+            file: prepared.file,
+            title: prepared.title,
+            size_str: prepared.size_str,
             rotation: 0,
+            is_first: index.current_index() == 0,
             is_last: false,
-            index: index.clone(),
             thumbnail: None,
         }
     }
@@ -596,18 +682,23 @@ impl FactoryComponent for MergeFileRow {
         match message {
             MergeFileRowMsg::RotateClockwise => {
                 self.rotation = (self.rotation + 90) % 360;
-                
+
                 let file_clone = self.file.clone();
                 let rotation = self.rotation;
                 let sender_clone = sender.clone();
-                
-                crate::pdf::preview::thread_pool().push(move || {
-                    if let Some(texture) = crate::pdf::preview::generate_thumbnail(&file_clone, rotation as i32) {
-                        sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
-                    }
-                }).expect("Failed to enqueue thumbnail task");
+
+                crate::pdf::preview::thread_pool()
+                    .push(move || {
+                        if let Some(texture) =
+                            crate::pdf::preview::generate_thumbnail(&file_clone, rotation as i32)
+                        {
+                            sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
+                        }
+                    })
+                    .expect("Failed to enqueue thumbnail task");
             }
-            MergeFileRowMsg::UpdateBounds { is_last } => {
+            MergeFileRowMsg::UpdateBounds { is_first, is_last } => {
+                self.is_first = is_first;
                 self.is_last = is_last;
             }
             MergeFileRowMsg::ThumbnailReady(texture) => {
@@ -635,12 +726,11 @@ fn file_title(file: &gio::File) -> String {
 }
 
 fn file_size_string(file: &gio::File) -> String {
-    match file.query_info(
+    file.query_info(
         "standard::size",
         gio::FileQueryInfoFlags::NONE,
         gio::Cancellable::NONE,
-    ) {
-        Ok(info) => glib::format_size(info.size() as u64).to_string(),
-        Err(_) => String::new(),
-    }
+    )
+    .map(|info| glib::format_size(info.size() as u64).to_string())
+    .unwrap_or_default()
 }

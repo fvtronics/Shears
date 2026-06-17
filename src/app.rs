@@ -23,12 +23,14 @@ pub(super) struct App {
     _compress: Controller<ToolPage>,
     _watermark: Controller<ToolPage>,
     _metadata: Controller<ToolPage>,
+    merge_is_loading: bool,
 }
 
 #[derive(Debug)]
 pub(super) enum AppMsg {
     SelectTool(Tool),
     UpdateMergeFileCount(usize),
+    UpdateMergeLoading(bool),
     Quit,
 }
 
@@ -196,9 +198,17 @@ impl SimpleComponent for App {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let merge = MergeTool::builder().launch(()).forward(sender.input_sender(), |msg| match msg {
-            crate::tools::merge::MergeToolOutput::FileCountChanged(len) => AppMsg::UpdateMergeFileCount(len),
-        });
+        let merge =
+            MergeTool::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    crate::tools::merge::MergeToolOutput::FileCountChanged(len) => {
+                        AppMsg::UpdateMergeFileCount(len)
+                    }
+                    crate::tools::merge::MergeToolOutput::Loading(is_loading) => {
+                        AppMsg::UpdateMergeLoading(is_loading)
+                    }
+                });
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
         let split = ToolPage::builder().launch(Tool::Split).detach();
@@ -216,6 +226,7 @@ impl SimpleComponent for App {
             _compress: compress,
             _watermark: watermark,
             _metadata: metadata,
+            merge_is_loading: false,
         };
         let widgets = view_output!();
         widgets
@@ -263,6 +274,10 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateMergeFileCount(len) => {
                 self.merge_file_count = len;
+            }
+            AppMsg::UpdateMergeLoading(is_loading) => {
+                tracing::info!("[TIMING] AppMsg::UpdateMergeLoading({})", is_loading);
+                self.merge_is_loading = is_loading;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -316,7 +331,9 @@ impl App {
     fn current_subtitle(&self) -> String {
         match self.selected_tool {
             Tool::Merge => {
-                if self.merge_file_count == 0 {
+                if self.merge_is_loading {
+                    gettext("Processing…")
+                } else if self.merge_file_count == 0 {
                     self.selected_tool.subtitle()
                 } else {
                     let count = self.merge_file_count as u32;

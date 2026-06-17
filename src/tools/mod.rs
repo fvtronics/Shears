@@ -136,6 +136,7 @@ pub(super) fn pdf_dialog(tool: Tool) -> gtk::FileDialog {
     gtk::FileDialog::builder()
         .title(tool.action_label())
         .accept_label(tool.action_label())
+        .initial_name(gettext("output.pdf"))
         .modal(true)
         .filters(&filters)
         .build()
