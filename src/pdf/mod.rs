@@ -7,6 +7,7 @@
 
 pub mod error;
 pub mod merge;
+pub mod preview;
 
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};

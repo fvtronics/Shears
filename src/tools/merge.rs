@@ -99,6 +99,7 @@ struct MergePage {
 #[derive(Debug)]
 enum MergePageMsg {
     AddFiles(Vec<gio::File>),
+    AddFilesBatch(Vec<gio::File>),
     ClearFiles,
     MoveFileUp(DynamicIndex),
     MoveFileDown(DynamicIndex),
@@ -333,8 +334,16 @@ impl Component for MergePage {
                 }
             }
             MergePageMsg::AddFiles(files) => {
+                let sender_clone = sender.clone();
+                relm4::spawn_local(async move {
+                    for chunk in files.chunks(20) {
+                        sender_clone.input(MergePageMsg::AddFilesBatch(chunk.to_vec()));
+                        relm4::gtk::glib::timeout_future(std::time::Duration::from_millis(5)).await;
+                    }
+                });
+            }
+            MergePageMsg::AddFilesBatch(files) => {
                 let mut files_guard = self.files.guard();
-
                 for file in files {
                     files_guard.push_back(file);
                 }
@@ -422,12 +431,14 @@ struct MergeFileRow {
     rotation: u16,
     is_last: bool,
     index: DynamicIndex,
+    thumbnail: Option<gdk::MemoryTexture>,
 }
 
 #[derive(Debug)]
 enum MergeFileRowMsg {
     RotateClockwise,
     UpdateBounds { is_last: bool },
+    ThumbnailReady(gdk::MemoryTexture),
 }
 
 #[derive(Debug)]
@@ -454,17 +465,22 @@ impl FactoryComponent for MergeFileRow {
             set_activatable: true,
 
             #[name(preview_frame)]
-            add_prefix = &gtk::Frame {
-                set_width_request: 56,
-                set_height_request: 72,
+            add_prefix = &gtk::Overlay {
                 set_margin_top: 6,
                 set_margin_bottom: 6,
                 set_valign: gtk::Align::Center,
                 set_vexpand: false,
 
                 #[wrap(Some)]
-                set_child = &gtk::Picture {
+                set_child = &gtk::Box {
+                    set_width_request: 56,
+                    set_height_request: 72,
+                },
+                add_overlay = &gtk::Picture {
+                    set_can_shrink: true,
                     set_content_fit: gtk::ContentFit::Contain,
+                    #[watch]
+                    set_paintable: self.thumbnail.as_ref(),
                 }
             },
 
@@ -555,22 +571,47 @@ impl FactoryComponent for MergeFileRow {
         }
     }
 
-    fn init_model(file: Self::Init, index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
+    fn init_model(file: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+        let file_clone = file.clone();
+        let sender_clone = sender.clone();
+        
+        let rotation = 0;
+        
+        crate::pdf::preview::thread_pool().push(move || {
+            if let Some(texture) = crate::pdf::preview::generate_thumbnail(&file_clone, rotation) {
+                sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
+            }
+        }).expect("Failed to enqueue thumbnail task");
+
         Self {
             file,
             rotation: 0,
             is_last: false,
             index: index.clone(),
+            thumbnail: None,
         }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: FactorySender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             MergeFileRowMsg::RotateClockwise => {
                 self.rotation = (self.rotation + 90) % 360;
+                
+                let file_clone = self.file.clone();
+                let rotation = self.rotation;
+                let sender_clone = sender.clone();
+                
+                crate::pdf::preview::thread_pool().push(move || {
+                    if let Some(texture) = crate::pdf::preview::generate_thumbnail(&file_clone, rotation as i32) {
+                        sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
+                    }
+                }).expect("Failed to enqueue thumbnail task");
             }
             MergeFileRowMsg::UpdateBounds { is_last } => {
                 self.is_last = is_last;
+            }
+            MergeFileRowMsg::ThumbnailReady(texture) => {
+                self.thumbnail = Some(texture);
             }
         }
     }
