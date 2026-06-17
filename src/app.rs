@@ -336,8 +336,8 @@ impl App {
                     self.selected_tool.subtitle()
                 } else {
                     let count = self.merge_file_count as u32;
-                    ngettext("{} file selected", "{} files selected", count)
-                        .replace("{}", &count.to_string())
+                    ngettext("{count} file selected", "{count} files selected", count)
+                        .replace("{count}", &count.to_string())
                 }
             }
             tool => tool.subtitle(),

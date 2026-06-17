@@ -20,14 +20,18 @@ pub struct MergeOptions {
 }
 
 pub fn merge_files<P: AsRef<Path>>(
-    files: &[(P, u16)],
+    files: &[(P, u16, Option<String>)],
     output_path: P,
     options: &MergeOptions,
 ) -> Result<(), PdfError> {
     let mut documents = Vec::with_capacity(files.len());
 
-    for (path, rotation) in files {
-        let mut doc = Document::load(path.as_ref())?;
+    for (path, rotation, password) in files {
+        let mut doc = if let Some(pass) = password {
+            Document::load_with_password(path.as_ref(), pass.as_str())?
+        } else {
+            Document::load(path.as_ref())?
+        };
         if *rotation != 0 {
             apply_file_rotation(&mut doc, *rotation);
         }

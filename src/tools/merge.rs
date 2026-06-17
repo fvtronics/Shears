@@ -8,6 +8,8 @@ use relm4::{
 
 use gtk::{gdk, gio, glib};
 
+use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
+use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, files_from_model, pdf_dialog, save_pdf_dialog};
@@ -118,6 +120,14 @@ struct MergePage {
     remove_metadata: bool,
     output_file: Option<String>,
     is_loading: bool,
+    password_dialog: Controller<PasswordDialog>,
+    password_queue: std::collections::VecDeque<PasswordRequest>,
+}
+
+struct PasswordRequest {
+    index: DynamicIndex,
+    filename: String,
+    is_error: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -135,7 +145,10 @@ enum MergePageMsg {
     ClearFiles,
     MoveFileUp(DynamicIndex),
     MoveFileDown(DynamicIndex),
-    MoveFile { from: usize, to: DynamicIndex },
+    MoveFile {
+        from: usize,
+        to: DynamicIndex,
+    },
     DeleteFile(DynamicIndex),
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
@@ -145,6 +158,13 @@ enum MergePageMsg {
     MergeComplete(Result<std::path::PathBuf, PdfError>),
     OpenOutput,
     LoadingComplete,
+    PasswordRequired {
+        index: DynamicIndex,
+        filename: String,
+        is_error: bool,
+    },
+    PasswordSuccess(DynamicIndex),
+    PasswordDialogOutput(PasswordDialogOutput),
 }
 
 #[derive(Debug)]
@@ -301,7 +321,22 @@ impl Component for MergePage {
                     MergeFileRowOutput::MoveDown(index) => MergePageMsg::MoveFileDown(index),
                     MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile(index),
                     MergeFileRowOutput::Move { from, to } => MergePageMsg::MoveFile { from, to },
+                    MergeFileRowOutput::PasswordRequired {
+                        index,
+                        filename,
+                        is_error,
+                    } => MergePageMsg::PasswordRequired {
+                        index,
+                        filename,
+                        is_error,
+                    },
+                    MergeFileRowOutput::PasswordSuccess(index) => {
+                        MergePageMsg::PasswordSuccess(index)
+                    }
                 });
+        let password_dialog = PasswordDialog::builder()
+            .launch(())
+            .forward(sender.input_sender(), MergePageMsg::PasswordDialogOutput);
         let model = Self {
             files,
             modern_pdf_format: false,
@@ -309,6 +344,8 @@ impl Component for MergePage {
             remove_metadata: false,
             output_file: None,
             is_loading: false,
+            password_dialog,
+            password_queue: std::collections::VecDeque::new(),
         };
         let file_list = model.files.widget();
         let widgets = view_output!();
@@ -322,11 +359,15 @@ impl Component for MergePage {
                 self.is_loading = true;
                 let _ = sender.output(MergePageOutput::Loading(true));
 
-                let files: Vec<(std::path::PathBuf, u16)> = self
+                let files: Vec<(std::path::PathBuf, u16, Option<String>)> = self
                     .files
                     .guard()
                     .iter()
-                    .filter_map(|row| row.file.path().map(|p| (p, row.rotation)))
+                    .filter_map(|row| {
+                        row.file
+                            .path()
+                            .map(|p| (p, row.rotation, row.password.clone()))
+                    })
                     .collect();
 
                 let options = MergeOptions {
@@ -460,7 +501,20 @@ impl Component for MergePage {
                 }
             }
             MergePageMsg::DeleteFile(index) => {
-                self.files.guard().remove(index.current_index());
+                let current_index = index.current_index();
+
+                if let Some(pos) = self
+                    .password_queue
+                    .iter()
+                    .position(|req| req.index == index)
+                {
+                    self.password_queue.remove(pos);
+                    if pos == 0 {
+                        self.process_password_queue(root);
+                    }
+                }
+
+                self.files.guard().remove(current_index);
                 let len = self.files.len();
                 let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
@@ -483,11 +537,72 @@ impl Component for MergePage {
                     self.files.send(i, MergeFileRowMsg::RotateClockwise);
                 }
             }
+            MergePageMsg::PasswordRequired {
+                index,
+                filename,
+                is_error,
+            } => {
+                if let Some(pos) = self
+                    .password_queue
+                    .iter()
+                    .position(|req| req.index == index)
+                {
+                    self.password_queue[pos].is_error = is_error;
+                    if pos == 0 {
+                        self.process_password_queue(root);
+                    }
+                } else {
+                    self.password_queue.push_back(PasswordRequest {
+                        index,
+                        filename,
+                        is_error,
+                    });
+                    if self.password_queue.len() == 1 {
+                        self.process_password_queue(root);
+                    }
+                }
+            }
+            MergePageMsg::PasswordSuccess(index) => {
+                if let Some(pos) = self
+                    .password_queue
+                    .iter()
+                    .position(|req| req.index == index)
+                {
+                    self.password_queue.remove(pos);
+                    if pos == 0 {
+                        self.process_password_queue(root);
+                    }
+                }
+            }
+            MergePageMsg::PasswordDialogOutput(output) => match output {
+                PasswordDialogOutput::Unlock { index, password } => {
+                    self.files.send(
+                        index.current_index(),
+                        MergeFileRowMsg::RetryWithPassword(password),
+                    );
+                }
+                PasswordDialogOutput::Cancelled(index) => {
+                    sender.input(MergePageMsg::DeleteFile(index));
+                }
+            },
         }
     }
 }
 
 impl MergePage {
+    fn process_password_queue(&mut self, root: &<Self as Component>::Root) {
+        if let Some(req) = self.password_queue.front()
+            && let Some(window) = root.root().and_downcast::<gtk::Window>()
+        {
+            self.password_dialog.emit(PasswordDialogMsg::Show {
+                index: req.index.clone(),
+                filename: req.filename.clone(),
+                is_error: req.is_error,
+                parent_window: window,
+            });
+        }
+    }
+
     fn update_bounds(&mut self) {
         self.output_file = None;
         let length = self.files.len();
@@ -512,13 +627,16 @@ struct MergeFileRow {
     is_first: bool,
     is_last: bool,
     thumbnail: Option<gdk::MemoryTexture>,
+    password: Option<String>,
+    index: DynamicIndex,
 }
 
 #[derive(Debug)]
 enum MergeFileRowMsg {
     RotateClockwise,
     UpdateBounds { is_first: bool, is_last: bool },
-    ThumbnailReady(gdk::MemoryTexture),
+    ThumbnailReady(Result<Option<gdk::MemoryTexture>, PreviewError>),
+    RetryWithPassword(String),
 }
 
 #[derive(Debug)]
@@ -526,7 +644,16 @@ enum MergeFileRowOutput {
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
     Delete(DynamicIndex),
-    Move { from: usize, to: DynamicIndex },
+    Move {
+        from: usize,
+        to: DynamicIndex,
+    },
+    PasswordRequired {
+        index: DynamicIndex,
+        filename: String,
+        is_error: bool,
+    },
+    PasswordSuccess(DynamicIndex),
 }
 
 #[relm4::factory]
@@ -657,15 +784,7 @@ impl FactoryComponent for MergeFileRow {
 
         let rotation = 0;
 
-        crate::pdf::preview::thread_pool()
-            .push(move || {
-                if let Some(texture) =
-                    crate::pdf::preview::generate_thumbnail(&file_clone, rotation)
-                {
-                    sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
-                }
-            })
-            .expect("Failed to enqueue thumbnail task");
+        request_thumbnail(file_clone, rotation, None, sender_clone);
 
         Self {
             file: prepared.file,
@@ -675,6 +794,8 @@ impl FactoryComponent for MergeFileRow {
             is_first: index.current_index() == 0,
             is_last: false,
             thumbnail: None,
+            password: None,
+            index: index.clone(),
         }
     }
 
@@ -686,26 +807,66 @@ impl FactoryComponent for MergeFileRow {
                 let file_clone = self.file.clone();
                 let rotation = self.rotation;
                 let sender_clone = sender.clone();
+                let password = self.password.clone();
 
-                crate::pdf::preview::thread_pool()
-                    .push(move || {
-                        if let Some(texture) =
-                            crate::pdf::preview::generate_thumbnail(&file_clone, rotation as i32)
-                        {
-                            sender_clone.input(MergeFileRowMsg::ThumbnailReady(texture));
-                        }
-                    })
-                    .expect("Failed to enqueue thumbnail task");
+                request_thumbnail(file_clone, rotation, password, sender_clone);
             }
             MergeFileRowMsg::UpdateBounds { is_first, is_last } => {
                 self.is_first = is_first;
                 self.is_last = is_last;
             }
-            MergeFileRowMsg::ThumbnailReady(texture) => {
-                self.thumbnail = Some(texture);
+            MergeFileRowMsg::ThumbnailReady(result) => match result {
+                Ok(texture) => {
+                    self.thumbnail = texture;
+                    if self.password.is_some() {
+                        let _ =
+                            sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
+                    }
+                }
+                Err(PreviewError::Encrypted) => {
+                    let is_error = self.password.is_some();
+                    let _ = sender.output(MergeFileRowOutput::PasswordRequired {
+                        index: self.index.clone(),
+                        filename: self.title.clone(),
+                        is_error,
+                    });
+                }
+                Err(_) => {
+                    if self.password.is_some() {
+                        let _ =
+                            sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
+                    }
+                }
+            },
+            MergeFileRowMsg::RetryWithPassword(password) => {
+                self.password = Some(password.clone());
+
+                let file_clone = self.file.clone();
+                let rotation = self.rotation;
+                let sender_clone = sender.clone();
+
+                request_thumbnail(file_clone, rotation, Some(password), sender_clone);
             }
         }
     }
+}
+
+fn request_thumbnail(
+    file: gio::File,
+    rotation: u16,
+    password: Option<String>,
+    sender: FactorySender<MergeFileRow>,
+) {
+    crate::pdf::preview::thread_pool()
+        .push(move || {
+            let result = crate::pdf::preview::generate_thumbnail(
+                &file,
+                rotation as i32,
+                password.as_deref(),
+            );
+            sender.input(MergeFileRowMsg::ThumbnailReady(result));
+        })
+        .expect("Failed to enqueue thumbnail task");
 }
 
 fn open_pdf_dialog(button: &gtk::Button, sender: ComponentSender<MergePage>) {
