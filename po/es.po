@@ -1,0 +1,316 @@
+# Quire Spanish translation.
+# Copyright (C) 2026 Francisco Vásquez Cuevas
+# This file is distributed under the same license as the quire package.
+# Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: quire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-17 15:30-0400\n"
+"PO-Revision-Date: 2026-06-17 15:44-0400\n"
+"Last-Translator: Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>\n"
+"Language-Team: es_DO\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 50.0\n"
+
+#: data/com.fvtronics.quire.desktop.in.in:2
+#: data/com.fvtronics.quire.metainfo.xml.in.in:7 src/app.rs:91 src/main.rs:33
+msgid "Quire"
+msgstr "Quire"
+
+#: data/com.fvtronics.quire.desktop.in.in:3
+#: data/com.fvtronics.quire.metainfo.xml.in.in:8
+msgid "Combine and edit PDF files"
+msgstr "Combine y edite archivos PDF"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/com.fvtronics.quire.desktop.in.in:9
+msgid "PDF;Merge;"
+msgstr "PDF;Combinar;"
+
+#: data/com.fvtronics.quire.gschema.xml.in:6
+msgid "Window width"
+msgstr "Anchura de ventana"
+
+#: data/com.fvtronics.quire.gschema.xml.in:10
+msgid "Window height"
+msgstr "Altura de ventana"
+
+#: data/com.fvtronics.quire.gschema.xml.in:14
+msgid "Window maximized state"
+msgstr "Estado de maximización de ventana"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:10
+msgid ""
+"Quire is a simple GNOME utility for working with local PDF files without a "
+"complex document suite."
+msgstr ""
+"Quire es una utilidad sencilla de GNOME para trabajar con archivos PDF "
+"locales sin una suite ofimática compleja."
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:11
+msgid "Merge PDFs without relying on online services."
+msgstr "Combine archivos PDF sin enviarlos a un servicio en línea"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:16
+msgid "Merge multiple PDF files into a single document"
+msgstr "Combinar varios archivos PDF en un solo documento"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:27
+msgid "Initial release"
+msgstr "Lanzamiento inicial"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:29
+msgid "Merge and rotate PDF files"
+msgstr "Combine y rote archivos PDF"
+
+#: data/resources/ui/shortcuts.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "General"
+
+#: data/resources/ui/shortcuts.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Mostrar atajos de teclado"
+
+#: data/resources/ui/shortcuts.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Salir"
+
+#: src/app.rs:82
+msgid "Sidebar"
+msgstr "Barra lateral"
+
+#: src/app.rs:110 src/tools/mod.rs:56
+msgid "Merge PDFs"
+msgstr "Combinar archivos PDF"
+
+#: src/app.rs:112
+msgid "Combine files"
+msgstr "Combinar archivos"
+
+#: src/app.rs:115 src/tools/mod.rs:57
+msgid "Organize Pages"
+msgstr "Organizar páginas"
+
+#: src/app.rs:117
+msgid "Reorder or remove"
+msgstr "Reordenar o eliminar páginas"
+
+#: src/app.rs:121 src/tools/mod.rs:58
+msgid "Extract Pages"
+msgstr "Extraer páginas"
+
+#: src/app.rs:123
+msgid "Save page ranges"
+msgstr "Guardar rangos de páginas"
+
+#: src/app.rs:127 src/tools/mod.rs:59
+msgid "Split PDF"
+msgstr "Dividir PDF"
+
+#: src/app.rs:129
+msgid "Create separate files"
+msgstr "Crear archivos separados"
+
+#: src/app.rs:133 src/tools/mod.rs:60
+msgid "Compress PDF"
+msgstr "Comprimir PDF"
+
+#: src/app.rs:135
+msgid "Reduce file size"
+msgstr "Reducir el tamaño de archivo"
+
+#: src/app.rs:139 src/tools/mod.rs:61
+msgid "Add Watermark"
+msgstr "Añadir marca de agua"
+
+#: src/app.rs:141
+msgid "Overlay an image"
+msgstr "Superponer una imagen"
+
+#: src/app.rs:145 src/tools/mod.rs:62
+msgid "Edit Metadata"
+msgstr "Editar metadatos"
+
+#: src/app.rs:147
+msgid "Update document details"
+msgstr "Actualizar detalles del documento"
+
+#: src/app.rs:334
+msgid "Processing…"
+msgstr "Procesando…"
+
+#: src/app.rs:339
+#, rust-format
+msgid "{} file selected"
+msgid_plural "{} files selected"
+msgstr[0] "{} archivo seleccionado"
+msgstr[1] "{} archivos seleccionados"
+
+#: src/tools/merge.rs:184
+msgid "Add PDF Files"
+msgstr "Añadir archivos PDF"
+
+#: src/tools/merge.rs:192
+msgid "Open Output"
+msgstr "Abrir resultado"
+
+#: src/tools/merge.rs:195
+msgid "Open Output File"
+msgstr "Abrir archivo de salida"
+
+#: src/tools/merge.rs:203
+msgid "Clear"
+msgstr "Limpiar"
+
+#: src/tools/merge.rs:204
+msgid "Clear File List"
+msgstr "Limpiar lista de archivos"
+
+#: src/tools/merge.rs:212
+msgid "Merge"
+msgstr "Combinar"
+
+#: src/tools/merge.rs:213
+msgid "Merge Selected PDFs"
+msgstr "Combinar los PDF seleccionados"
+
+#: src/tools/merge.rs:218
+msgid "Save Merged PDF"
+msgstr "Guardar PDF combinado"
+
+#: src/tools/merge.rs:227
+msgid "Advanced Options"
+msgstr "Opciones avanzadas"
+
+#: src/tools/merge.rs:234
+msgid "Rotate all"
+msgstr "Rotar todos los archivos"
+
+#: src/tools/merge.rs:243
+msgid "Modern PDF format"
+msgstr "Formato PDF moderno"
+
+#: src/tools/merge.rs:244
+msgid "Save with PDF 1.5 object streams"
+msgstr "Guardar con flujos de objetos de PDF 1.5"
+
+#: src/tools/merge.rs:253
+msgid "Normalize page size"
+msgstr "Normalizar tamaño de página"
+
+#: src/tools/merge.rs:254
+msgid "Resize output pages to the largest page size"
+msgstr "Ajustar las páginas de salida al mayor tamaño de página"
+
+#: src/tools/merge.rs:263
+msgid "Remove metadata"
+msgstr "Eliminar metadatos"
+
+#: src/tools/merge.rs:264
+msgid "Remove existing metadata before saving"
+msgstr "Eliminar metadatos existentes antes de guardar"
+
+#: src/tools/merge.rs:354
+msgid "PDFs merged successfully"
+msgstr "Archivos PDF combinados exitosamente"
+
+#: src/tools/merge.rs:359
+msgid "Could not save PDF"
+msgstr "No se pudo guardar el archivo PDF"
+
+#: src/tools/merge.rs:369
+msgid "Output file not found"
+msgstr "Archivo de salida no encontrado"
+
+#: src/tools/merge.rs:377
+msgid "Failed to open output file"
+msgstr "No se pudo abrir el archivo de salida"
+
+#: src/tools/merge.rs:604
+msgid "Move Up"
+msgstr "Mover hacia arriba"
+
+#: src/tools/merge.rs:618
+msgid "Move Down"
+msgstr "Mover hacia abajo"
+
+#: src/tools/merge.rs:632
+msgid "Rotate Clockwise"
+msgstr "Girar en sentido horario"
+
+#: src/tools/merge.rs:642
+msgid "Remove File"
+msgstr "Eliminar archivo"
+
+#: src/tools/mod.rs:68
+msgid "No files selected"
+msgstr "No hay archivos seleccionados"
+
+#: src/tools/mod.rs:74
+msgid "No file selected"
+msgstr "No hay archivos seleccionados"
+
+#: src/tools/mod.rs:92
+msgid "No PDFs Added"
+msgstr "Ningún archivo seleccionado"
+
+#: src/tools/mod.rs:98
+msgid "No PDF Open"
+msgstr "Ningún archivo abierto"
+
+#: src/tools/mod.rs:104
+msgid "Add two or more PDFs to merge them"
+msgstr "Añada dos o más archivos PDF para combinarlos"
+
+#: src/tools/mod.rs:105
+msgid "Open a PDF to reorder or remove pages"
+msgstr "Abra un archivo para reordenar o eliminar páginas"
+
+#: src/tools/mod.rs:106
+msgid "Open a PDF to choose pages to extract"
+msgstr "Abra un archivo para elegir qué páginas extraer"
+
+#: src/tools/mod.rs:107
+msgid "Open a PDF to choose where to split it"
+msgstr "Abra un archivo para decidir cómo dividirlo"
+
+#: src/tools/mod.rs:108
+msgid "Open a PDF to save a smaller copy"
+msgstr "Abra un archivo para guardar una copia reducida"
+
+#: src/tools/mod.rs:109
+msgid "Open a PDF to add an image watermark"
+msgstr "Abra un archivo para añadir una marca de agua"
+
+#: src/tools/mod.rs:110
+msgid "Open a PDF to edit its metadata"
+msgstr "Abra un archivo para editar sus metadatos"
+
+#: src/tools/mod.rs:116
+msgid "Add PDFs"
+msgstr "Añadir archivos PDF"
+
+#: src/tools/mod.rs:122
+msgid "Open PDF"
+msgstr "Abrir PDF"
+
+#: src/tools/mod.rs:129
+msgid "PDF Documents"
+msgstr "Documentos PDF"
+
+#: src/tools/mod.rs:139
+msgid "output.pdf"
+msgstr "salida.pdf"
+
+#: src/tools/mod.rs:160
+msgid "Save"
+msgstr "Guardar"

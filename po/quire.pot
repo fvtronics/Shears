@@ -1,0 +1,314 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the quire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: quire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-17 15:30-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: data/com.fvtronics.quire.desktop.in.in:2
+#: data/com.fvtronics.quire.metainfo.xml.in.in:7 src/app.rs:91 src/main.rs:33
+msgid "Quire"
+msgstr ""
+
+#: data/com.fvtronics.quire.desktop.in.in:3
+#: data/com.fvtronics.quire.metainfo.xml.in.in:8
+msgid "Combine and edit PDF files"
+msgstr ""
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/com.fvtronics.quire.desktop.in.in:9
+msgid "PDF;Merge;"
+msgstr ""
+
+#: data/com.fvtronics.quire.gschema.xml.in:6
+msgid "Window width"
+msgstr ""
+
+#: data/com.fvtronics.quire.gschema.xml.in:10
+msgid "Window height"
+msgstr ""
+
+#: data/com.fvtronics.quire.gschema.xml.in:14
+msgid "Window maximized state"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:10
+msgid ""
+"Quire is a simple GNOME utility for working with local PDF files without a "
+"complex document suite."
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:11
+msgid "Merge PDFs without relying on online services."
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:16
+msgid "Merge multiple PDF files into a single document"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:27
+msgid "Initial release"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:29
+msgid "Merge and rotate PDF files"
+msgstr ""
+
+#: data/resources/ui/shortcuts.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr ""
+
+#: data/resources/ui/shortcuts.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr ""
+
+#: data/resources/ui/shortcuts.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr ""
+
+#: src/app.rs:82
+msgid "Sidebar"
+msgstr ""
+
+#: src/app.rs:110 src/tools/mod.rs:56
+msgid "Merge PDFs"
+msgstr ""
+
+#: src/app.rs:112
+msgid "Combine files"
+msgstr ""
+
+#: src/app.rs:115 src/tools/mod.rs:57
+msgid "Organize Pages"
+msgstr ""
+
+#: src/app.rs:117
+msgid "Reorder or remove"
+msgstr ""
+
+#: src/app.rs:121 src/tools/mod.rs:58
+msgid "Extract Pages"
+msgstr ""
+
+#: src/app.rs:123
+msgid "Save page ranges"
+msgstr ""
+
+#: src/app.rs:127 src/tools/mod.rs:59
+msgid "Split PDF"
+msgstr ""
+
+#: src/app.rs:129
+msgid "Create separate files"
+msgstr ""
+
+#: src/app.rs:133 src/tools/mod.rs:60
+msgid "Compress PDF"
+msgstr ""
+
+#: src/app.rs:135
+msgid "Reduce file size"
+msgstr ""
+
+#: src/app.rs:139 src/tools/mod.rs:61
+msgid "Add Watermark"
+msgstr ""
+
+#: src/app.rs:141
+msgid "Overlay an image"
+msgstr ""
+
+#: src/app.rs:145 src/tools/mod.rs:62
+msgid "Edit Metadata"
+msgstr ""
+
+#: src/app.rs:147
+msgid "Update document details"
+msgstr ""
+
+#: src/app.rs:334
+msgid "Processing…"
+msgstr ""
+
+#: src/app.rs:339
+#, rust-format
+msgid "{} file selected"
+msgid_plural "{} files selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tools/merge.rs:184
+msgid "Add PDF Files"
+msgstr ""
+
+#: src/tools/merge.rs:192
+msgid "Open Output"
+msgstr ""
+
+#: src/tools/merge.rs:195
+msgid "Open Output File"
+msgstr ""
+
+#: src/tools/merge.rs:203
+msgid "Clear"
+msgstr ""
+
+#: src/tools/merge.rs:204
+msgid "Clear File List"
+msgstr ""
+
+#: src/tools/merge.rs:212
+msgid "Merge"
+msgstr ""
+
+#: src/tools/merge.rs:213
+msgid "Merge Selected PDFs"
+msgstr ""
+
+#: src/tools/merge.rs:218
+msgid "Save Merged PDF"
+msgstr ""
+
+#: src/tools/merge.rs:227
+msgid "Advanced Options"
+msgstr ""
+
+#: src/tools/merge.rs:234
+msgid "Rotate all"
+msgstr ""
+
+#: src/tools/merge.rs:243
+msgid "Modern PDF format"
+msgstr ""
+
+#: src/tools/merge.rs:244
+msgid "Save with PDF 1.5 object streams"
+msgstr ""
+
+#: src/tools/merge.rs:253
+msgid "Normalize page size"
+msgstr ""
+
+#: src/tools/merge.rs:254
+msgid "Resize output pages to the largest page size"
+msgstr ""
+
+#: src/tools/merge.rs:263
+msgid "Remove metadata"
+msgstr ""
+
+#: src/tools/merge.rs:264
+msgid "Remove existing metadata before saving"
+msgstr ""
+
+#: src/tools/merge.rs:354
+msgid "PDFs merged successfully"
+msgstr ""
+
+#: src/tools/merge.rs:359
+msgid "Could not save PDF"
+msgstr ""
+
+#: src/tools/merge.rs:369
+msgid "Output file not found"
+msgstr ""
+
+#: src/tools/merge.rs:377
+msgid "Failed to open output file"
+msgstr ""
+
+#: src/tools/merge.rs:604
+msgid "Move Up"
+msgstr ""
+
+#: src/tools/merge.rs:618
+msgid "Move Down"
+msgstr ""
+
+#: src/tools/merge.rs:632
+msgid "Rotate Clockwise"
+msgstr ""
+
+#: src/tools/merge.rs:642
+msgid "Remove File"
+msgstr ""
+
+#: src/tools/mod.rs:68
+msgid "No files selected"
+msgstr ""
+
+#: src/tools/mod.rs:74
+msgid "No file selected"
+msgstr ""
+
+#: src/tools/mod.rs:92
+msgid "No PDFs Added"
+msgstr ""
+
+#: src/tools/mod.rs:98
+msgid "No PDF Open"
+msgstr ""
+
+#: src/tools/mod.rs:104
+msgid "Add two or more PDFs to merge them"
+msgstr ""
+
+#: src/tools/mod.rs:105
+msgid "Open a PDF to reorder or remove pages"
+msgstr ""
+
+#: src/tools/mod.rs:106
+msgid "Open a PDF to choose pages to extract"
+msgstr ""
+
+#: src/tools/mod.rs:107
+msgid "Open a PDF to choose where to split it"
+msgstr ""
+
+#: src/tools/mod.rs:108
+msgid "Open a PDF to save a smaller copy"
+msgstr ""
+
+#: src/tools/mod.rs:109
+msgid "Open a PDF to add an image watermark"
+msgstr ""
+
+#: src/tools/mod.rs:110
+msgid "Open a PDF to edit its metadata"
+msgstr ""
+
+#: src/tools/mod.rs:116
+msgid "Add PDFs"
+msgstr ""
+
+#: src/tools/mod.rs:122
+msgid "Open PDF"
+msgstr ""
+
+#: src/tools/mod.rs:129
+msgid "PDF Documents"
+msgstr ""
+
+#: src/tools/mod.rs:139
+msgid "output.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:160
+msgid "Save"
+msgstr ""

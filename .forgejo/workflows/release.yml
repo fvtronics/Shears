@@ -1,0 +1,73 @@
+name: Quire release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  flatpak-bundle:
+    name: Flatpak Bundle
+    runs-on: flatpak-builder
+
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build Flatpak Bundle
+        run: |
+          flatpak-builder \
+            --repo=repo \
+            --default-branch=stable \
+            --disable-rofiles-fuse \
+            --disable-updates \
+            --force-clean \
+            build-dir \
+            build-aux/com.fvtronics.quire.json
+
+          flatpak build-bundle \
+            repo \
+            "quire-${{ forgejo.ref_name }}.flatpak" \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+            com.fvtronics.quire \
+            stable
+
+          flatpak build-bundle \
+            --runtime \
+            repo \
+            "quire-locale-${{ forgejo.ref_name }}.flatpak" \
+            com.fvtronics.quire.Locale \
+            stable
+
+      - name: Upload Flatpak Bundle
+        uses: https://data.forgejo.org/actions/upload-artifact@v3
+        with:
+          name: flatpak-bundles
+          path: quire-*.flatpak
+          if-no-files-found: error
+
+  release:
+    name: Create Forgejo Release
+    needs: flatpak-bundle
+    runs-on: linux-amd64
+
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download Flatpak Bundle
+        uses: https://data.forgejo.org/actions/download-artifact@v3
+        with:
+          name: flatpak-bundles
+          path: dist/release
+
+      - name: Create Forgejo Release
+        uses: https://data.forgejo.org/actions/forgejo-release@v2.12.1
+        with:
+          direction: upload
+          release-dir: dist/release
+          release-notes-file: CHANGELOG.md
