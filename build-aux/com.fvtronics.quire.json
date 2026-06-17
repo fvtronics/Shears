@@ -56,8 +56,9 @@
             "buildsystem": "meson",
             "sources": [
                 {
-                    "type": "dir",
-                    "path": "../"
+                  "type": "git",
+                  "url": "https://codeberg.org/FVtronics/Quire.git",
+                  "tag": "v0.1.0"
                 },
                 "../cargo-sources.json"
             ],

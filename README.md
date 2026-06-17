@@ -23,9 +23,9 @@ compress files, add watermarks, and edit metadata, all without relying on online
 
 ## Screenshots
 
-| Main Window |
+| Merge PDFs |
 |:-----------:|
-| ![Merge PDFs](data/resources/screenshots/screenshot1.png?raw=true "Merge multiple PDF files") |
+| ![Merge PDFs](data/resources/screenshots/merge.png?raw=true "Merge multiple PDF files") |
 
 ## How to install
 

@@ -8,11 +8,11 @@
   <summary>Combine and edit PDF files</summary>
   <description>
     <p>Quire is a simple GNOME utility for working with local PDF files without a complex document suite.</p>
-    <p>Merge PDFs, organize pages, extract page ranges, split documents, compress files, add watermarks, and edit metadata, all without relying on online services.</p>
+    <p>Merge PDFs without relying on online services.</p>
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.1.0/data/screenshots/merge.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.1.0/data/resources/screenshots/merge.png</image>
       <caption>Merge multiple PDF files into a single document</caption>
     </screenshot>
   </screenshots>
@@ -22,7 +22,14 @@
   <url type="translate">https://codeberg.org/translate/Quire/src/branch/main/po</url>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="0.1.0" date="2019-07-11" />
+    <release version="0.1.0" date="2026-06-17" >
+      <description>
+        <p>Initial release</p>
+        <ul>
+          <li>Merge and rotate PDF files</li>
+        </ul>
+      </description>
+    </release>
   </releases>
 
   <developer id="com.fvtronics">
