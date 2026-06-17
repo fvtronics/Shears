@@ -276,7 +276,6 @@ impl SimpleComponent for App {
                 self.merge_file_count = len;
             }
             AppMsg::UpdateMergeLoading(is_loading) => {
-                tracing::info!("[TIMING] AppMsg::UpdateMergeLoading({})", is_loading);
                 self.merge_is_loading = is_loading;
             }
             AppMsg::Quit => main_application().quit(),
