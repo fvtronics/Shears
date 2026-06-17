@@ -495,10 +495,10 @@ impl MergePage {
         for i in 0..length {
             let is_first = i == 0;
             let is_last = i == length - 1;
-            if let Some(row) = files_guard.get(i) {
-                if row.is_first != is_first || row.is_last != is_last {
-                    files_guard.send(i, MergeFileRowMsg::UpdateBounds { is_first, is_last });
-                }
+            if let Some(row) = files_guard.get(i)
+                && (row.is_first != is_first || row.is_last != is_last)
+            {
+                files_guard.send(i, MergeFileRowMsg::UpdateBounds { is_first, is_last });
             }
         }
     }

@@ -61,7 +61,7 @@ pub fn generate_thumbnail(file: &gio::File, rotation: i32) -> Option<gdk::Memory
     cr.scale(scale, scale);
     let angle = (rotation as f64) * std::f64::consts::PI / 180.0;
 
-    match (rotation % 360 + 360) % 360 {
+    match rotation.rem_euclid(360) {
         90 => {
             cr.translate(orig_height, 0.0);
             cr.rotate(angle);
