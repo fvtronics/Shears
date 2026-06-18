@@ -195,12 +195,9 @@ impl Component for MergePage {
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 8,
+                set_halign: gtk::Align::End,
                 #[watch]
                 set_sensitive: !model.is_loading,
-
-                gtk::Box {
-                    set_hexpand: true,
-                },
 
                 gtk::Button {
                     set_label: &Tool::Merge.action_label(),
@@ -728,6 +725,13 @@ impl FactoryComponent for MergeFileRow {
                     #[watch]
                     set_paintable: self.thumbnail.as_ref(),
                 }
+            },
+
+            add_prefix = &gtk::Image {
+                set_icon_name: Some("list-drag-handle-symbolic"),
+                add_css_class: "dim-label",
+                set_valign: gtk::Align::Center,
+                set_cursor_from_name: Some("grab"),
             },
 
             add_controller = gtk::DragSource {
