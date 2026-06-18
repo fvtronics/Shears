@@ -290,7 +290,7 @@ impl SimpleComponent for App {
 fn split_view_breakpoint(split_view: &impl IsA<glib::Object>) -> adw::Breakpoint {
     let bp = adw::Breakpoint::new(adw::BreakpointCondition::new_length(
         adw::BreakpointConditionLengthType::MaxWidth,
-        500.0,
+        700.0,
         adw::LengthUnit::Sp,
     ));
 

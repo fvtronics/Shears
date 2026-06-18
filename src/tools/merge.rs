@@ -265,7 +265,8 @@ impl Component for MergePage {
                         add_css_class: "menu",
                         adw::PreferencesGroup {
                             add = &adw::ActionRow {
-                                set_title: &gettext("Rotate all"),
+                                set_title: &gettext("Rotate _all"),
+                                set_use_underline: true,
                                 set_activatable: true,
 
                                 connect_activated[sender] => move |_| {
@@ -274,7 +275,8 @@ impl Component for MergePage {
                             },
 
                             add = &adw::SwitchRow {
-                                set_title: &gettext("Modern PDF format"),
+                                set_title: &gettext("_Modern PDF format"),
+                                set_use_underline: true,
                                 set_subtitle: &gettext("Save with PDF 1.5 object streams"),
                                 set_active: model.modern_pdf_format,
 
@@ -284,7 +286,8 @@ impl Component for MergePage {
                             },
 
                             add = &adw::SwitchRow {
-                                set_title: &gettext("Normalize page size"),
+                                set_title: &gettext("_Normalize page size"),
+                                set_use_underline: true,
                                 set_subtitle: &gettext("Resize output pages to the largest page size"),
                                 set_active: model.normalize_page_size,
 
@@ -294,7 +297,8 @@ impl Component for MergePage {
                             },
 
                             add = &adw::SwitchRow {
-                                set_title: &gettext("Remove metadata"),
+                                set_title: &gettext("_Remove metadata"),
+                                set_use_underline: true,
                                 set_subtitle: &gettext("Remove existing metadata before saving"),
                                 set_active: model.remove_metadata,
 
@@ -859,6 +863,21 @@ impl FactoryComponent for MergeFileRow {
                 }
             },
 
+            add_controller = gtk::GestureClick::new() {
+                set_button: 3,
+                connect_pressed[menu_button] => move |gesture, _, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                    menu_button.popup();
+                }
+            },
+
+            add_controller = gtk::GestureLongPress::new() {
+                connect_pressed[menu_button] => move |gesture, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                    menu_button.popup();
+                }
+            },
+
             add_suffix = &gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
 
@@ -886,6 +905,7 @@ impl FactoryComponent for MergeFileRow {
                     }
                 },
 
+                #[name(menu_button)]
                 append = &gtk::MenuButton {
                     set_icon_name: "view-more-symbolic",
                     add_css_class: "flat",
@@ -898,10 +918,10 @@ impl FactoryComponent for MergeFileRow {
                         relm4::menu! {
                             main_menu: {
                                 section! {
-                                    &gettext("Move Up") => MoveUpAction,
-                                    &gettext("Move Down") => MoveDownAction,
-                                    &gettext("Duplicate") => DuplicateAction,
-                                    &gettext("Insert Blank Page After") => InsertBlankAction,
+                                    &gettext("Move _Up") => MoveUpAction,
+                                    &gettext("_Move Down") => MoveDownAction,
+                                    &gettext("_Duplicate") => DuplicateAction,
+                                    &gettext("_Insert Blank Page After") => InsertBlankAction,
                                 }
                             }
                         }
