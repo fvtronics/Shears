@@ -73,6 +73,10 @@ impl Component for PasswordDialog {
 
                     connect_changed[sender] => move |entry| {
                         sender.input(PasswordDialogMsg::PasswordChanged(entry.text().to_string()));
+                    },
+
+                    connect_map => move |entry| {
+                        entry.grab_focus();
                     }
                 },
 
@@ -128,11 +132,11 @@ impl Component for PasswordDialog {
                 self.filename = filename;
                 self.is_error = is_error;
                 self.is_valid = false;
+                root.present(Some(&parent_window));
                 if let Some(entry) = &self.password_entry {
                     entry.set_text("");
                     entry.grab_focus();
                 }
-                root.present(Some(&parent_window));
             }
             PasswordDialogMsg::PasswordChanged(pass) => {
                 self.is_valid = !pass.is_empty();
