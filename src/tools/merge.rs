@@ -653,6 +653,10 @@ impl MergePage {
     }
 }
 
+relm4::new_action_group!(pub(super) RowActionGroup, "row");
+relm4::new_stateless_action!(MoveUpAction, RowActionGroup, "move-up");
+relm4::new_stateless_action!(MoveDownAction, RowActionGroup, "move-down");
+
 struct MergeFileRow {
     file: gio::File,
     title: String,
@@ -664,6 +668,9 @@ struct MergeFileRow {
     password: Option<String>,
     index: DynamicIndex,
     preview_status: PreviewStatus,
+    action_group: gio::SimpleActionGroup,
+    move_up_action: gio::SimpleAction,
+    move_down_action: gio::SimpleAction,
 }
 
 #[derive(Debug)]
@@ -767,34 +774,6 @@ impl FactoryComponent for MergeFileRow {
                 set_orientation: gtk::Orientation::Horizontal,
 
                 append = &gtk::Button {
-                    set_icon_name: "go-up-symbolic",
-                    add_css_class: "flat",
-                    set_vexpand: false,
-                    set_valign: gtk::Align::Center,
-                    set_tooltip_text: Some(&gettext("Move Up")),
-                    #[watch]
-                    set_sensitive: !self.is_first,
-
-                    connect_clicked[sender, index] => move |_| {
-                        let _ = sender.output(MergeFileRowOutput::MoveUp(index.clone()));
-                    }
-                },
-
-                append = &gtk::Button {
-                    set_icon_name: "go-down-symbolic",
-                    add_css_class: "flat",
-                    set_vexpand: false,
-                    set_valign: gtk::Align::Center,
-                    set_tooltip_text: Some(&gettext("Move Down")),
-                    #[watch]
-                    set_sensitive: !self.is_last,
-
-                    connect_clicked[sender, index] => move |_| {
-                        let _ = sender.output(MergeFileRowOutput::MoveDown(index.clone()));
-                    }
-                },
-
-                append = &gtk::Button {
                     set_icon_name: "object-rotate-right-symbolic",
                     add_css_class: "flat",
                     set_vexpand: false,
@@ -817,6 +796,27 @@ impl FactoryComponent for MergeFileRow {
                         let _ = sender.output(MergeFileRowOutput::Delete(index.clone()));
                     }
                 },
+
+                append = &gtk::MenuButton {
+                    set_icon_name: "view-more-symbolic",
+                    add_css_class: "flat",
+                    set_valign: gtk::Align::Center,
+                    set_tooltip_text: Some(&gettext("More Options")),
+
+                    insert_action_group: ("row", Some(&self.action_group)),
+
+                    set_menu_model: Some(&{
+                        relm4::menu! {
+                            main_menu: {
+                                section! {
+                                    &gettext("Move Up") => MoveUpAction,
+                                    &gettext("Move Down") => MoveDownAction,
+                                }
+                            }
+                        }
+                        main_menu
+                    }),
+                }
             }
         }
     }
@@ -829,17 +829,45 @@ impl FactoryComponent for MergeFileRow {
 
         request_thumbnail(file_clone, rotation, None, sender_clone);
 
+        let action_group = gio::SimpleActionGroup::new();
+        let move_up_action = gio::SimpleAction::new("move-up", None);
+        let move_down_action = gio::SimpleAction::new("move-down", None);
+
+        let sender_up = sender.clone();
+        let index_up = index.clone();
+        move_up_action.connect_activate(move |_, _| {
+            let _ = sender_up.output(MergeFileRowOutput::MoveUp(index_up.clone()));
+        });
+
+        let sender_down = sender.clone();
+        let index_down = index.clone();
+        move_down_action.connect_activate(move |_, _| {
+            let _ = sender_down.output(MergeFileRowOutput::MoveDown(index_down.clone()));
+        });
+
+        let is_first = index.current_index() == 0;
+        let is_last = false;
+
+        move_up_action.set_enabled(!is_first);
+        move_down_action.set_enabled(!is_last);
+
+        action_group.add_action(&move_up_action);
+        action_group.add_action(&move_down_action);
+
         Self {
             file: prepared.file,
             title: prepared.title,
             size_str: prepared.size_str,
             rotation: 0,
-            is_first: index.current_index() == 0,
-            is_last: false,
+            is_first,
+            is_last,
             thumbnail: None,
             password: None,
             index: index.clone(),
             preview_status: PreviewStatus::InitialPending,
+            action_group,
+            move_up_action,
+            move_down_action,
         }
     }
 
@@ -859,6 +887,8 @@ impl FactoryComponent for MergeFileRow {
             MergeFileRowMsg::UpdateBounds { is_first, is_last } => {
                 self.is_first = is_first;
                 self.is_last = is_last;
+                self.move_up_action.set_enabled(!is_first);
+                self.move_down_action.set_enabled(!is_last);
             }
             MergeFileRowMsg::ThumbnailReady(result) => match result {
                 Ok(texture) => {
