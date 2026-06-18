@@ -133,8 +133,14 @@ struct PasswordRequest {
 }
 
 #[derive(Debug, Clone)]
+pub enum MergeItemType {
+    File(gio::File),
+    BlankPage { width: f64, height: f64 },
+}
+
+#[derive(Debug, Clone)]
 pub struct PreparedFile {
-    pub file: gio::File,
+    pub item_type: MergeItemType,
     pub title: String,
     pub size_str: String,
     pub rotation: u16,
@@ -170,6 +176,12 @@ enum MergePageMsg {
     PasswordSuccess(DynamicIndex),
     PasswordDialogOutput(PasswordDialogOutput),
     PreviewComplete,
+    InsertBlankPageAfter {
+        index: DynamicIndex,
+        width: f64,
+        height: f64,
+        rotation: u16,
+    },
 }
 
 #[derive(Debug)]
@@ -337,6 +349,17 @@ impl Component for MergePage {
                         MergePageMsg::PasswordSuccess(index)
                     }
                     MergeFileRowOutput::PreviewComplete => MergePageMsg::PreviewComplete,
+                    MergeFileRowOutput::InsertBlankPageAfter {
+                        index,
+                        width,
+                        height,
+                        rotation,
+                    } => MergePageMsg::InsertBlankPageAfter {
+                        index,
+                        width,
+                        height,
+                        rotation,
+                    },
                 });
         let password_dialog = PasswordDialog::builder()
             .launch(())
@@ -365,14 +388,25 @@ impl Component for MergePage {
                 self.is_merging = true;
                 self.check_loading_state(&sender);
 
-                let files: Vec<(std::path::PathBuf, u16, Option<String>)> = self
+                let files: Vec<(crate::pdf::merge::MergeInput, u16)> = self
                     .files
                     .guard()
                     .iter()
-                    .filter_map(|row| {
-                        row.file
-                            .path()
-                            .map(|p| (p, row.rotation, row.password.clone()))
+                    .filter_map(|row| match &row.item_type {
+                        MergeItemType::File(file) => file.path().map(|p| {
+                            (
+                                crate::pdf::merge::MergeInput::File(p, row.password.clone()),
+                                row.rotation,
+                            )
+                        }),
+                        MergeItemType::BlankPage { width, height } => Some((
+                            crate::pdf::merge::MergeInput::BlankPage {
+                                title: row.title.clone(),
+                                width: *width,
+                                height: *height,
+                            },
+                            row.rotation,
+                        )),
                     })
                     .collect();
 
@@ -439,7 +473,7 @@ impl Component for MergePage {
                             let title = file_title(&file);
                             let size_str = file_size_string(&file);
                             PreparedFile {
-                                file,
+                                item_type: MergeItemType::File(file),
                                 title,
                                 size_str,
                                 rotation: 0,
@@ -448,6 +482,24 @@ impl Component for MergePage {
                         .collect();
                     sender_clone.input(MergePageMsg::FilesReady(prepared));
                 });
+            }
+            MergePageMsg::InsertBlankPageAfter {
+                index,
+                width,
+                height,
+                rotation,
+            } => {
+                let current_index = index.current_index();
+                let prepared = PreparedFile {
+                    item_type: MergeItemType::BlankPage { width, height },
+                    title: gettext("Blank Page"),
+                    size_str: "-".to_string(),
+                    rotation,
+                };
+                self.files.guard().insert(current_index + 1, prepared);
+                self.update_bounds();
+                let _ = sender.output(MergePageOutput::FileCountChanged(self.files.len()));
+                self.check_loading_state(&sender);
             }
             MergePageMsg::FilesReady(prepared_files) => {
                 let sender_clone = sender.clone();
@@ -511,14 +563,18 @@ impl Component for MergePage {
             }
             MergePageMsg::DuplicateFile(index) => {
                 let current_index = index.current_index();
-                
-                let prepared = self.files.guard().get(current_index).map(|row| PreparedFile {
-                    file: row.file.clone(),
-                    title: row.title.clone(),
-                    size_str: row.size_str.clone(),
-                    rotation: row.rotation,
-                });
-                
+
+                let prepared = self
+                    .files
+                    .guard()
+                    .get(current_index)
+                    .map(|row| PreparedFile {
+                        item_type: row.item_type.clone(),
+                        title: row.title.clone(),
+                        size_str: row.size_str.clone(),
+                        rotation: row.rotation,
+                    });
+
                 if let Some(prepared) = prepared {
                     self.files.guard().insert(current_index + 1, prepared);
                     self.update_bounds();
@@ -678,29 +734,33 @@ relm4::new_action_group!(pub(super) RowActionGroup, "row");
 relm4::new_stateless_action!(MoveUpAction, RowActionGroup, "move-up");
 relm4::new_stateless_action!(MoveDownAction, RowActionGroup, "move-down");
 relm4::new_stateless_action!(DuplicateAction, RowActionGroup, "duplicate");
+relm4::new_stateless_action!(InsertBlankAction, RowActionGroup, "insert-blank");
 
 struct MergeFileRow {
-    file: gio::File,
+    item_type: MergeItemType,
     title: String,
     size_str: String,
     rotation: u16,
     is_first: bool,
     is_last: bool,
     thumbnail: Option<gdk::MemoryTexture>,
+    original_dimensions: Option<(f64, f64)>,
     password: Option<String>,
     index: DynamicIndex,
     preview_status: PreviewStatus,
     action_group: gio::SimpleActionGroup,
     move_up_action: gio::SimpleAction,
     move_down_action: gio::SimpleAction,
+    insert_blank_action: gio::SimpleAction,
 }
 
 #[derive(Debug)]
 enum MergeFileRowMsg {
     RotateClockwise,
     UpdateBounds { is_first: bool, is_last: bool },
-    ThumbnailReady(Result<Option<gdk::MemoryTexture>, PreviewError>),
+    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     RetryWithPassword(String),
+    RequestInsertBlank,
 }
 
 #[derive(Debug)]
@@ -720,6 +780,12 @@ enum MergeFileRowOutput {
     },
     PasswordSuccess(DynamicIndex),
     PreviewComplete,
+    InsertBlankPageAfter {
+        index: DynamicIndex,
+        width: f64,
+        height: f64,
+        rotation: u16,
+    },
 }
 
 #[relm4::factory]
@@ -835,6 +901,7 @@ impl FactoryComponent for MergeFileRow {
                                     &gettext("Move Up") => MoveUpAction,
                                     &gettext("Move Down") => MoveDownAction,
                                     &gettext("Duplicate") => DuplicateAction,
+                                    &gettext("Insert Blank Page After") => InsertBlankAction,
                                 }
                             }
                         }
@@ -846,17 +913,18 @@ impl FactoryComponent for MergeFileRow {
     }
 
     fn init_model(prepared: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
-        let file_clone = prepared.file.clone();
+        let item_type = prepared.item_type.clone();
         let sender_clone = sender.clone();
 
         let rotation = prepared.rotation;
 
-        request_thumbnail(file_clone, rotation, None, sender_clone);
+        request_thumbnail(item_type.clone(), rotation, None, sender_clone);
 
         let action_group = gio::SimpleActionGroup::new();
         let move_up_action = gio::SimpleAction::new("move-up", None);
         let move_down_action = gio::SimpleAction::new("move-down", None);
         let duplicate_action = gio::SimpleAction::new("duplicate", None);
+        let insert_blank_action = gio::SimpleAction::new("insert-blank", None);
 
         let sender_up = sender.clone();
         let index_up = index.clone();
@@ -876,30 +944,39 @@ impl FactoryComponent for MergeFileRow {
             let _ = sender_dup.output(MergeFileRowOutput::Duplicate(index_dup.clone()));
         });
 
+        let sender_insert = sender.clone();
+        insert_blank_action.connect_activate(move |_, _| {
+            sender_insert.input(MergeFileRowMsg::RequestInsertBlank);
+        });
+
         let is_first = index.current_index() == 0;
         let is_last = false;
 
         move_up_action.set_enabled(!is_first);
         move_down_action.set_enabled(!is_last);
+        insert_blank_action.set_enabled(false);
 
         action_group.add_action(&move_up_action);
         action_group.add_action(&move_down_action);
         action_group.add_action(&duplicate_action);
+        action_group.add_action(&insert_blank_action);
 
         Self {
-            file: prepared.file,
+            item_type: prepared.item_type,
             title: prepared.title,
             size_str: prepared.size_str,
             rotation: prepared.rotation,
             is_first,
             is_last,
             thumbnail: None,
+            original_dimensions: None,
             password: None,
             index: index.clone(),
             preview_status: PreviewStatus::InitialPending,
             action_group,
             move_up_action,
             move_down_action,
+            insert_blank_action,
         }
     }
 
@@ -909,12 +986,12 @@ impl FactoryComponent for MergeFileRow {
                 self.rotation = (self.rotation + 90) % 360;
                 self.preview_status = PreviewStatus::Reloading;
 
-                let file_clone = self.file.clone();
+                let item_clone = self.item_type.clone();
                 let rotation = self.rotation;
                 let sender_clone = sender.clone();
                 let password = self.password.clone();
 
-                request_thumbnail(file_clone, rotation, password, sender_clone);
+                request_thumbnail(item_clone, rotation, password, sender_clone);
             }
             MergeFileRowMsg::UpdateBounds { is_first, is_last } => {
                 self.is_first = is_first;
@@ -922,62 +999,76 @@ impl FactoryComponent for MergeFileRow {
                 self.move_up_action.set_enabled(!is_first);
                 self.move_down_action.set_enabled(!is_last);
             }
-            MergeFileRowMsg::ThumbnailReady(result) => match result {
-                Ok(texture) => {
-                    self.thumbnail = texture;
-                    self.preview_status = PreviewStatus::Ready;
-                    if self.password.is_some() {
-                        let _ =
-                            sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
-                    } else {
-                        let _ = sender.output(MergeFileRowOutput::PreviewComplete);
+            MergeFileRowMsg::ThumbnailReady(result) => {
+                match result {
+                    Ok(thumb_res) => {
+                        self.thumbnail = thumb_res.texture;
+                        if let Some(dim) = thumb_res.original_dimensions {
+                            self.original_dimensions = Some(dim);
+                            self.insert_blank_action.set_enabled(true);
+                        }
                     }
-                }
-                Err(PreviewError::Encrypted) => {
-                    self.preview_status = PreviewStatus::PasswordRequired;
-                    let is_error = self.password.is_some();
-                    let _ = sender.output(MergeFileRowOutput::PasswordRequired {
-                        index: self.index.clone(),
-                        filename: self.title.clone(),
-                        is_error,
-                    });
-                }
-                Err(_) => {
-                    self.preview_status = PreviewStatus::Ready;
-                    if self.password.is_some() {
-                        let _ =
-                            sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
-                    } else {
-                        let _ = sender.output(MergeFileRowOutput::PreviewComplete);
+                    Err(PreviewError::Encrypted) => {
+                        self.preview_status = PreviewStatus::PasswordRequired;
+                        let is_error = self.password.is_some();
+                        let _ = sender.output(MergeFileRowOutput::PasswordRequired {
+                            index: self.index.clone(),
+                            filename: self.title.clone(),
+                            is_error,
+                        });
+                        return;
                     }
+                    Err(_) => {}
                 }
-            },
+
+                self.preview_status = PreviewStatus::Ready;
+                if self.password.is_some() {
+                    let _ = sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
+                } else {
+                    let _ = sender.output(MergeFileRowOutput::PreviewComplete);
+                }
+            }
             MergeFileRowMsg::RetryWithPassword(password) => {
                 self.password = Some(password.clone());
 
-                let file_clone = self.file.clone();
+                let item_clone = self.item_type.clone();
                 let rotation = self.rotation;
                 let sender_clone = sender.clone();
 
-                request_thumbnail(file_clone, rotation, Some(password), sender_clone);
+                request_thumbnail(item_clone, rotation, Some(password), sender_clone);
+            }
+            MergeFileRowMsg::RequestInsertBlank => {
+                if let Some((w, h)) = self.original_dimensions {
+                    let _ = sender.output(MergeFileRowOutput::InsertBlankPageAfter {
+                        index: self.index.clone(),
+                        width: w,
+                        height: h,
+                        rotation: self.rotation,
+                    });
+                }
             }
         }
     }
 }
 
 fn request_thumbnail(
-    file: gio::File,
+    item_type: MergeItemType,
     rotation: u16,
     password: Option<String>,
     sender: FactorySender<MergeFileRow>,
 ) {
     crate::pdf::preview::thread_pool()
         .push(move || {
-            let result = crate::pdf::preview::generate_thumbnail(
-                &file,
-                rotation as i32,
-                password.as_deref(),
-            );
+            let result = match item_type {
+                MergeItemType::File(file) => crate::pdf::preview::generate_thumbnail(
+                    &file,
+                    rotation as i32,
+                    password.as_deref(),
+                ),
+                MergeItemType::BlankPage { width, height } => {
+                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32)
+                }
+            };
             sender.input(MergeFileRowMsg::ThumbnailReady(result));
         })
         .expect("Failed to enqueue thumbnail task");

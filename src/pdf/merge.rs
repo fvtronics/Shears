@@ -7,6 +7,7 @@
 
 use std::fs::File;
 use std::path::Path;
+use std::path::PathBuf;
 
 use lopdf::{Bookmark, Document, Object, ObjectId};
 
@@ -19,28 +20,52 @@ pub struct MergeOptions {
     pub remove_metadata: bool,
 }
 
+#[derive(Debug, Clone)]
+pub enum MergeInput {
+    File(PathBuf, Option<String>),
+    BlankPage {
+        title: String,
+        width: f64,
+        height: f64,
+    },
+}
+
 pub fn merge_files<P: AsRef<Path>>(
-    files: &[(P, u16, Option<String>)],
+    files: &[(MergeInput, u16)],
     output_path: P,
     options: &MergeOptions,
 ) -> Result<(), PdfError> {
     let mut documents = Vec::with_capacity(files.len());
 
-    for (path, rotation, password) in files {
-        let mut doc = if let Some(pass) = password {
-            Document::load_with_password(path.as_ref(), pass.as_str())?
-        } else {
-            Document::load(path.as_ref())?
+    for (input, rotation) in files {
+        let (filename, mut doc) = match input {
+            MergeInput::File(path, password) => {
+                let d = if let Some(pass) = password {
+                    Document::load_with_password(path.as_path(), pass.as_str())?
+                } else {
+                    Document::load(path.as_path())?
+                };
+                let fname = path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                (fname, d)
+            }
+            MergeInput::BlankPage {
+                title,
+                width,
+                height,
+            } => (
+                title.clone(),
+                create_blank_pdf(*width as f32, *height as f32),
+            ),
         };
+
         if *rotation != 0 {
             apply_file_rotation(&mut doc, *rotation);
         }
-        let filename = path
-            .as_ref()
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
+
         documents.push((filename, doc));
     }
 
@@ -62,6 +87,41 @@ pub fn merge_files<P: AsRef<Path>>(
     }
 
     Ok(())
+}
+
+fn create_blank_pdf(width: f32, height: f32) -> Document {
+    let mut doc = Document::with_version("1.5");
+
+    let catalog_id = (1, 0);
+    let pages_id = (2, 0);
+    let page_id = (3, 0);
+
+    doc.max_id = 3;
+
+    let mut catalog = lopdf::Dictionary::new();
+    catalog.set("Type", "Catalog");
+    catalog.set("Pages", pages_id);
+    doc.objects.insert(catalog_id, Object::Dictionary(catalog));
+
+    let mut pages = lopdf::Dictionary::new();
+    pages.set("Type", "Pages");
+    pages.set("Kids", vec![Object::Reference(page_id)]);
+    pages.set("Count", 1);
+    doc.objects.insert(pages_id, Object::Dictionary(pages));
+
+    let mut page = lopdf::Dictionary::new();
+    page.set("Type", "Page");
+    page.set("Parent", pages_id);
+    page.set(
+        "MediaBox",
+        vec![0.into(), 0.into(), width.into(), height.into()],
+    );
+    page.set("Resources", lopdf::Dictionary::new());
+    doc.objects.insert(page_id, Object::Dictionary(page));
+
+    doc.trailer.set("Root", catalog_id);
+
+    doc
 }
 
 fn get_inherited_rotation(doc: &Document, page_id: ObjectId) -> i64 {
@@ -142,9 +202,10 @@ fn normalize_page_sizes(doc: &mut Document) {
             if let Some(media_box) = get_inherited_mediabox(doc, page_id) {
                 let w = (media_box[2] - media_box[0]).abs();
                 let h = (media_box[3] - media_box[1]).abs();
-                return (mw.max(w), mh.max(h));
+                (mw.max(w), mh.max(h))
+            } else {
+                (mw, mh)
             }
-            (mw, mh)
         });
 
     if max_width > 0.0 && max_height > 0.0 {
