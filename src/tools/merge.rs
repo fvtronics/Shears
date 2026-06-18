@@ -137,6 +137,7 @@ pub struct PreparedFile {
     pub file: gio::File,
     pub title: String,
     pub size_str: String,
+    pub rotation: u16,
 }
 
 #[derive(Debug)]
@@ -152,6 +153,7 @@ enum MergePageMsg {
         to: DynamicIndex,
     },
     DeleteFile(DynamicIndex),
+    DuplicateFile(DynamicIndex),
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
     SetRemoveMetadata(bool),
@@ -320,6 +322,7 @@ impl Component for MergePage {
                     MergeFileRowOutput::MoveUp(index) => MergePageMsg::MoveFileUp(index),
                     MergeFileRowOutput::MoveDown(index) => MergePageMsg::MoveFileDown(index),
                     MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile(index),
+                    MergeFileRowOutput::Duplicate(index) => MergePageMsg::DuplicateFile(index),
                     MergeFileRowOutput::Move { from, to } => MergePageMsg::MoveFile { from, to },
                     MergeFileRowOutput::PasswordRequired {
                         index,
@@ -439,6 +442,7 @@ impl Component for MergePage {
                                 file,
                                 title,
                                 size_str,
+                                rotation: 0,
                             }
                         })
                         .collect();
@@ -503,6 +507,23 @@ impl Component for MergePage {
                 if from != to {
                     self.files.guard().move_to(from, to);
                     self.update_bounds();
+                }
+            }
+            MergePageMsg::DuplicateFile(index) => {
+                let current_index = index.current_index();
+                
+                let prepared = self.files.guard().get(current_index).map(|row| PreparedFile {
+                    file: row.file.clone(),
+                    title: row.title.clone(),
+                    size_str: row.size_str.clone(),
+                    rotation: row.rotation,
+                });
+                
+                if let Some(prepared) = prepared {
+                    self.files.guard().insert(current_index + 1, prepared);
+                    self.update_bounds();
+                    let _ = sender.output(MergePageOutput::FileCountChanged(self.files.len()));
+                    self.check_loading_state(&sender);
                 }
             }
             MergePageMsg::DeleteFile(index) => {
@@ -656,6 +677,7 @@ impl MergePage {
 relm4::new_action_group!(pub(super) RowActionGroup, "row");
 relm4::new_stateless_action!(MoveUpAction, RowActionGroup, "move-up");
 relm4::new_stateless_action!(MoveDownAction, RowActionGroup, "move-down");
+relm4::new_stateless_action!(DuplicateAction, RowActionGroup, "duplicate");
 
 struct MergeFileRow {
     file: gio::File,
@@ -685,6 +707,7 @@ enum MergeFileRowMsg {
 enum MergeFileRowOutput {
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
+    Duplicate(DynamicIndex),
     Delete(DynamicIndex),
     Move {
         from: usize,
@@ -811,6 +834,7 @@ impl FactoryComponent for MergeFileRow {
                                 section! {
                                     &gettext("Move Up") => MoveUpAction,
                                     &gettext("Move Down") => MoveDownAction,
+                                    &gettext("Duplicate") => DuplicateAction,
                                 }
                             }
                         }
@@ -825,13 +849,14 @@ impl FactoryComponent for MergeFileRow {
         let file_clone = prepared.file.clone();
         let sender_clone = sender.clone();
 
-        let rotation = 0;
+        let rotation = prepared.rotation;
 
         request_thumbnail(file_clone, rotation, None, sender_clone);
 
         let action_group = gio::SimpleActionGroup::new();
         let move_up_action = gio::SimpleAction::new("move-up", None);
         let move_down_action = gio::SimpleAction::new("move-down", None);
+        let duplicate_action = gio::SimpleAction::new("duplicate", None);
 
         let sender_up = sender.clone();
         let index_up = index.clone();
@@ -845,6 +870,12 @@ impl FactoryComponent for MergeFileRow {
             let _ = sender_down.output(MergeFileRowOutput::MoveDown(index_down.clone()));
         });
 
+        let sender_dup = sender.clone();
+        let index_dup = index.clone();
+        duplicate_action.connect_activate(move |_, _| {
+            let _ = sender_dup.output(MergeFileRowOutput::Duplicate(index_dup.clone()));
+        });
+
         let is_first = index.current_index() == 0;
         let is_last = false;
 
@@ -853,12 +884,13 @@ impl FactoryComponent for MergeFileRow {
 
         action_group.add_action(&move_up_action);
         action_group.add_action(&move_down_action);
+        action_group.add_action(&duplicate_action);
 
         Self {
             file: prepared.file,
             title: prepared.title,
             size_str: prepared.size_str,
-            rotation: 0,
+            rotation: prepared.rotation,
             is_first,
             is_last,
             thumbnail: None,
