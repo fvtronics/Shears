@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: quire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-17 15:30-0400\n"
-"PO-Revision-Date: 2026-06-17 15:44-0400\n"
 "Last-Translator: Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>\n"
+"POT-Creation-Date: 2026-06-18 12:26-0400\n"
+"PO-Revision-Date: 2026-06-18 18:46-0400\n"
 "Language-Team: es_DO\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -150,106 +150,122 @@ msgstr "Procesando…"
 
 #: src/app.rs:339
 #, rust-format
-msgid "{} file selected"
-msgid_plural "{} files selected"
-msgstr[0] "{} archivo seleccionado"
-msgstr[1] "{} archivos seleccionados"
+msgid "{count} file selected"
+msgid_plural "{count} files selected"
+msgstr[0] "{count} archivo seleccionado"
+msgstr[1] "{count} archivos seleccionados"
 
-#: src/tools/merge.rs:184
+#: src/tools/merge.rs:218
 msgid "Add PDF Files"
 msgstr "Añadir archivos PDF"
 
-#: src/tools/merge.rs:192
+#: src/tools/merge.rs:226
 msgid "Open Output"
 msgstr "Abrir resultado"
 
-#: src/tools/merge.rs:195
+#: src/tools/merge.rs:229
 msgid "Open Output File"
 msgstr "Abrir archivo de salida"
 
-#: src/tools/merge.rs:203
+#: src/tools/merge.rs:237
 msgid "Clear"
 msgstr "Limpiar"
 
-#: src/tools/merge.rs:204
+#: src/tools/merge.rs:238
 msgid "Clear File List"
 msgstr "Limpiar lista de archivos"
 
-#: src/tools/merge.rs:212
+#: src/tools/merge.rs:246
 msgid "Merge"
 msgstr "Combinar"
 
-#: src/tools/merge.rs:213
+#: src/tools/merge.rs:247
 msgid "Merge Selected PDFs"
 msgstr "Combinar los PDF seleccionados"
 
-#: src/tools/merge.rs:218
+#: src/tools/merge.rs:252
 msgid "Save Merged PDF"
 msgstr "Guardar PDF combinado"
 
-#: src/tools/merge.rs:227
+#: src/tools/merge.rs:261
 msgid "Advanced Options"
 msgstr "Opciones avanzadas"
 
-#: src/tools/merge.rs:234
-msgid "Rotate all"
-msgstr "Rotar todos los archivos"
+#: src/tools/merge.rs:268
+msgid "Rotate _all"
+msgstr "_Girar todos los archivos"
 
-#: src/tools/merge.rs:243
-msgid "Modern PDF format"
-msgstr "Formato PDF moderno"
+#: src/tools/merge.rs:278
+msgid "_Modern PDF format"
+msgstr "_Formato PDF moderno"
 
-#: src/tools/merge.rs:244
+#: src/tools/merge.rs:280
 msgid "Save with PDF 1.5 object streams"
 msgstr "Guardar con flujos de objetos de PDF 1.5"
 
-#: src/tools/merge.rs:253
-msgid "Normalize page size"
-msgstr "Normalizar tamaño de página"
+#: src/tools/merge.rs:289
+msgid "_Normalize page size"
+msgstr "_Normalizar tamaño de página"
 
-#: src/tools/merge.rs:254
+#: src/tools/merge.rs:291
 msgid "Resize output pages to the largest page size"
 msgstr "Ajustar las páginas de salida al mayor tamaño de página"
 
-#: src/tools/merge.rs:263
-msgid "Remove metadata"
-msgstr "Eliminar metadatos"
+#: src/tools/merge.rs:300
+msgid "_Remove metadata"
+msgstr "_Eliminar metadatos"
 
-#: src/tools/merge.rs:264
+#: src/tools/merge.rs:302
 msgid "Remove existing metadata before saving"
 msgstr "Eliminar metadatos existentes antes de guardar"
 
-#: src/tools/merge.rs:354
+#: src/tools/merge.rs:439
 msgid "PDFs merged successfully"
 msgstr "Archivos PDF combinados exitosamente"
 
-#: src/tools/merge.rs:359
+#: src/tools/merge.rs:444
 msgid "Could not save PDF"
 msgstr "No se pudo guardar el archivo PDF"
 
-#: src/tools/merge.rs:369
+#: src/tools/merge.rs:454
 msgid "Output file not found"
 msgstr "Archivo de salida no encontrado"
 
-#: src/tools/merge.rs:377
+#: src/tools/merge.rs:462
 msgid "Failed to open output file"
 msgstr "No se pudo abrir el archivo de salida"
 
-#: src/tools/merge.rs:604
-msgid "Move Up"
-msgstr "Mover hacia arriba"
+#: src/tools/merge.rs:499
+msgid "Blank Page"
+msgstr "Página en blanco"
 
-#: src/tools/merge.rs:618
-msgid "Move Down"
-msgstr "Mover hacia abajo"
-
-#: src/tools/merge.rs:632
+#: src/tools/merge.rs:889
 msgid "Rotate Clockwise"
 msgstr "Girar en sentido horario"
 
-#: src/tools/merge.rs:642
+#: src/tools/merge.rs:899
 msgid "Remove File"
 msgstr "Eliminar archivo"
+
+#: src/tools/merge.rs:913
+msgid "More Options"
+msgstr "Más opciones"
+
+#: src/tools/merge.rs:921
+msgid "Move _Up"
+msgstr "Mover hacia _arriba"
+
+#: src/tools/merge.rs:922
+msgid "_Move Down"
+msgstr "_Mover hacia abajo"
+
+#: src/tools/merge.rs:923
+msgid "_Duplicate"
+msgstr "_Duplicar"
+
+#: src/tools/merge.rs:924
+msgid "_Insert Blank Page After"
+msgstr "_Insertar página en blanco"
 
 #: src/tools/mod.rs:68
 msgid "No files selected"

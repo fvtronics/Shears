@@ -12,3 +12,4 @@
 .flatpak-builder/
 result
 .direnv
+po/es.po~
