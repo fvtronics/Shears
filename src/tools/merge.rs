@@ -120,6 +120,8 @@ struct MergePage {
     remove_metadata: bool,
     output_file: Option<String>,
     is_loading: bool,
+    is_adding_files: bool,
+    is_merging: bool,
     password_dialog: Controller<PasswordDialog>,
     password_queue: std::collections::VecDeque<PasswordRequest>,
 }
@@ -165,6 +167,7 @@ enum MergePageMsg {
     },
     PasswordSuccess(DynamicIndex),
     PasswordDialogOutput(PasswordDialogOutput),
+    PreviewComplete,
 }
 
 #[derive(Debug)]
@@ -333,6 +336,7 @@ impl Component for MergePage {
                     MergeFileRowOutput::PasswordSuccess(index) => {
                         MergePageMsg::PasswordSuccess(index)
                     }
+                    MergeFileRowOutput::PreviewComplete => MergePageMsg::PreviewComplete,
                 });
         let password_dialog = PasswordDialog::builder()
             .launch(())
@@ -344,6 +348,8 @@ impl Component for MergePage {
             remove_metadata: false,
             output_file: None,
             is_loading: false,
+            is_adding_files: false,
+            is_merging: false,
             password_dialog,
             password_queue: std::collections::VecDeque::new(),
         };
@@ -356,8 +362,8 @@ impl Component for MergePage {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             MergePageMsg::MergeTo(output_file) => {
-                self.is_loading = true;
-                let _ = sender.output(MergePageOutput::Loading(true));
+                self.is_merging = true;
+                self.check_loading_state(&sender);
 
                 let files: Vec<(std::path::PathBuf, u16, Option<String>)> = self
                     .files
@@ -386,8 +392,8 @@ impl Component for MergePage {
                 }
             }
             MergePageMsg::MergeComplete(result) => {
-                self.is_loading = false;
-                let _ = sender.output(MergePageOutput::Loading(false));
+                self.is_merging = false;
+                self.check_loading_state(&sender);
 
                 match result {
                     Ok(path) => {
@@ -422,8 +428,8 @@ impl Component for MergePage {
                 }
             }
             MergePageMsg::AddFiles(files) => {
-                self.is_loading = true;
-                let _ = sender.output(MergePageOutput::Loading(true));
+                self.is_adding_files = true;
+                self.check_loading_state(&sender);
 
                 let sender_clone = sender.clone();
                 relm4::spawn_blocking(move || {
@@ -463,11 +469,12 @@ impl Component for MergePage {
                 self.update_bounds();
             }
             MergePageMsg::LoadingComplete => {
-                self.is_loading = false;
-                let _ = sender.output(MergePageOutput::Loading(false));
+                self.is_adding_files = false;
+                self.check_loading_state(&sender);
             }
             MergePageMsg::ClearFiles => {
                 self.output_file = None;
+                self.password_queue.clear();
                 {
                     let mut files_guard = self.files.guard();
                     files_guard.clear();
@@ -475,6 +482,7 @@ impl Component for MergePage {
 
                 let _ = sender.output(MergePageOutput::FileCountChanged(0));
                 let _ = sender.output(MergePageOutput::ClearFiles);
+                self.check_loading_state(&sender);
             }
             MergePageMsg::MoveFileUp(index) => {
                 let index = index.current_index();
@@ -518,6 +526,7 @@ impl Component for MergePage {
                 let len = self.files.len();
                 let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
+                self.check_loading_state(&sender);
             }
             MergePageMsg::SetModernPdfFormat(active) => {
                 self.modern_pdf_format = active;
@@ -573,6 +582,10 @@ impl Component for MergePage {
                         self.process_password_queue(root);
                     }
                 }
+                self.check_loading_state(&sender);
+            }
+            MergePageMsg::PreviewComplete => {
+                self.check_loading_state(&sender);
             }
             MergePageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { index, password } => {
@@ -589,7 +602,31 @@ impl Component for MergePage {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PreviewStatus {
+    InitialPending,
+    Ready,
+    PasswordRequired,
+    Reloading,
+}
+
 impl MergePage {
+    fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
+        let is_loading = self.is_adding_files || self.is_merging || {
+            let files_guard = self.files.guard();
+            files_guard.iter().any(|row| {
+                matches!(
+                    row.preview_status,
+                    PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
+                )
+            })
+        };
+
+        if self.is_loading != is_loading {
+            self.is_loading = is_loading;
+            let _ = sender.output(MergePageOutput::Loading(is_loading));
+        }
+    }
     fn process_password_queue(&mut self, root: &<Self as Component>::Root) {
         if let Some(req) = self.password_queue.front()
             && let Some(window) = root.root().and_downcast::<gtk::Window>()
@@ -629,6 +666,7 @@ struct MergeFileRow {
     thumbnail: Option<gdk::MemoryTexture>,
     password: Option<String>,
     index: DynamicIndex,
+    preview_status: PreviewStatus,
 }
 
 #[derive(Debug)]
@@ -654,6 +692,7 @@ enum MergeFileRowOutput {
         is_error: bool,
     },
     PasswordSuccess(DynamicIndex),
+    PreviewComplete,
 }
 
 #[relm4::factory]
@@ -796,6 +835,7 @@ impl FactoryComponent for MergeFileRow {
             thumbnail: None,
             password: None,
             index: index.clone(),
+            preview_status: PreviewStatus::InitialPending,
         }
     }
 
@@ -803,6 +843,7 @@ impl FactoryComponent for MergeFileRow {
         match message {
             MergeFileRowMsg::RotateClockwise => {
                 self.rotation = (self.rotation + 90) % 360;
+                self.preview_status = PreviewStatus::Reloading;
 
                 let file_clone = self.file.clone();
                 let rotation = self.rotation;
@@ -818,12 +859,16 @@ impl FactoryComponent for MergeFileRow {
             MergeFileRowMsg::ThumbnailReady(result) => match result {
                 Ok(texture) => {
                     self.thumbnail = texture;
+                    self.preview_status = PreviewStatus::Ready;
                     if self.password.is_some() {
                         let _ =
                             sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
+                    } else {
+                        let _ = sender.output(MergeFileRowOutput::PreviewComplete);
                     }
                 }
                 Err(PreviewError::Encrypted) => {
+                    self.preview_status = PreviewStatus::PasswordRequired;
                     let is_error = self.password.is_some();
                     let _ = sender.output(MergeFileRowOutput::PasswordRequired {
                         index: self.index.clone(),
@@ -832,9 +877,12 @@ impl FactoryComponent for MergeFileRow {
                     });
                 }
                 Err(_) => {
+                    self.preview_status = PreviewStatus::Ready;
                     if self.password.is_some() {
                         let _ =
                             sender.output(MergeFileRowOutput::PasswordSuccess(self.index.clone()));
+                    } else {
+                        let _ = sender.output(MergeFileRowOutput::PreviewComplete);
                     }
                 }
             },
