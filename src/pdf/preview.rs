@@ -64,6 +64,7 @@ pub fn generate_thumbnail(
     file: &gio::File,
     rotation: i32,
     password: Option<&str>,
+    max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
     let doc = match poppler::Document::from_gfile(file, password, gio::Cancellable::NONE) {
         Ok(d) => d,
@@ -91,7 +92,7 @@ pub fn generate_thumbnail(
         (orig_width, orig_height)
     };
 
-    let scale = 150.0 / width.max(height);
+    let scale = max_dim / width.max(height);
     let scaled_width = (width * scale) as i32;
     let scaled_height = (height * scale) as i32;
 
@@ -128,6 +129,7 @@ pub fn generate_blank_thumbnail(
     orig_width: f64,
     orig_height: f64,
     rotation: i32,
+    max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
     let (width, height) = if rotation % 180 != 0 {
         (orig_height, orig_width)
@@ -135,7 +137,7 @@ pub fn generate_blank_thumbnail(
         (orig_width, orig_height)
     };
 
-    let scale = 150.0 / width.max(height);
+    let scale = max_dim / width.max(height);
     let scaled_width = (width * scale) as i32;
     let scaled_height = (height * scale) as i32;
 

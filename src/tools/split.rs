@@ -5,11 +5,12 @@ use relm4::{
     SimpleComponent, adw, gtk,
 };
 
-use gtk::gio;
+use gtk::{gdk, gio};
 
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, open_pdf_dialog, select_folder_dialog};
 use crate::pdf::{DivideAfter, SplitOptions, split_file, PdfError};
+use crate::pdf::preview::PreviewError;
 
 pub struct SplitTool {
     has_file: bool,
@@ -79,6 +80,7 @@ struct SplitPage {
     prefix_changed: bool,
     divide_after: DivideAfter,
     is_splitting: bool,
+    thumbnail: Option<gdk::MemoryTexture>,
 }
 
 #[derive(Debug)]
@@ -88,6 +90,7 @@ enum SplitPageMsg {
     SetPrefix(String),
     SplitTo(gio::File),
     SplitComplete(Result<(), PdfError>),
+    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
 }
 
 #[relm4::component]
@@ -152,20 +155,16 @@ impl Component for SplitPage {
                 set_spacing: 24,
                 set_margin_all: 24,
 
-                gtk::AspectFrame {
-                    set_ratio: 56.0 / 72.0,
-                    set_obey_child: false,
+                gtk::Picture {
+                    set_can_shrink: true,
+                    set_content_fit: gtk::ContentFit::Contain,
                     set_hexpand: true,
-                    set_valign: gtk::Align::Center,
-
-                    #[wrap(Some)]
-                    set_child = &gtk::Frame {
-                        set_css_classes: &["view"]
-                    }
+                    #[watch]
+                    set_paintable: model.thumbnail.as_ref(),
                 },
 
                 gtk::ScrolledWindow {
-                    set_width_request: 320,
+                    set_width_request: 260,
                     set_vexpand: true,
                     set_hscrollbar_policy: gtk::PolicyType::Never,
                     set_propagate_natural_height: true,
@@ -219,6 +218,7 @@ impl Component for SplitPage {
             prefix_changed: true,
             divide_after: DivideAfter::EachPage,
             is_splitting: false,
+            thumbnail: None,
         };
         let widgets = view_output!();
 
@@ -231,6 +231,25 @@ impl Component for SplitPage {
             SplitPageMsg::AddFile(file) => {
                 self.prefix = file_stem(&file);
                 self.prefix_changed = true;
+                self.thumbnail = None;
+
+                let sender_clone = sender.clone();
+                let file_clone = file.clone();
+
+                if let Err(e) = crate::pdf::preview::thread_pool()
+                    .push(move || {
+                        let result = crate::pdf::preview::generate_thumbnail(
+                            &file_clone,
+                            0,
+                            None,
+                            800.0,
+                        );
+                        sender_clone.input(SplitPageMsg::ThumbnailReady(result));
+                    })
+                {
+                    tracing::error!("Failed to enqueue thumbnail task: {}", e);
+                }
+
                 self.file = Some(file);
             }
 
@@ -264,6 +283,16 @@ impl Component for SplitPage {
                     Err(err) => {
                         tracing::error!("Failed to split PDF: {:?}", err);
                         root.add_toast(adw::Toast::new(&gettext("Failed to split PDF")));
+                    }
+                }
+            }
+            SplitPageMsg::ThumbnailReady(result) => {
+                match result {
+                    Ok(thumb_res) => {
+                        self.thumbnail = thumb_res.texture;
+                    }
+                    Err(err) => {
+                        tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
                     }
                 }
             }

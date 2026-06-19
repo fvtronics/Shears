@@ -1081,21 +1081,24 @@ fn request_thumbnail(
     password: Option<String>,
     sender: FactorySender<MergeFileRow>,
 ) {
-    crate::pdf::preview::thread_pool()
+    if let Err(e) = crate::pdf::preview::thread_pool()
         .push(move || {
             let result = match item_type {
                 MergeItemType::File(file) => crate::pdf::preview::generate_thumbnail(
                     &file,
                     rotation as i32,
                     password.as_deref(),
+                    150.0,
                 ),
                 MergeItemType::BlankPage { width, height } => {
-                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32)
+                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32, 150.0)
                 }
             };
             sender.input(MergeFileRowMsg::ThumbnailReady(result));
         })
-        .expect("Failed to enqueue thumbnail task");
+    {
+        tracing::error!("Failed to enqueue thumbnail task: {}", e);
+    }
 }
 
 fn file_title(file: &gio::File) -> String {
