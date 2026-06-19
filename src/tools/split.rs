@@ -7,10 +7,10 @@ use relm4::{
 
 use gtk::{gdk, gio};
 
+use crate::pdf::preview::PreviewError;
+use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, open_pdf_dialog, select_folder_dialog};
-use crate::pdf::{DivideAfter, SplitOptions, split_file, PdfError};
-use crate::pdf::preview::PreviewError;
 
 pub struct SplitTool {
     has_file: bool,
@@ -103,107 +103,121 @@ impl Component for SplitPage {
     view! {
         #[root]
         adw::ToastOverlay {
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 12,
-                set_margin_all: 24,
+            #[name(breakpoint_bin)]
+            adw::BreakpointBin {
+                set_width_request: 260,
+                set_height_request: 200,
 
                 gtk::Box {
-                    set_orientation: gtk::Orientation::Horizontal,
-                    set_spacing: 6,
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 12,
+                    set_margin_all: 24,
 
                     gtk::Box {
-                        set_hexpand: true,
-                    },
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_spacing: 6,
 
-                    gtk::Button {
-                        set_label: &Tool::Split.action_label(),
-                        set_tooltip_text: Some(&Tool::Split.action_label()),
-                        set_halign: gtk::Align::End,
-                        #[watch]
-                        set_sensitive: !model.is_splitting,
+                        gtk::Box {
+                            set_hexpand: true,
+                        },
 
-                        connect_clicked[sender] => move |button| {
-                            let sender_clone = sender.clone();
-                            open_pdf_dialog(button, Tool::Split, move |mut files| {
-                                if let Some(file) = files.pop() {
-                                    sender_clone.input(SplitPageMsg::AddFile(file));
-                                }
-                            });
+                        gtk::Button {
+                            set_label: &Tool::Split.action_label(),
+                            set_tooltip_text: Some(&Tool::Split.action_label()),
+                            set_halign: gtk::Align::End,
+                            #[watch]
+                            set_sensitive: !model.is_splitting,
+
+                            connect_clicked[sender] => move |button| {
+                                let sender_clone = sender.clone();
+                                open_pdf_dialog(button, Tool::Split, move |mut files| {
+                                    if let Some(file) = files.pop() {
+                                        sender_clone.input(SplitPageMsg::AddFile(file));
+                                    }
+                                });
+                            },
+                        },
+
+                        gtk::Button {
+                            set_label: &gettext("Split"),
+                            set_tooltip_text: Some(&gettext("Split")),
+                            set_halign: gtk::Align::End,
+                            add_css_class: "suggested-action",
+                            #[watch]
+                            set_sensitive: model.file.is_some() && !model.is_splitting,
+
+                            connect_clicked[sender] => move |button| {
+                                let sender_clone = sender.clone();
+                                select_folder_dialog(button, &gettext("Select Output Folder"), move |folder| {
+                                    sender_clone.input(SplitPageMsg::SplitTo(folder));
+                                });
+                            }
                         },
                     },
 
-                    gtk::Button {
-                        set_label: &gettext("Split"),
-                        set_tooltip_text: Some(&gettext("Split")),
-                        set_halign: gtk::Align::End,
-                        add_css_class: "suggested-action",
-                        #[watch]
-                        set_sensitive: model.file.is_some() && !model.is_splitting,
-
-                        connect_clicked[sender] => move |button| {
-                            let sender_clone = sender.clone();
-                            select_folder_dialog(button, &gettext("Select Output Folder"), move |folder| {
-                                sender_clone.input(SplitPageMsg::SplitTo(folder));
-                            });
-                        }
-                    },
-                },
-
-            gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
-                set_spacing: 24,
-                set_margin_all: 24,
-
-                gtk::Picture {
-                    set_can_shrink: true,
-                    set_content_fit: gtk::ContentFit::Contain,
-                    set_hexpand: true,
-                    #[watch]
-                    set_paintable: model.thumbnail.as_ref(),
-                },
-
-                gtk::ScrolledWindow {
-                    set_width_request: 260,
-                    set_vexpand: true,
-                    set_hscrollbar_policy: gtk::PolicyType::Never,
-                    set_propagate_natural_height: true,
-
+                    #[name(split_box)]
                     gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_spacing: 24,
+                        set_margin_all: 24,
 
-                        adw::PreferencesGroup {
-                            adw::ComboRow {
-                                set_title: &gettext("Divide after"),
-                                set_model: Some(&gtk::StringList::new(&[
-                                    gettext("Each page").as_str(),
-                                    gettext("Even pages").as_str(),
-                                    gettext("Odd pages").as_str(),
+                        #[name(picture_clamp)]
+                        adw::Clamp {
+                            set_maximum_size: 450,
+                            set_unit: adw::LengthUnit::Sp,
+
+                            #[wrap(Some)]
+                            set_child = &gtk::Picture {
+                                set_can_shrink: true,
+                                set_content_fit: gtk::ContentFit::Contain,
+                                #[watch]
+                                set_paintable: model.thumbnail.as_ref(),
+                            }
+                        },
+
+                        gtk::ScrolledWindow {
+                            set_width_request: 256,
+                            set_vexpand: true,
+                            set_hexpand: true,
+                            set_hscrollbar_policy: gtk::PolicyType::Never,
+                            set_propagate_natural_height: true,
+
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+
+                                adw::PreferencesGroup {
+                                    adw::ComboRow {
+                                        set_title: &gettext("Divide after"),
+                                        set_model: Some(&gtk::StringList::new(&[
+                                            gettext("Each page").as_str(),
+                                            gettext("Even pages").as_str(),
+                                            gettext("Odd pages").as_str(),
                                 ])),
-                                connect_selected_notify[sender] => move |row| {
-                                    let divide_after = match row.selected() {
-                                        0 => DivideAfter::EachPage,
-                                        1 => DivideAfter::EvenPages,
-                                        _ => DivideAfter::OddPages,
-                                    };
-                                    sender.input(SplitPageMsg::SetDivideAfter(divide_after));
-                                }
-                            },
+                                        connect_selected_notify[sender] => move |row| {
+                                            let divide_after = match row.selected() {
+                                                0 => DivideAfter::EachPage,
+                                                1 => DivideAfter::EvenPages,
+                                                _ => DivideAfter::OddPages,
+                                            };
+                                            sender.input(SplitPageMsg::SetDivideAfter(divide_after));
+                                        }
+                                    },
 
-                            adw::EntryRow {
-                                set_title: &gettext("Output prefix"),
-                                #[track = "model.prefix_changed"]
-                                set_text: &model.prefix,
-                                set_show_apply_button: false,
-                                connect_changed[sender] => move |entry| {
-                                    sender.input(SplitPageMsg::SetPrefix(entry.text().to_string()));
+                                    adw::EntryRow {
+                                        set_title: &gettext("Output prefix"),
+                                        #[track = "model.prefix_changed"]
+                                        set_text: &model.prefix,
+                                        set_show_apply_button: false,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(SplitPageMsg::SetPrefix(entry.text().to_string()));
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
     }
     }
 
@@ -222,6 +236,20 @@ impl Component for SplitPage {
         };
         let widgets = view_output!();
 
+        let condition = adw::BreakpointCondition::new_length(
+            adw::BreakpointConditionLengthType::MaxWidth,
+            600.0,
+            adw::LengthUnit::Sp,
+        );
+        let bp = adw::Breakpoint::new(condition);
+        bp.add_setters(&[(
+            &widgets.split_box,
+            "orientation",
+            gtk::Orientation::Vertical,
+        )]);
+        bp.add_setters(&[(&widgets.picture_clamp, "vexpand", true)]);
+        widgets.breakpoint_bin.add_breakpoint(bp);
+
         ComponentParts { model, widgets }
     }
 
@@ -236,17 +264,11 @@ impl Component for SplitPage {
                 let sender_clone = sender.clone();
                 let file_clone = file.clone();
 
-                if let Err(e) = crate::pdf::preview::thread_pool()
-                    .push(move || {
-                        let result = crate::pdf::preview::generate_thumbnail(
-                            &file_clone,
-                            0,
-                            None,
-                            800.0,
-                        );
-                        sender_clone.input(SplitPageMsg::ThumbnailReady(result));
-                    })
-                {
+                if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
+                    let result =
+                        crate::pdf::preview::generate_thumbnail(&file_clone, 0, None, 800.0);
+                    sender_clone.input(SplitPageMsg::ThumbnailReady(result));
+                }) {
                     tracing::error!("Failed to enqueue thumbnail task: {}", e);
                 }
 
@@ -260,7 +282,10 @@ impl Component for SplitPage {
                 self.prefix = prefix;
             }
             SplitPageMsg::SplitTo(output_folder) => {
-                if let (Some(file_path), Some(output_path)) = (self.file.as_ref().and_then(|f| f.path()), output_folder.path()) {
+                if let (Some(file_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    output_folder.path(),
+                ) {
                     self.is_splitting = true;
                     let options = SplitOptions {
                         divide_after: self.divide_after,
@@ -286,16 +311,14 @@ impl Component for SplitPage {
                     }
                 }
             }
-            SplitPageMsg::ThumbnailReady(result) => {
-                match result {
-                    Ok(thumb_res) => {
-                        self.thumbnail = thumb_res.texture;
-                    }
-                    Err(err) => {
-                        tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
-                    }
+            SplitPageMsg::ThumbnailReady(result) => match result {
+                Ok(thumb_res) => {
+                    self.thumbnail = thumb_res.texture;
                 }
-            }
+                Err(err) => {
+                    tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
+                }
+            },
         }
     }
 }
