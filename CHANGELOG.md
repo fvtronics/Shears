@@ -1,6 +1,13 @@
-# v0.1.0
+# v0.1.1
 
-<p>Initial release</p>
+<p>New</p>
 <ul>
-  <li>Merge and rotate PDF files</li>
+  <li>Add support for opening password protected files</li>
+  <li>Add option to insert blank page</li>
+  <li>Add option to duplicate a file in the list view</li>
+</ul>
+<p>Changes</p>
+<ul>
+  <li>Collapse secondary options into a menu</li>
+  <li>Add handler to rows for drag and drop</li>
 </ul>
