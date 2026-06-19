@@ -7,13 +7,22 @@ use relm4::{
 
 use gtk::{gdk, gio};
 
+use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, open_pdf_dialog, select_folder_dialog};
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum SplitToolState {
+    Empty,
+    LoadingNewFile,
+    Ready,
+    Processing,
+}
+
 pub struct SplitTool {
-    has_file: bool,
+    state: SplitToolState,
     _empty_page: Controller<ToolPage>,
     split_page: Controller<SplitPage>,
 }
@@ -21,13 +30,20 @@ pub struct SplitTool {
 #[derive(Debug)]
 pub enum SplitToolMsg {
     AddFiles(Vec<gio::File>),
+    UpdateFileActive(bool),
+    Loading(bool),
+}
+
+#[derive(Debug)]
+pub enum SplitToolOutput {
+    Loading(bool),
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for SplitTool {
     type Init = ();
     type Input = SplitToolMsg;
-    type Output = ();
+    type Output = SplitToolOutput;
 
     view! {
         gtk::Stack {
@@ -37,7 +53,7 @@ impl SimpleComponent for SplitTool {
             add_named: (model.split_page.widget(), Some("split")),
 
             #[watch]
-            set_visible_child_name: if model.has_file { "split" } else { "empty" },
+            set_visible_child_name: if matches!(model.state, SplitToolState::Ready | SplitToolState::Processing) { "split" } else { "empty" },
         }
     }
 
@@ -50,10 +66,15 @@ impl SimpleComponent for SplitTool {
             .launch(Tool::Split)
             .forward(sender.input_sender(), SplitToolMsg::AddFiles);
 
-        let split_page = SplitPage::builder().launch(()).detach();
+        let split_page = SplitPage::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                SplitPageOutput::FileActive(active) => SplitToolMsg::UpdateFileActive(active),
+                SplitPageOutput::Loading(is_loading) => SplitToolMsg::Loading(is_loading),
+            });
 
         let model = Self {
-            has_file: false,
+            state: SplitToolState::Empty,
             _empty_page: empty_page,
             split_page,
         };
@@ -62,25 +83,55 @@ impl SimpleComponent for SplitTool {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             SplitToolMsg::AddFiles(mut files) => {
                 if let Some(file) = files.pop() {
                     self.split_page.emit(SplitPageMsg::AddFile(file));
-                    self.has_file = true;
                 }
+            }
+            SplitToolMsg::UpdateFileActive(active) => {
+                if !active {
+                    self.state = SplitToolState::Empty;
+                }
+            }
+            SplitToolMsg::Loading(is_loading) => {
+                if is_loading {
+                    if self.state == SplitToolState::Empty {
+                        self.state = SplitToolState::LoadingNewFile;
+                    } else if self.state == SplitToolState::Ready {
+                        self.state = SplitToolState::Processing;
+                    }
+                } else {
+                    if self.state == SplitToolState::LoadingNewFile || self.state == SplitToolState::Processing {
+                        self.state = SplitToolState::Ready;
+                    }
+                }
+                self._empty_page.emit(is_loading);
+                let _ = sender.output(SplitToolOutput::Loading(is_loading));
             }
         }
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PreviewStatus {
+    InitialPending,
+    Ready,
+    PasswordRequired,
+}
+
 struct SplitPage {
     file: Option<gio::File>,
+    password: Option<String>,
     prefix: String,
     prefix_changed: bool,
     divide_after: DivideAfter,
     is_splitting: bool,
+    is_loading: bool,
     thumbnail: Option<gdk::MemoryTexture>,
+    password_dialog: Controller<PasswordDialog>,
+    preview_status: PreviewStatus,
 }
 
 #[derive(Debug)]
@@ -91,13 +142,20 @@ enum SplitPageMsg {
     SplitTo(gio::File),
     SplitComplete(Result<(), PdfError>),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    PasswordDialogOutput(PasswordDialogOutput),
+}
+
+#[derive(Debug)]
+pub enum SplitPageOutput {
+    FileActive(bool),
+    Loading(bool),
 }
 
 #[relm4::component]
 impl Component for SplitPage {
     type Init = ();
     type Input = SplitPageMsg;
-    type Output = ();
+    type Output = SplitPageOutput;
     type CommandOutput = ();
 
     view! {
@@ -115,18 +173,14 @@ impl Component for SplitPage {
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Horizontal,
-                        set_spacing: 6,
-
-                        gtk::Box {
-                            set_hexpand: true,
-                        },
+                        set_spacing: 8,
+                        set_halign: gtk::Align::End,
+                        #[watch]
+                        set_sensitive: !model.is_loading,
 
                         gtk::Button {
                             set_label: &Tool::Split.action_label(),
-                            set_tooltip_text: Some(&Tool::Split.action_label()),
-                            set_halign: gtk::Align::End,
-                            #[watch]
-                            set_sensitive: !model.is_splitting,
+                            set_tooltip_text: Some(&gettext("Select PDF File")),
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
@@ -141,7 +195,6 @@ impl Component for SplitPage {
                         gtk::Button {
                             set_label: &gettext("Split"),
                             set_tooltip_text: Some(&gettext("Split")),
-                            set_halign: gtk::Align::End,
                             add_css_class: "suggested-action",
                             #[watch]
                             set_sensitive: model.file.is_some() && !model.is_splitting,
@@ -160,6 +213,8 @@ impl Component for SplitPage {
                         set_orientation: gtk::Orientation::Horizontal,
                         set_spacing: 24,
                         set_margin_all: 24,
+                        #[watch]
+                        set_sensitive: !model.is_loading,
 
                         #[name(picture_clamp)]
                         adw::Clamp {
@@ -192,7 +247,7 @@ impl Component for SplitPage {
                                             gettext("Each page").as_str(),
                                             gettext("Even pages").as_str(),
                                             gettext("Odd pages").as_str(),
-                                ])),
+                                        ])),
                                         connect_selected_notify[sender] => move |row| {
                                             let divide_after = match row.selected() {
                                                 0 => DivideAfter::EachPage,
@@ -218,7 +273,7 @@ impl Component for SplitPage {
                     }
                 }
             }
-    }
+        }
     }
 
     fn init(
@@ -226,13 +281,21 @@ impl Component for SplitPage {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let password_dialog = PasswordDialog::builder()
+            .launch(())
+            .forward(sender.input_sender(), SplitPageMsg::PasswordDialogOutput);
+
         let model = Self {
             file: None,
+            password: None,
             prefix: gettext("output_file"),
             prefix_changed: true,
             divide_after: DivideAfter::EachPage,
             is_splitting: false,
+            is_loading: false,
             thumbnail: None,
+            password_dialog,
+            preview_status: PreviewStatus::Ready,
         };
         let widgets = view_output!();
 
@@ -259,22 +322,15 @@ impl Component for SplitPage {
             SplitPageMsg::AddFile(file) => {
                 self.prefix = file_stem(&file);
                 self.prefix_changed = true;
-                self.thumbnail = None;
+                self.password = None;
+                self.preview_status = PreviewStatus::InitialPending;
+                self.file = Some(file.clone());
 
-                let sender_clone = sender.clone();
-                let file_clone = file.clone();
+                self.check_loading_state(&sender);
+                let _ = sender.output(SplitPageOutput::FileActive(true));
 
-                if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                    let result =
-                        crate::pdf::preview::generate_thumbnail(&file_clone, 0, None, 800.0);
-                    sender_clone.input(SplitPageMsg::ThumbnailReady(result));
-                }) {
-                    tracing::error!("Failed to enqueue thumbnail task: {}", e);
-                }
-
-                self.file = Some(file);
+                self.request_thumbnail(None, &sender);
             }
-
             SplitPageMsg::SetDivideAfter(divide_after) => {
                 self.divide_after = divide_after;
             }
@@ -287,9 +343,11 @@ impl Component for SplitPage {
                     output_folder.path(),
                 ) {
                     self.is_splitting = true;
+                    self.check_loading_state(&sender);
                     let options = SplitOptions {
                         divide_after: self.divide_after,
                         prefix: self.prefix.clone(),
+                        password: self.password.clone(),
                     };
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
@@ -300,6 +358,7 @@ impl Component for SplitPage {
             }
             SplitPageMsg::SplitComplete(result) => {
                 self.is_splitting = false;
+                self.check_loading_state(&sender);
                 match result {
                     Ok(_) => {
                         tracing::info!("Split PDF complete");
@@ -311,14 +370,84 @@ impl Component for SplitPage {
                     }
                 }
             }
-            SplitPageMsg::ThumbnailReady(result) => match result {
-                Ok(thumb_res) => {
-                    self.thumbnail = thumb_res.texture;
+            SplitPageMsg::ThumbnailReady(result) => {
+                match result {
+                    Ok(thumb_res) => {
+                        self.thumbnail = thumb_res.texture;
+                        self.preview_status = PreviewStatus::Ready;
+                    }
+                    Err(PreviewError::Encrypted) => {
+                        self.preview_status = PreviewStatus::PasswordRequired;
+                        let is_error = self.password.is_some();
+                        let filename = format!("{}.pdf", self.prefix);
+                        if let Some(window) = root.root().and_downcast::<gtk::Window>() {
+                            self.password_dialog.emit(PasswordDialogMsg::Show {
+                                index: None,
+                                filename,
+                                is_error,
+                                parent_window: window,
+                            });
+                        }
+                    }
+                    Err(err) => {
+                        tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
+                        self.thumbnail = None;
+                        self.preview_status = PreviewStatus::Ready;
+                    }
                 }
-                Err(err) => {
-                    tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
+                self.check_loading_state(&sender);
+            }
+            SplitPageMsg::PasswordDialogOutput(output) => match output {
+                PasswordDialogOutput::Unlock { password, .. } => {
+                    self.password = Some(password.clone());
+                    self.request_thumbnail(Some(password), &sender);
+                }
+                PasswordDialogOutput::Cancelled(_) => {
+                    self.clear_file(&sender);
                 }
             },
+        }
+    }
+}
+
+impl SplitPage {
+    fn request_thumbnail(&self, password: Option<String>, sender: &ComponentSender<Self>) {
+        if let Some(file) = &self.file {
+            let sender_clone = sender.clone();
+            let file_clone = file.clone();
+            
+            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
+                let result = crate::pdf::preview::generate_thumbnail(
+                    &file_clone, 
+                    0, 
+                    password.as_deref(), 
+                    800.0
+                );
+                sender_clone.input(SplitPageMsg::ThumbnailReady(result));
+            }) {
+                tracing::error!("Failed to enqueue thumbnail task: {}", e);
+            }
+        }
+    }
+
+    fn clear_file(&mut self, sender: &ComponentSender<Self>) {
+        self.file = None;
+        self.thumbnail = None;
+        self.password = None;
+        self.preview_status = PreviewStatus::Ready;
+        self.check_loading_state(sender);
+        let _ = sender.output(SplitPageOutput::FileActive(false));
+    }
+
+    fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
+        let is_loading = self.is_splitting || matches!(
+            self.preview_status,
+            PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
+        );
+
+        if self.is_loading != is_loading {
+            self.is_loading = is_loading;
+            let _ = sender.output(SplitPageOutput::Loading(is_loading));
         }
     }
 }

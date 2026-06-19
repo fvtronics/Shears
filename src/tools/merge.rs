@@ -671,13 +671,17 @@ impl Component for MergePage {
             }
             MergePageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { index, password } => {
-                    self.files.send(
-                        index.current_index(),
-                        MergeFileRowMsg::RetryWithPassword(password),
-                    );
+                    if let Some(idx) = index {
+                        self.files.send(
+                            idx.current_index(),
+                            MergeFileRowMsg::RetryWithPassword(password),
+                        );
+                    }
                 }
                 PasswordDialogOutput::Cancelled(index) => {
-                    sender.input(MergePageMsg::DeleteFile(index));
+                    if let Some(idx) = index {
+                        sender.input(MergePageMsg::DeleteFile(idx));
+                    }
                 }
             },
         }
@@ -714,7 +718,7 @@ impl MergePage {
             && let Some(window) = root.root().and_downcast::<gtk::Window>()
         {
             self.password_dialog.emit(PasswordDialogMsg::Show {
-                index: req.index.clone(),
+                index: Some(req.index.clone()),
                 filename: req.filename.clone(),
                 is_error: req.is_error,
                 parent_window: window,

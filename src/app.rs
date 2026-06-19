@@ -24,6 +24,7 @@ pub(super) struct App {
     _watermark: Controller<ToolPage>,
     _metadata: Controller<ToolPage>,
     merge_is_loading: bool,
+    split_is_loading: bool,
 }
 
 #[derive(Debug)]
@@ -31,6 +32,7 @@ pub(super) enum AppMsg {
     SelectTool(Tool),
     UpdateMergeFileCount(usize),
     UpdateMergeLoading(bool),
+    UpdateSplitLoading(bool),
     Quit,
 }
 
@@ -211,7 +213,13 @@ impl SimpleComponent for App {
                 });
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
-        let split = SplitTool::builder().launch(()).detach();
+        let split = SplitTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                crate::tools::split::SplitToolOutput::Loading(is_loading) => {
+                    AppMsg::UpdateSplitLoading(is_loading)
+                }
+            });
         let compress = ToolPage::builder().launch(Tool::Compress).detach();
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
         let metadata = ToolPage::builder().launch(Tool::Metadata).detach();
@@ -227,6 +235,7 @@ impl SimpleComponent for App {
             _watermark: watermark,
             _metadata: metadata,
             merge_is_loading: false,
+            split_is_loading: false,
         };
         let widgets = view_output!();
         widgets
@@ -277,6 +286,9 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateMergeLoading(is_loading) => {
                 self.merge_is_loading = is_loading;
+            }
+            AppMsg::UpdateSplitLoading(is_loading) => {
+                self.split_is_loading = is_loading;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -338,6 +350,13 @@ impl App {
                     let count = self.merge_file_count as u32;
                     ngettext("{count} file selected", "{count} files selected", count)
                         .replace("{count}", &count.to_string())
+                }
+            }
+            Tool::Split => {
+                if self.split_is_loading {
+                    gettext("Processing…")
+                } else {
+                    self.selected_tool.subtitle()
                 }
             }
             tool => tool.subtitle(),

@@ -69,10 +69,10 @@ pub fn generate_thumbnail(
     let doc = match poppler::Document::from_gfile(file, password, gio::Cancellable::NONE) {
         Ok(d) => d,
         Err(e) => {
-            tracing::error!("Failed to open poppler doc: {:?}", e);
             if e.matches(poppler::Error::Encrypted) {
                 return Err(PreviewError::Encrypted);
             }
+            tracing::error!("Failed to open poppler doc: {:?}", e);
             return Err(PreviewError::Other);
         }
     };

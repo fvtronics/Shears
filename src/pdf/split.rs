@@ -20,6 +20,7 @@ pub enum DivideAfter {
 pub struct SplitOptions {
     pub divide_after: DivideAfter,
     pub prefix: String,
+    pub password: Option<String>,
 }
 
 pub fn split_file<P: AsRef<Path>>(
@@ -28,7 +29,7 @@ pub fn split_file<P: AsRef<Path>>(
     options: &SplitOptions,
 ) -> Result<(), PdfError> {
     Err(PdfError::Other(format!(
-        "Test error. Prefix: '{}', Divide: {:?}",
-        options.prefix, options.divide_after
+        "Test error. Prefix: '{}', Divide: {:?}, Pass: {:?}",
+        options.prefix, options.divide_after, options.password.is_some()
     )))
 }
