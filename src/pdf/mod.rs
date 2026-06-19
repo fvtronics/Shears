@@ -8,6 +8,8 @@
 pub mod error;
 pub mod merge;
 pub mod preview;
+pub mod split;
 
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};
+pub use split::{DivideAfter, SplitOptions, split_file};

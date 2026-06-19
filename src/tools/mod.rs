@@ -191,3 +191,21 @@ pub(super) fn save_pdf_dialog(
         }
     });
 }
+
+pub(super) fn select_folder_dialog(
+    button: &gtk::Button,
+    title: &str,
+    callback: impl FnOnce(gio::File) + 'static,
+) {
+    let dialog = gtk::FileDialog::builder()
+        .title(title)
+        .modal(true)
+        .build();
+    let parent = button.root().and_downcast::<gtk::Window>();
+
+    dialog.select_folder(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+        if let Ok(file) = result {
+            callback(file);
+        }
+    });
+}
