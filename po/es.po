@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: quire\n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-18 20:22-0400\n"
+"PO-Revision-Date: 2026-06-18 20:25-0400\n"
 "Last-Translator: Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>\n"
-"POT-Creation-Date: 2026-06-18 12:26-0400\n"
-"PO-Revision-Date: 2026-06-18 18:46-0400\n"
 "Language-Team: es_DO\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -62,10 +62,39 @@ msgid "Merge multiple PDF files into a single document"
 msgstr "Combinar varios archivos PDF en un solo documento"
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:27
+msgid "New"
+msgstr "Nuevo"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:29
+msgid "Add support for opening password protected files"
+msgstr "Se añadió soporte para archivos protegidos con contraseña"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:30
+msgid "Add option to insert blank page"
+msgstr "Se añadió una opción para insertar páginas en blanco"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:31
+msgid "Add option to duplicate a file in the list view"
+msgstr "Se añadió una opción para duplicar un archivo en la vista de lista"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:33
+msgid "Changes"
+msgstr "Cambios"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:35
+msgid "Collapse secondary options into a menu"
+msgstr "Colapsar opciones secundarias en un menú"
+
+# Se adaptó este texto para que haga sentido
+#: data/com.fvtronics.quire.metainfo.xml.in.in:36
+msgid "Add handler to rows for drag and drop"
+msgstr "Añadir un ícono para arrastrar las filas"
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:42
 msgid "Initial release"
 msgstr "Lanzamiento inicial"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:29
+#: data/com.fvtronics.quire.metainfo.xml.in.in:44
 msgid "Merge and rotate PDF files"
 msgstr "Combine y rote archivos PDF"
 
