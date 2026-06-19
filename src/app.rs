@@ -25,6 +25,7 @@ pub(super) struct App {
     _metadata: Controller<ToolPage>,
     merge_is_loading: bool,
     split_is_loading: bool,
+    split_file_stem: Option<String>,
 }
 
 #[derive(Debug)]
@@ -33,6 +34,7 @@ pub(super) enum AppMsg {
     UpdateMergeFileCount(usize),
     UpdateMergeLoading(bool),
     UpdateSplitLoading(bool),
+    UpdateSplitFileStem(Option<String>),
     Quit,
 }
 
@@ -219,6 +221,9 @@ impl SimpleComponent for App {
                 crate::tools::split::SplitToolOutput::Loading(is_loading) => {
                     AppMsg::UpdateSplitLoading(is_loading)
                 }
+                crate::tools::split::SplitToolOutput::FileActive(stem) => {
+                    AppMsg::UpdateSplitFileStem(stem)
+                }
             });
         let compress = ToolPage::builder().launch(Tool::Compress).detach();
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
@@ -236,6 +241,7 @@ impl SimpleComponent for App {
             _metadata: metadata,
             merge_is_loading: false,
             split_is_loading: false,
+            split_file_stem: None,
         };
         let widgets = view_output!();
         widgets
@@ -289,6 +295,9 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateSplitLoading(is_loading) => {
                 self.split_is_loading = is_loading;
+            }
+            AppMsg::UpdateSplitFileStem(stem) => {
+                self.split_file_stem = stem;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -355,6 +364,8 @@ impl App {
             Tool::Split => {
                 if self.split_is_loading {
                     gettext("Processing…")
+                } else if let Some(stem) = &self.split_file_stem {
+                    stem.clone()
                 } else {
                     self.selected_tool.subtitle()
                 }

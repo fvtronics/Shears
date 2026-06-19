@@ -30,12 +30,13 @@ pub struct SplitTool {
 #[derive(Debug)]
 pub enum SplitToolMsg {
     AddFiles(Vec<gio::File>),
-    UpdateFileActive(bool),
+    UpdateFileActive(Option<String>),
     Loading(bool),
 }
 
 #[derive(Debug)]
 pub enum SplitToolOutput {
+    FileActive(Option<String>),
     Loading(bool),
 }
 
@@ -69,7 +70,7 @@ impl SimpleComponent for SplitTool {
         let split_page = SplitPage::builder()
             .launch(())
             .forward(sender.input_sender(), |msg| match msg {
-                SplitPageOutput::FileActive(active) => SplitToolMsg::UpdateFileActive(active),
+                SplitPageOutput::FileActive(file_stem) => SplitToolMsg::UpdateFileActive(file_stem),
                 SplitPageOutput::Loading(is_loading) => SplitToolMsg::Loading(is_loading),
             });
 
@@ -90,10 +91,11 @@ impl SimpleComponent for SplitTool {
                     self.split_page.emit(SplitPageMsg::AddFile(file));
                 }
             }
-            SplitToolMsg::UpdateFileActive(active) => {
-                if !active {
+            SplitToolMsg::UpdateFileActive(file_stem) => {
+                if file_stem.is_none() {
                     self.state = SplitToolState::Empty;
                 }
+                let _ = sender.output(SplitToolOutput::FileActive(file_stem));
             }
             SplitToolMsg::Loading(is_loading) => {
                 if is_loading {
@@ -147,7 +149,7 @@ enum SplitPageMsg {
 
 #[derive(Debug)]
 pub enum SplitPageOutput {
-    FileActive(bool),
+    FileActive(Option<String>),
     Loading(bool),
 }
 
@@ -327,7 +329,7 @@ impl Component for SplitPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(SplitPageOutput::FileActive(true));
+                let _ = sender.output(SplitPageOutput::FileActive(Some(self.prefix.clone())));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -436,7 +438,7 @@ impl SplitPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(SplitPageOutput::FileActive(false));
+        let _ = sender.output(SplitPageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
