@@ -12,7 +12,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, files_from_model, pdf_dialog, save_pdf_dialog};
+use crate::tools::{Tool, open_pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
@@ -44,12 +44,13 @@ impl SimpleComponent for MergeTool {
 
     view! {
         gtk::Stack {
-            #[watch]
-            set_visible_child_name: if model.has_files { "merge" } else { "empty" },
             set_vhomogeneous: false,
 
             add_named: (model._empty_page.widget(), Some("empty")),
             add_named: (model.merge_page.widget(), Some("merge")),
+
+            #[watch]
+            set_visible_child_name: if model.has_files { "merge" } else { "empty" },
         }
     }
 
@@ -218,7 +219,10 @@ impl Component for MergePage {
                     set_tooltip_text: Some(&gettext("Add PDF Files")),
 
                     connect_clicked[sender] => move |button| {
-                        open_pdf_dialog(button, sender.clone());
+                        let sender_clone = sender.clone();
+                        open_pdf_dialog(button, Tool::Merge, move |files| {
+                            sender_clone.input(MergePageMsg::AddFiles(files));
+                        });
                     },
                 },
 
@@ -1092,17 +1096,6 @@ fn request_thumbnail(
             sender.input(MergeFileRowMsg::ThumbnailReady(result));
         })
         .expect("Failed to enqueue thumbnail task");
-}
-
-fn open_pdf_dialog(button: &gtk::Button, sender: ComponentSender<MergePage>) {
-    let dialog = pdf_dialog(Tool::Merge);
-    let parent = button.root().and_downcast::<gtk::Window>();
-
-    dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
-        if let Ok(files) = result {
-            sender.input(MergePageMsg::AddFiles(files_from_model(&files)));
-        }
-    });
 }
 
 fn file_title(file: &gio::File) -> String {

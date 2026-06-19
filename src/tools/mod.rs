@@ -7,6 +7,7 @@
 
 pub mod merge;
 pub mod page;
+pub mod split;
 
 use gettextrs::gettext;
 use relm4::gtk;
@@ -147,6 +148,29 @@ pub(super) fn files_from_model(model: &gio::ListModel) -> Vec<gio::File> {
         .filter_map(|index| model.item(index))
         .filter_map(|item| item.downcast::<gio::File>().ok())
         .collect()
+}
+
+pub(super) fn open_pdf_dialog(
+    button: &gtk::Button,
+    tool: Tool,
+    callback: impl FnOnce(Vec<gio::File>) + 'static,
+) {
+    let dialog = pdf_dialog(tool);
+    let parent = button.root().and_downcast::<gtk::Window>();
+
+    if matches!(tool, Tool::Merge) {
+        dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+            if let Ok(files) = result {
+                callback(files_from_model(&files));
+            }
+        });
+    } else {
+        dialog.open(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+            if let Ok(file) = result {
+                callback(vec![file]);
+            }
+        });
+    }
 }
 
 pub(super) fn save_pdf_dialog(

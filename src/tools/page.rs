@@ -3,7 +3,7 @@ use relm4::{ComponentParts, ComponentSender, SimpleComponent, adw, gtk};
 use gtk::gio;
 use gtk::prelude::*;
 
-use crate::tools::{Tool, files_from_model, pdf_dialog};
+use crate::tools::{Tool, open_pdf_dialog};
 
 pub struct ToolPage {
     tool: Tool,
@@ -33,7 +33,10 @@ impl SimpleComponent for ToolPage {
                 set_sensitive: !model.is_loading,
 
                 connect_clicked[sender, tool = model.tool] => move |button| {
-                    open_pdf_dialog(tool, button, sender.clone());
+                    let sender_clone = sender.clone();
+                    open_pdf_dialog(button, tool, move |files| {
+                        let _ = sender_clone.output(files);
+                    });
                 },
             },
         }
@@ -55,20 +58,5 @@ impl SimpleComponent for ToolPage {
 
     fn update(&mut self, is_loading: Self::Input, _sender: ComponentSender<Self>) {
         self.is_loading = is_loading;
-    }
-}
-
-fn open_pdf_dialog(tool: Tool, button: &gtk::Button, sender: ComponentSender<ToolPage>) {
-    let dialog = pdf_dialog(tool);
-    let parent = button.root().and_downcast::<gtk::Window>();
-
-    if matches!(tool, Tool::Merge) {
-        dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
-            if let Ok(files) = result {
-                let _ = sender.output(files_from_model(&files));
-            }
-        });
-    } else {
-        dialog.open(parent.as_ref(), None::<&gio::Cancellable>, |_| {});
     }
 }
