@@ -17,6 +17,7 @@ pub enum PreviewError {
 pub struct ThumbnailResult {
     pub texture: Option<gdk::MemoryTexture>,
     pub original_dimensions: Option<(f64, f64)>,
+    pub page_count: i32,
 }
 
 fn render_to_texture(
@@ -82,6 +83,7 @@ pub fn generate_thumbnail(
         return Ok(ThumbnailResult {
             texture: None,
             original_dimensions: None,
+            page_count: doc.n_pages(),
         });
     };
 
@@ -122,6 +124,7 @@ pub fn generate_thumbnail(
     Ok(ThumbnailResult {
         texture,
         original_dimensions: Some((orig_width, orig_height)),
+        page_count: doc.n_pages(),
     })
 }
 
@@ -146,6 +149,7 @@ pub fn generate_blank_thumbnail(
     Ok(ThumbnailResult {
         texture,
         original_dimensions: Some((orig_width, orig_height)),
+        page_count: 1,
     })
 }
 

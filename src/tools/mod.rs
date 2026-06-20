@@ -206,3 +206,66 @@ pub(super) fn select_folder_dialog(
         }
     });
 }
+
+pub(super) fn validate_specific_pages(
+    input: &str,
+    max_pages: u32,
+) -> Result<Vec<std::ops::RangeInclusive<u32>>, String> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Err(gettext("Please specify pages"));
+    }
+
+    let mut raw_ranges = Vec::new();
+
+    for part in input.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            let start = start_str.trim().parse::<u32>().map_err(|_| gettext("Invalid input"))?;
+            let end = end_str.trim().parse::<u32>().map_err(|_| gettext("Invalid input"))?;
+
+            if start == 0 || end == 0 || start > end {
+                return Err(gettext("Invalid input"));
+            }
+            if end > max_pages {
+                return Err(gettext("Contains out of range pages (Max: {max})")
+                    .replace("{max}", &max_pages.to_string()));
+            }
+            raw_ranges.push(start..=end);
+        } else {
+            let p = part.parse::<u32>().map_err(|_| gettext("Invalid input"))?;
+            if p == 0 {
+                return Err(gettext("Invalid input"));
+            }
+            if p > max_pages {
+                return Err(gettext("Contains out of range pages (Max: {max})")
+                    .replace("{max}", &max_pages.to_string()));
+            }
+            raw_ranges.push(p..=p);
+        }
+    }
+
+    if raw_ranges.is_empty() {
+        return Err(gettext("Please specify pages"));
+    }
+
+    raw_ranges.sort_unstable_by_key(|r| *r.start());
+
+    let mut merged: Vec<std::ops::RangeInclusive<u32>> = Vec::new();
+    for current in raw_ranges {
+        if let Some(last) = merged.last_mut() {
+            if *current.start() <= last.end().saturating_add(1) {
+                let max_end = std::cmp::max(*last.end(), *current.end());
+                *last = *last.start()..=max_end;
+                continue;
+            }
+        }
+        merged.push(current);
+    }
+
+    Ok(merged)
+}

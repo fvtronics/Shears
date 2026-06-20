@@ -15,7 +15,7 @@ pub enum DivideAfter {
     EvenPages,
     OddPages,
     EveryNPages(u32),
-    SpecificPages(String),
+    SpecificPages(Vec<std::ops::RangeInclusive<u32>>),
 }
 
 #[derive(Debug, Clone, Default)]

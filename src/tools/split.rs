@@ -155,6 +155,8 @@ struct SplitPage {
     divide_mode: DivideMode,
     every_n: u32,
     specific_pages: String,
+    specific_pages_error: Option<String>,
+    page_count: u32,
     is_splitting: bool,
     is_loading: bool,
     modern_pdf_format: bool,
@@ -325,7 +327,16 @@ impl Component for SplitPage {
 
                                     adw::SpinRow {
                                         set_title: &gettext("Pages"),
-                                        set_adjustment: Some(&gtk::Adjustment::new(1.0, 1.0, 9999.0, 1.0, 10.0, 0.0)),
+                                        set_numeric: true,
+                                        #[wrap(Some)]
+                                        set_adjustment = &gtk::Adjustment {
+                                            set_lower: 1.0,
+                                            #[watch]
+                                            set_upper: model.page_count.max(1) as f64,
+                                            set_value: 1.0,
+                                            set_step_increment: 1.0,
+                                            set_page_increment: 10.0,
+                                        },
                                         #[watch]
                                         set_visible: matches!(model.divide_mode, DivideMode::EveryNPages),
                                         connect_value_notify[sender] => move |row| {
@@ -339,8 +350,18 @@ impl Component for SplitPage {
                                         set_visible: matches!(model.divide_mode, DivideMode::SpecificPages),
                                         set_text: &model.specific_pages,
                                         set_show_apply_button: false,
+                                        #[watch]
+                                        set_class_active: ("error", model.specific_pages_error.is_some()),
                                         connect_changed[sender] => move |entry| {
                                             sender.input(SplitPageMsg::SetSpecificPages(entry.text().to_string()));
+                                        },
+                                        add_suffix = &gtk::Image {
+                                            set_icon_name: Some("dialog-error-symbolic"),
+                                            #[watch]
+                                            set_tooltip_text: model.specific_pages_error.as_deref(),
+                                            #[watch]
+                                            set_visible: model.specific_pages_error.is_some(),
+                                            add_css_class: "error",
                                         }
                                     },
 
@@ -379,6 +400,8 @@ impl Component for SplitPage {
             divide_mode: DivideMode::default(),
             every_n: 1,
             specific_pages: String::new(),
+            specific_pages_error: None,
+            page_count: 0,
             is_splitting: false,
             is_loading: false,
             modern_pdf_format: false,
@@ -429,6 +452,7 @@ impl Component for SplitPage {
             }
             SplitPageMsg::SetSpecificPages(pages) => {
                 self.specific_pages = pages;
+                self.specific_pages_error = None;
             }
             SplitPageMsg::SetPrefix(prefix) => {
                 self.prefix = prefix;
@@ -438,15 +462,24 @@ impl Component for SplitPage {
                     self.file.as_ref().and_then(|f| f.path()),
                     output_folder.path(),
                 ) {
-                    self.is_splitting = true;
-                    self.check_loading_state(&sender);
                     let divide_after = match self.divide_mode {
                         DivideMode::EachPage => DivideAfter::EachPage,
                         DivideMode::EvenPages => DivideAfter::EvenPages,
                         DivideMode::OddPages => DivideAfter::OddPages,
-                        DivideMode::EveryNPages => DivideAfter::EveryNPages(self.every_n),
-                        DivideMode::SpecificPages => DivideAfter::SpecificPages(self.specific_pages.clone()),
+                        DivideMode::EveryNPages => DivideAfter::EveryNPages(self.every_n.min(self.page_count.max(1))),
+                        DivideMode::SpecificPages => {
+                            match super::validate_specific_pages(&self.specific_pages, self.page_count) {
+                                Ok(cleaned) => DivideAfter::SpecificPages(cleaned),
+                                Err(err) => {
+                                    self.specific_pages_error = Some(err);
+                                    return;
+                                }
+                            }
+                        }
                     };
+
+                    self.is_splitting = true;
+                    self.check_loading_state(&sender);
                     let options = SplitOptions {
                         divide_after,
                         prefix: self.prefix.clone(),
@@ -485,6 +518,7 @@ impl Component for SplitPage {
                 match result {
                     Ok(thumb_res) => {
                         self.thumbnail = thumb_res.texture;
+                        self.page_count = thumb_res.page_count as u32;
                         self.preview_status = PreviewStatus::Ready;
                     }
                     Err(PreviewError::Encrypted) => {
