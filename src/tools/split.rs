@@ -176,7 +176,8 @@ enum SplitPageMsg {
     SplitTo(gio::File),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
-    SplitComplete(Result<(), PdfError>),
+    SplitComplete(Result<std::path::PathBuf, PdfError>),
+    OpenOutput(std::path::PathBuf),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
 }
@@ -489,8 +490,9 @@ impl Component for SplitPage {
                     };
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = split_file(&(file_path, 0), output_path, &options);
-                        sender.input(SplitPageMsg::SplitComplete(result));
+                        let result = split_file(&(file_path, 0), output_path.clone(), &options);
+                        let msg_result = result.map(|_| output_path);
+                        sender.input(SplitPageMsg::SplitComplete(msg_result));
                     });
                 }
             }
@@ -504,14 +506,31 @@ impl Component for SplitPage {
                 self.is_splitting = false;
                 self.check_loading_state(&sender);
                 match result {
-                    Ok(_) => {
+                    Ok(path) => {
                         tracing::info!("Split PDF complete");
-                        root.add_toast(adw::Toast::new(&gettext("Split PDFs saved")));
+                        let toast = adw::Toast::new(&gettext("Split PDFs saved"));
+                        toast.set_button_label(Some(&gettext("Open Folder")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(SplitPageMsg::OpenOutput(path.clone()));
+                        });
+                        root.add_toast(toast);
                     }
                     Err(err) => {
                         tracing::error!("Failed to split PDF: {:?}", err);
                         root.add_toast(adw::Toast::new(&gettext("Failed to split PDF")));
                     }
+                }
+            }
+            SplitPageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output folder"));
+                    root.add_toast(toast);
+                    tracing::error!("Failed to open output folder: {:?}", e);
                 }
             }
             SplitPageMsg::ThumbnailReady(result) => {
