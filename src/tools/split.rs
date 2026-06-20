@@ -125,12 +125,36 @@ pub enum PreviewStatus {
     PasswordRequired,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub enum DivideMode {
+    #[default]
+    EachPage,
+    EvenPages,
+    OddPages,
+    EveryNPages,
+    SpecificPages,
+}
+
+impl From<u32> for DivideMode {
+    fn from(value: u32) -> Self {
+        match value {
+            1 => Self::EvenPages,
+            2 => Self::OddPages,
+            3 => Self::EveryNPages,
+            4 => Self::SpecificPages,
+            _ => Self::EachPage,
+        }
+    }
+}
+
 struct SplitPage {
     file: Option<gio::File>,
     password: Option<String>,
     prefix: String,
     prefix_changed: bool,
-    divide_after: DivideAfter,
+    divide_mode: DivideMode,
+    every_n: u32,
+    specific_pages: String,
     is_splitting: bool,
     is_loading: bool,
     modern_pdf_format: bool,
@@ -143,7 +167,9 @@ struct SplitPage {
 #[derive(Debug)]
 enum SplitPageMsg {
     AddFile(gio::File),
-    SetDivideAfter(DivideAfter),
+    SetDivideMode(DivideMode),
+    SetEveryN(u32),
+    SetSpecificPages(String),
     SetPrefix(String),
     SplitTo(gio::File),
     SetModernPdfFormat(bool),
@@ -289,14 +315,32 @@ impl Component for SplitPage {
                                             gettext("Each page").as_str(),
                                             gettext("Even pages").as_str(),
                                             gettext("Odd pages").as_str(),
+                                            gettext("Every N pages").as_str(),
+                                            gettext("Specific pages").as_str(),
                                         ])),
                                         connect_selected_notify[sender] => move |row| {
-                                            let divide_after = match row.selected() {
-                                                0 => DivideAfter::EachPage,
-                                                1 => DivideAfter::EvenPages,
-                                                _ => DivideAfter::OddPages,
-                                            };
-                                            sender.input(SplitPageMsg::SetDivideAfter(divide_after));
+                                            sender.input(SplitPageMsg::SetDivideMode(DivideMode::from(row.selected())));
+                                        }
+                                    },
+
+                                    adw::SpinRow {
+                                        set_title: &gettext("Pages"),
+                                        set_adjustment: Some(&gtk::Adjustment::new(1.0, 1.0, 9999.0, 1.0, 10.0, 0.0)),
+                                        #[watch]
+                                        set_visible: matches!(model.divide_mode, DivideMode::EveryNPages),
+                                        connect_value_notify[sender] => move |row| {
+                                            sender.input(SplitPageMsg::SetEveryN(row.value() as u32));
+                                        }
+                                    },
+
+                                    adw::EntryRow {
+                                        set_title: &gettext("Pages"),
+                                        #[watch]
+                                        set_visible: matches!(model.divide_mode, DivideMode::SpecificPages),
+                                        set_text: &model.specific_pages,
+                                        set_show_apply_button: false,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(SplitPageMsg::SetSpecificPages(entry.text().to_string()));
                                         }
                                     },
 
@@ -332,7 +376,9 @@ impl Component for SplitPage {
             password: None,
             prefix: gettext("output_file"),
             prefix_changed: true,
-            divide_after: DivideAfter::EachPage,
+            divide_mode: DivideMode::default(),
+            every_n: 1,
+            specific_pages: String::new(),
             is_splitting: false,
             is_loading: false,
             modern_pdf_format: false,
@@ -375,8 +421,14 @@ impl Component for SplitPage {
 
                 self.request_thumbnail(None, &sender);
             }
-            SplitPageMsg::SetDivideAfter(divide_after) => {
-                self.divide_after = divide_after;
+            SplitPageMsg::SetDivideMode(divide_mode) => {
+                self.divide_mode = divide_mode;
+            }
+            SplitPageMsg::SetEveryN(every_n) => {
+                self.every_n = every_n;
+            }
+            SplitPageMsg::SetSpecificPages(pages) => {
+                self.specific_pages = pages;
             }
             SplitPageMsg::SetPrefix(prefix) => {
                 self.prefix = prefix;
@@ -388,8 +440,15 @@ impl Component for SplitPage {
                 ) {
                     self.is_splitting = true;
                     self.check_loading_state(&sender);
+                    let divide_after = match self.divide_mode {
+                        DivideMode::EachPage => DivideAfter::EachPage,
+                        DivideMode::EvenPages => DivideAfter::EvenPages,
+                        DivideMode::OddPages => DivideAfter::OddPages,
+                        DivideMode::EveryNPages => DivideAfter::EveryNPages(self.every_n),
+                        DivideMode::SpecificPages => DivideAfter::SpecificPages(self.specific_pages.clone()),
+                    };
                     let options = SplitOptions {
-                        divide_after: self.divide_after,
+                        divide_after,
                         prefix: self.prefix.clone(),
                         password: self.password.clone(),
                         modern_format: self.modern_pdf_format,

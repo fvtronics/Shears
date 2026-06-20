@@ -8,12 +8,14 @@
 use crate::pdf::error::PdfError;
 use std::path::Path;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum DivideAfter {
     #[default]
     EachPage,
     EvenPages,
     OddPages,
+    EveryNPages(u32),
+    SpecificPages(String),
 }
 
 #[derive(Debug, Clone, Default)]
