@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use lopdf::{Bookmark, Document, Object, ObjectId};
 
 use crate::pdf::error::PdfError;
+use crate::pdf::util::{apply_file_rotation, remove_metadata};
 
 #[derive(Debug, Clone, Default)]
 pub struct MergeOptions {
@@ -124,43 +125,6 @@ fn create_blank_pdf(width: f32, height: f32) -> Document {
     doc
 }
 
-fn get_inherited_rotation(doc: &Document, page_id: ObjectId) -> i64 {
-    let mut current_id = page_id;
-    loop {
-        if let Ok(Object::Dictionary(dict)) = doc.get_object(current_id) {
-            if let Ok(rotate) = dict.get(b"Rotate").and_then(Object::as_i64) {
-                return rotate;
-            }
-            if let Ok(Object::Reference(parent_id)) = dict.get(b"Parent") {
-                current_id = *parent_id;
-                continue;
-            }
-        }
-        break;
-    }
-    0
-}
-
-fn apply_file_rotation(doc: &mut Document, rotation: u16) {
-    let pages = doc.get_pages();
-    for page_id in pages.values() {
-        let current_rotation = get_inherited_rotation(doc, *page_id);
-        let new_rotation = (current_rotation + rotation as i64) % 360;
-
-        if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(*page_id) {
-            page_dict.set("Rotate", Object::Integer(new_rotation));
-        }
-    }
-}
-
-fn remove_metadata(doc: &mut Document) {
-    doc.trailer.remove(b"Info");
-    if let Ok(Object::Reference(root_id)) = doc.trailer.get(b"Root")
-        && let Ok(Object::Dictionary(catalog)) = doc.get_object_mut(*root_id)
-    {
-        catalog.remove(b"Metadata");
-    }
-}
 
 fn get_inherited_mediabox(doc: &Document, page_id: ObjectId) -> Option<Vec<f32>> {
     let mut current_id = page_id;
