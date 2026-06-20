@@ -215,16 +215,17 @@ impl SimpleComponent for App {
                 });
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
-        let split = SplitTool::builder()
-            .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::split::SplitToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateSplitLoading(is_loading)
-                }
-                crate::tools::split::SplitToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateSplitFileStem(stem)
-                }
-            });
+        let split =
+            SplitTool::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    crate::tools::split::SplitToolOutput::Loading(is_loading) => {
+                        AppMsg::UpdateSplitLoading(is_loading)
+                    }
+                    crate::tools::split::SplitToolOutput::FileActive(stem) => {
+                        AppMsg::UpdateSplitFileStem(stem)
+                    }
+                });
         let compress = ToolPage::builder().launch(Tool::Compress).detach();
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
         let metadata = ToolPage::builder().launch(Tool::Metadata).detach();

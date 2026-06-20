@@ -105,7 +105,9 @@ impl SimpleComponent for SplitTool {
                         self.state = SplitToolState::Processing;
                     }
                 } else {
-                    if self.state == SplitToolState::LoadingNewFile || self.state == SplitToolState::Processing {
+                    if self.state == SplitToolState::LoadingNewFile
+                        || self.state == SplitToolState::Processing
+                    {
                         self.state = SplitToolState::Ready;
                     }
                 }
@@ -131,6 +133,8 @@ struct SplitPage {
     divide_after: DivideAfter,
     is_splitting: bool,
     is_loading: bool,
+    modern_pdf_format: bool,
+    remove_metadata: bool,
     thumbnail: Option<gdk::MemoryTexture>,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
@@ -142,6 +146,8 @@ enum SplitPageMsg {
     SetDivideAfter(DivideAfter),
     SetPrefix(String),
     SplitTo(gio::File),
+    SetModernPdfFormat(bool),
+    SetRemoveMetadata(bool),
     SplitComplete(Result<(), PdfError>),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
@@ -208,6 +214,40 @@ impl Component for SplitPage {
                                 });
                             }
                         },
+
+                        gtk::MenuButton {
+                            set_icon_name: "view-more-symbolic",
+                            add_css_class: "flat",
+                            set_tooltip_text: Some(&gettext("Advanced Options")),
+
+                            #[wrap(Some)]
+                            set_popover = &gtk::Popover {
+                                add_css_class: "menu",
+                                adw::PreferencesGroup {
+                                    add = &adw::SwitchRow {
+                                        set_title: &gettext("_Modern PDF format"),
+                                        set_use_underline: true,
+                                        set_subtitle: &gettext("Save with PDF 1.5 object streams"),
+                                        set_active: model.modern_pdf_format,
+
+                                        connect_active_notify[sender] => move |row| {
+                                            sender.input(SplitPageMsg::SetModernPdfFormat(row.is_active()));
+                                        }
+                                    },
+
+                                    add = &adw::SwitchRow {
+                                        set_title: &gettext("_Remove metadata"),
+                                        set_use_underline: true,
+                                        set_subtitle: &gettext("Remove existing metadata before saving"),
+                                        set_active: model.remove_metadata,
+
+                                        connect_active_notify[sender] => move |row| {
+                                            sender.input(SplitPageMsg::SetRemoveMetadata(row.is_active()));
+                                        }
+                                    },
+                                }
+                            }
+                        }
                     },
 
                     #[name(split_box)]
@@ -295,6 +335,8 @@ impl Component for SplitPage {
             divide_after: DivideAfter::EachPage,
             is_splitting: false,
             is_loading: false,
+            modern_pdf_format: false,
+            remove_metadata: false,
             thumbnail: None,
             password_dialog,
             preview_status: PreviewStatus::Ready,
@@ -350,6 +392,8 @@ impl Component for SplitPage {
                         divide_after: self.divide_after,
                         prefix: self.prefix.clone(),
                         password: self.password.clone(),
+                        modern_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
                     };
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
@@ -357,6 +401,12 @@ impl Component for SplitPage {
                         sender.input(SplitPageMsg::SplitComplete(result));
                     });
                 }
+            }
+            SplitPageMsg::SetModernPdfFormat(active) => {
+                self.modern_pdf_format = active;
+            }
+            SplitPageMsg::SetRemoveMetadata(active) => {
+                self.remove_metadata = active;
             }
             SplitPageMsg::SplitComplete(result) => {
                 self.is_splitting = false;
@@ -417,13 +467,13 @@ impl SplitPage {
         if let Some(file) = &self.file {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
-            
+
             if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
                 let result = crate::pdf::preview::generate_thumbnail(
-                    &file_clone, 
-                    0, 
-                    password.as_deref(), 
-                    800.0
+                    &file_clone,
+                    0,
+                    password.as_deref(),
+                    800.0,
                 );
                 sender_clone.input(SplitPageMsg::ThumbnailReady(result));
             }) {
@@ -442,10 +492,11 @@ impl SplitPage {
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
-        let is_loading = self.is_splitting || matches!(
-            self.preview_status,
-            PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
-        );
+        let is_loading = self.is_splitting
+            || matches!(
+                self.preview_status,
+                PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
+            );
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;

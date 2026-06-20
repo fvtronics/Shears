@@ -21,6 +21,8 @@ pub struct SplitOptions {
     pub divide_after: DivideAfter,
     pub prefix: String,
     pub password: Option<String>,
+    pub modern_format: bool,
+    pub remove_metadata: bool,
 }
 
 pub fn split_file<P: AsRef<Path>>(
@@ -29,7 +31,11 @@ pub fn split_file<P: AsRef<Path>>(
     options: &SplitOptions,
 ) -> Result<(), PdfError> {
     Err(PdfError::Other(format!(
-        "Test error. Prefix: '{}', Divide: {:?}, Pass: {:?}",
-        options.prefix, options.divide_after, options.password.is_some()
+        "Test error. Prefix: '{}', Divide: {:?}, Pass: {:?}, Modern: {:?}, Metadata: {:?}",
+        options.prefix,
+        options.divide_after,
+        options.password.is_some(),
+        options.modern_format,
+        options.remove_metadata
     )))
 }
