@@ -17,6 +17,7 @@ pub enum PreviewError {
 pub struct ThumbnailResult {
     pub texture: Option<gdk::MemoryTexture>,
     pub original_dimensions: Option<(f64, f64)>,
+    pub page_count: i32,
 }
 
 fn render_to_texture(
@@ -64,14 +65,15 @@ pub fn generate_thumbnail(
     file: &gio::File,
     rotation: i32,
     password: Option<&str>,
+    max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
     let doc = match poppler::Document::from_gfile(file, password, gio::Cancellable::NONE) {
         Ok(d) => d,
         Err(e) => {
-            tracing::error!("Failed to open poppler doc: {:?}", e);
             if e.matches(poppler::Error::Encrypted) {
                 return Err(PreviewError::Encrypted);
             }
+            tracing::error!("Failed to open poppler doc: {:?}", e);
             return Err(PreviewError::Other);
         }
     };
@@ -81,6 +83,7 @@ pub fn generate_thumbnail(
         return Ok(ThumbnailResult {
             texture: None,
             original_dimensions: None,
+            page_count: doc.n_pages(),
         });
     };
 
@@ -91,7 +94,7 @@ pub fn generate_thumbnail(
         (orig_width, orig_height)
     };
 
-    let scale = 150.0 / width.max(height);
+    let scale = max_dim / width.max(height);
     let scaled_width = (width * scale) as i32;
     let scaled_height = (height * scale) as i32;
 
@@ -121,6 +124,7 @@ pub fn generate_thumbnail(
     Ok(ThumbnailResult {
         texture,
         original_dimensions: Some((orig_width, orig_height)),
+        page_count: doc.n_pages(),
     })
 }
 
@@ -128,6 +132,7 @@ pub fn generate_blank_thumbnail(
     orig_width: f64,
     orig_height: f64,
     rotation: i32,
+    max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
     let (width, height) = if rotation % 180 != 0 {
         (orig_height, orig_width)
@@ -135,7 +140,7 @@ pub fn generate_blank_thumbnail(
         (orig_width, orig_height)
     };
 
-    let scale = 150.0 / width.max(height);
+    let scale = max_dim / width.max(height);
     let scaled_width = (width * scale) as i32;
     let scaled_height = (height * scale) as i32;
 
@@ -144,6 +149,7 @@ pub fn generate_blank_thumbnail(
     Ok(ThumbnailResult {
         texture,
         original_dimensions: Some((orig_width, orig_height)),
+        page_count: 1,
     })
 }
 

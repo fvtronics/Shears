@@ -15,7 +15,7 @@ pub struct PasswordDialog {
 #[derive(Debug)]
 pub enum PasswordDialogMsg {
     Show {
-        index: DynamicIndex,
+        index: Option<DynamicIndex>,
         filename: String,
         is_error: bool,
         parent_window: gtk::Window,
@@ -28,10 +28,10 @@ pub enum PasswordDialogMsg {
 #[derive(Debug)]
 pub enum PasswordDialogOutput {
     Unlock {
-        index: DynamicIndex,
+        index: Option<DynamicIndex>,
         password: String,
     },
-    Cancelled(DynamicIndex),
+    Cancelled(Option<DynamicIndex>),
 }
 
 #[relm4::component(pub)]
@@ -128,7 +128,7 @@ impl Component for PasswordDialog {
                 is_error,
                 parent_window,
             } => {
-                self.file_index = Some(index);
+                self.file_index = index;
                 self.filename = filename;
                 self.is_error = is_error;
                 self.is_valid = false;
@@ -142,17 +142,13 @@ impl Component for PasswordDialog {
                 self.is_valid = !pass.is_empty();
             }
             PasswordDialogMsg::Unlock(pass) => {
-                if let Some(index) = self.file_index.clone() {
-                    let _ = sender.output(PasswordDialogOutput::Unlock {
-                        index,
-                        password: pass,
-                    });
-                }
+                let _ = sender.output(PasswordDialogOutput::Unlock {
+                    index: self.file_index.clone(),
+                    password: pass,
+                });
             }
             PasswordDialogMsg::Cancel => {
-                if let Some(index) = self.file_index.clone() {
-                    let _ = sender.output(PasswordDialogOutput::Cancelled(index));
-                }
+                let _ = sender.output(PasswordDialogOutput::Cancelled(self.file_index.clone()));
             }
         }
     }

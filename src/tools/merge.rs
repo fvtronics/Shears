@@ -12,7 +12,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, files_from_model, pdf_dialog, save_pdf_dialog};
+use crate::tools::{Tool, open_pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
@@ -44,12 +44,13 @@ impl SimpleComponent for MergeTool {
 
     view! {
         gtk::Stack {
-            #[watch]
-            set_visible_child_name: if model.has_files { "merge" } else { "empty" },
             set_vhomogeneous: false,
 
             add_named: (model._empty_page.widget(), Some("empty")),
             add_named: (model.merge_page.widget(), Some("merge")),
+
+            #[watch]
+            set_visible_child_name: if model.has_files { "merge" } else { "empty" },
         }
     }
 
@@ -118,7 +119,6 @@ struct MergePage {
     modern_pdf_format: bool,
     normalize_page_size: bool,
     remove_metadata: bool,
-    output_file: Option<String>,
     is_loading: bool,
     is_adding_files: bool,
     is_merging: bool,
@@ -166,7 +166,7 @@ enum MergePageMsg {
     RotateAll,
     MergeTo(gio::File),
     MergeComplete(Result<std::path::PathBuf, PdfError>),
-    OpenOutput,
+    OpenOutput(std::path::PathBuf),
     LoadingComplete,
     PasswordRequired {
         index: DynamicIndex,
@@ -218,18 +218,10 @@ impl Component for MergePage {
                     set_tooltip_text: Some(&gettext("Add PDF Files")),
 
                     connect_clicked[sender] => move |button| {
-                        open_pdf_dialog(button, sender.clone());
-                    },
-                },
-
-                gtk::Button {
-                    set_label: &gettext("Open Output"),
-                    #[watch]
-                    set_visible: model.output_file.is_some(),
-                    set_tooltip_text: Some(&gettext("Open Output File")),
-
-                    connect_clicked[sender] => move |_| {
-                        sender.input(MergePageMsg::OpenOutput);
+                        let sender_clone = sender.clone();
+                        open_pdf_dialog(button, Tool::Merge, move |files| {
+                            sender_clone.input(MergePageMsg::AddFiles(files));
+                        });
                     },
                 },
 
@@ -373,7 +365,6 @@ impl Component for MergePage {
             modern_pdf_format: false,
             normalize_page_size: false,
             remove_metadata: false,
-            output_file: None,
             is_loading: false,
             is_adding_files: false,
             is_merging: false,
@@ -435,10 +426,14 @@ impl Component for MergePage {
 
                 match result {
                     Ok(path) => {
-                        self.output_file = Some(path.to_string_lossy().into_owned());
-                        let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
-                        root.add_toast(toast);
                         tracing::info!("Merged PDF Saved");
+                        let toast = adw::Toast::new(&gettext("PDFs merged successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(MergePageMsg::OpenOutput(path.clone()));
+                        });
+                        root.add_toast(toast);
                     }
                     Err(err) => {
                         let toast = adw::Toast::new(&gettext("Could not save PDF"));
@@ -447,22 +442,15 @@ impl Component for MergePage {
                     }
                 }
             }
-            MergePageMsg::OpenOutput => {
-                if let Some(path_str) = self.output_file.clone() {
-                    let file = gio::File::for_path(&path_str);
-                    if !file.query_exists(gio::Cancellable::NONE) {
-                        let toast = adw::Toast::new(&gettext("Output file not found"));
-                        root.add_toast(toast);
-                        self.output_file = None;
-                        tracing::error!("Output file no longer exists at: {}", path_str);
-                    } else if let Err(e) = gio::AppInfo::launch_default_for_uri(
-                        file.uri().as_str(),
-                        None::<&gio::AppLaunchContext>,
-                    ) {
-                        let toast = adw::Toast::new(&gettext("Failed to open output file"));
-                        root.add_toast(toast);
-                        tracing::error!("Failed to open output file: {:?}", e);
-                    }
+            MergePageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                    root.add_toast(toast);
+                    tracing::error!("Failed to open output file: {:?}", e);
                 }
             }
             MergePageMsg::AddFiles(files) => {
@@ -530,7 +518,6 @@ impl Component for MergePage {
                 self.check_loading_state(&sender);
             }
             MergePageMsg::ClearFiles => {
-                self.output_file = None;
                 self.password_queue.clear();
                 {
                     let mut files_guard = self.files.guard();
@@ -608,18 +595,14 @@ impl Component for MergePage {
             }
             MergePageMsg::SetModernPdfFormat(active) => {
                 self.modern_pdf_format = active;
-                self.output_file = None;
             }
             MergePageMsg::SetNormalizePageSize(active) => {
                 self.normalize_page_size = active;
-                self.output_file = None;
             }
             MergePageMsg::SetRemoveMetadata(active) => {
                 self.remove_metadata = active;
-                self.output_file = None;
             }
             MergePageMsg::RotateAll => {
-                self.output_file = None;
                 for i in 0..self.files.len() {
                     self.files.send(i, MergeFileRowMsg::RotateClockwise);
                 }
@@ -667,13 +650,17 @@ impl Component for MergePage {
             }
             MergePageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { index, password } => {
-                    self.files.send(
-                        index.current_index(),
-                        MergeFileRowMsg::RetryWithPassword(password),
-                    );
+                    if let Some(idx) = index {
+                        self.files.send(
+                            idx.current_index(),
+                            MergeFileRowMsg::RetryWithPassword(password),
+                        );
+                    }
                 }
                 PasswordDialogOutput::Cancelled(index) => {
-                    sender.input(MergePageMsg::DeleteFile(index));
+                    if let Some(idx) = index {
+                        sender.input(MergePageMsg::DeleteFile(idx));
+                    }
                 }
             },
         }
@@ -710,7 +697,7 @@ impl MergePage {
             && let Some(window) = root.root().and_downcast::<gtk::Window>()
         {
             self.password_dialog.emit(PasswordDialogMsg::Show {
-                index: req.index.clone(),
+                index: Some(req.index.clone()),
                 filename: req.filename.clone(),
                 is_error: req.is_error,
                 parent_window: window,
@@ -719,7 +706,6 @@ impl MergePage {
     }
 
     fn update_bounds(&mut self) {
-        self.output_file = None;
         let length = self.files.len();
         let files_guard = self.files.guard();
         for i in 0..length {
@@ -1077,32 +1063,22 @@ fn request_thumbnail(
     password: Option<String>,
     sender: FactorySender<MergeFileRow>,
 ) {
-    crate::pdf::preview::thread_pool()
-        .push(move || {
-            let result = match item_type {
-                MergeItemType::File(file) => crate::pdf::preview::generate_thumbnail(
-                    &file,
-                    rotation as i32,
-                    password.as_deref(),
-                ),
-                MergeItemType::BlankPage { width, height } => {
-                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32)
-                }
-            };
-            sender.input(MergeFileRowMsg::ThumbnailReady(result));
-        })
-        .expect("Failed to enqueue thumbnail task");
-}
-
-fn open_pdf_dialog(button: &gtk::Button, sender: ComponentSender<MergePage>) {
-    let dialog = pdf_dialog(Tool::Merge);
-    let parent = button.root().and_downcast::<gtk::Window>();
-
-    dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
-        if let Ok(files) = result {
-            sender.input(MergePageMsg::AddFiles(files_from_model(&files)));
-        }
-    });
+    if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
+        let result = match item_type {
+            MergeItemType::File(file) => crate::pdf::preview::generate_thumbnail(
+                &file,
+                rotation as i32,
+                password.as_deref(),
+                150.0,
+            ),
+            MergeItemType::BlankPage { width, height } => {
+                crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32, 150.0)
+            }
+        };
+        sender.input(MergeFileRowMsg::ThumbnailReady(result));
+    }) {
+        tracing::error!("Failed to enqueue thumbnail task: {}", e);
+    }
 }
 
 fn file_title(file: &gio::File) -> String {

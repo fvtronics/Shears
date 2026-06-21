@@ -11,7 +11,7 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
-use crate::tools::{Tool, merge::MergeTool, page::ToolPage};
+use crate::tools::{Tool, merge::MergeTool, page::ToolPage, split::SplitTool};
 
 pub(super) struct App {
     selected_tool: Tool,
@@ -19,11 +19,13 @@ pub(super) struct App {
     _merge: Controller<MergeTool>,
     _organize: Controller<ToolPage>,
     _extract: Controller<ToolPage>,
-    _split: Controller<ToolPage>,
+    _split: Controller<SplitTool>,
     _compress: Controller<ToolPage>,
     _watermark: Controller<ToolPage>,
     _metadata: Controller<ToolPage>,
     merge_is_loading: bool,
+    split_is_loading: bool,
+    split_file_stem: Option<String>,
 }
 
 #[derive(Debug)]
@@ -31,6 +33,8 @@ pub(super) enum AppMsg {
     SelectTool(Tool),
     UpdateMergeFileCount(usize),
     UpdateMergeLoading(bool),
+    UpdateSplitLoading(bool),
+    UpdateSplitFileStem(Option<String>),
     Quit,
 }
 
@@ -127,7 +131,6 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Split PDF")) {
                                             set_icon_name: Some(Tool::Split.icon_name()),
                                             set_subtitle: Some(gettext("Create separate files").as_str()),
-                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Compress PDF")) {
@@ -175,8 +178,6 @@ impl SimpleComponent for App {
                                 },
 
                                 gtk::Stack {
-                                    #[watch]
-                                    set_visible_child_name: model.selected_tool.stack_name(),
                                     set_vhomogeneous: false,
 
                                     add_named: (model._merge.widget(), Some(Tool::Merge.stack_name())),
@@ -186,6 +187,9 @@ impl SimpleComponent for App {
                                     add_named: (model._compress.widget(), Some(Tool::Compress.stack_name())),
                                     add_named: (model._watermark.widget(), Some(Tool::Watermark.stack_name())),
                                     add_named: (model._metadata.widget(), Some(Tool::Metadata.stack_name())),
+
+                                    #[watch]
+                                    set_visible_child_name: model.selected_tool.stack_name(),
                                 }
                             }
                     }
@@ -211,7 +215,17 @@ impl SimpleComponent for App {
                 });
         let organize = ToolPage::builder().launch(Tool::Organize).detach();
         let extract = ToolPage::builder().launch(Tool::Extract).detach();
-        let split = ToolPage::builder().launch(Tool::Split).detach();
+        let split =
+            SplitTool::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    crate::tools::split::SplitToolOutput::Loading(is_loading) => {
+                        AppMsg::UpdateSplitLoading(is_loading)
+                    }
+                    crate::tools::split::SplitToolOutput::FileActive(stem) => {
+                        AppMsg::UpdateSplitFileStem(stem)
+                    }
+                });
         let compress = ToolPage::builder().launch(Tool::Compress).detach();
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
         let metadata = ToolPage::builder().launch(Tool::Metadata).detach();
@@ -227,6 +241,8 @@ impl SimpleComponent for App {
             _watermark: watermark,
             _metadata: metadata,
             merge_is_loading: false,
+            split_is_loading: false,
+            split_file_stem: None,
         };
         let widgets = view_output!();
         widgets
@@ -277,6 +293,12 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateMergeLoading(is_loading) => {
                 self.merge_is_loading = is_loading;
+            }
+            AppMsg::UpdateSplitLoading(is_loading) => {
+                self.split_is_loading = is_loading;
+            }
+            AppMsg::UpdateSplitFileStem(stem) => {
+                self.split_file_stem = stem;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -338,6 +360,15 @@ impl App {
                     let count = self.merge_file_count as u32;
                     ngettext("{count} file selected", "{count} files selected", count)
                         .replace("{count}", &count.to_string())
+                }
+            }
+            Tool::Split => {
+                if self.split_is_loading {
+                    gettext("Processing…")
+                } else if let Some(stem) = &self.split_file_stem {
+                    stem.clone()
+                } else {
+                    self.selected_tool.subtitle()
                 }
             }
             tool => tool.subtitle(),

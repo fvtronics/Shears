@@ -7,6 +7,7 @@
 
 pub mod merge;
 pub mod page;
+pub mod split;
 
 use gettextrs::gettext;
 use relm4::gtk;
@@ -149,6 +150,29 @@ pub(super) fn files_from_model(model: &gio::ListModel) -> Vec<gio::File> {
         .collect()
 }
 
+pub(super) fn open_pdf_dialog(
+    button: &gtk::Button,
+    tool: Tool,
+    callback: impl FnOnce(Vec<gio::File>) + 'static,
+) {
+    let dialog = pdf_dialog(tool);
+    let parent = button.root().and_downcast::<gtk::Window>();
+
+    if matches!(tool, Tool::Merge) {
+        dialog.open_multiple(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+            if let Ok(files) = result {
+                callback(files_from_model(&files));
+            }
+        });
+    } else {
+        dialog.open(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+            if let Ok(file) = result {
+                callback(vec![file]);
+            }
+        });
+    }
+}
+
 pub(super) fn save_pdf_dialog(
     button: &gtk::Button,
     tool: Tool,
@@ -166,4 +190,65 @@ pub(super) fn save_pdf_dialog(
             callback(file);
         }
     });
+}
+
+pub(super) fn select_folder_dialog(
+    button: &gtk::Button,
+    title: &str,
+    callback: impl FnOnce(gio::File) + 'static,
+) {
+    let dialog = gtk::FileDialog::builder().title(title).modal(true).build();
+    let parent = button.root().and_downcast::<gtk::Window>();
+
+    dialog.select_folder(parent.as_ref(), None::<&gio::Cancellable>, move |result| {
+        if let Ok(file) = result {
+            callback(file);
+        }
+    });
+}
+
+fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, String> {
+    let p = s
+        .trim()
+        .parse::<u32>()
+        .map_err(|_| gettext("Invalid input"))?;
+    if p == 0 {
+        return Err(gettext("Invalid input"));
+    }
+    if p > max_pages {
+        return Err(gettext("Contains out of range pages (Max: {max})")
+            .replace("{max}", &max_pages.to_string()));
+    }
+    Ok(p)
+}
+
+pub(super) fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec<u32>, String> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Err(gettext("Please specify pages"));
+    }
+
+    let mut pages = Vec::new();
+
+    for part in input.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+
+        if part.contains('-') {
+            return Err(gettext("Ranges are not supported for splitting"));
+        }
+
+        pages.push(parse_page_number(part, max_pages)?);
+    }
+
+    if pages.is_empty() {
+        return Err(gettext("Please specify pages"));
+    }
+
+    pages.sort_unstable();
+    pages.dedup();
+
+    Ok(pages)
 }
