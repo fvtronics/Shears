@@ -125,7 +125,6 @@ fn create_blank_pdf(width: f32, height: f32) -> Document {
     doc
 }
 
-
 fn get_inherited_mediabox(doc: &Document, page_id: ObjectId) -> Option<Vec<f32>> {
     let mut current_id = page_id;
     loop {

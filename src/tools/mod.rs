@@ -208,7 +208,10 @@ pub(super) fn select_folder_dialog(
 }
 
 fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, String> {
-    let p = s.trim().parse::<u32>().map_err(|_| gettext("Invalid input"))?;
+    let p = s
+        .trim()
+        .parse::<u32>()
+        .map_err(|_| gettext("Invalid input"))?;
     if p == 0 {
         return Err(gettext("Invalid input"));
     }
@@ -219,10 +222,7 @@ fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, String> {
     Ok(p)
 }
 
-pub(super) fn validate_specific_pages(
-    input: &str,
-    max_pages: u32,
-) -> Result<Vec<u32>, String> {
+pub(super) fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec<u32>, String> {
     let input = input.trim();
     if input.is_empty() {
         return Err(gettext("Please specify pages"));

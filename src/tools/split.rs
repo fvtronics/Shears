@@ -467,9 +467,14 @@ impl Component for SplitPage {
                         DivideMode::EachPage => DivideAfter::EachPage,
                         DivideMode::EvenPages => DivideAfter::EvenPages,
                         DivideMode::OddPages => DivideAfter::OddPages,
-                        DivideMode::EveryNPages => DivideAfter::EveryNPages(self.every_n.min(self.page_count.max(1))),
+                        DivideMode::EveryNPages => {
+                            DivideAfter::EveryNPages(self.every_n.min(self.page_count.max(1)))
+                        }
                         DivideMode::SpecificPages => {
-                            match super::validate_specific_pages(&self.specific_pages, self.page_count) {
+                            match super::validate_specific_pages(
+                                &self.specific_pages,
+                                self.page_count,
+                            ) {
                                 Ok(cleaned) => DivideAfter::SpecificPages(cleaned),
                                 Err(err) => {
                                     self.specific_pages_error = Some(err);

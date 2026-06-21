@@ -59,7 +59,7 @@ fn calculate_segments(divide_after: &DivideAfter, total_pages: u32) -> Vec<Vec<u
 
     for p in 1..=total_pages {
         current_segment.push(p);
-        
+
         let should_cut = match divide_after {
             DivideAfter::EachPage => true,
             DivideAfter::EvenPages => p % 2 == 0,
@@ -73,7 +73,7 @@ fn calculate_segments(divide_after: &DivideAfter, total_pages: u32) -> Vec<Vec<u
             current_segment = Vec::new();
         }
     }
-    
+
     if !current_segment.is_empty() {
         segments.push(current_segment);
     }
