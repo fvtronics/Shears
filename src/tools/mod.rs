@@ -8,12 +8,13 @@
 pub mod merge;
 pub mod page;
 pub mod split;
+pub mod metadata;
 
 use gettextrs::gettext;
 use relm4::gtk;
 
 use gtk::gio;
-use gtk::prelude::{Cast, CastNone, ListModelExt, WidgetExt};
+use gtk::prelude::{Cast, CastNone, FileExt, ListModelExt, WidgetExt};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Tool {
@@ -251,4 +252,14 @@ pub(super) fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec
     pages.dedup();
 
     Ok(pages)
+}
+
+pub(super) fn file_stem(file: &gio::File) -> String {
+    file.basename()
+        .and_then(|name| {
+            std::path::Path::new(&name)
+                .file_stem()
+                .map(|stem| stem.to_string_lossy().into_owned())
+        })
+        .unwrap_or_else(|| file.uri().to_string())
 }

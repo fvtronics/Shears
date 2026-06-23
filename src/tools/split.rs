@@ -11,7 +11,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, open_pdf_dialog, select_folder_dialog};
+use crate::tools::{Tool, file_stem, open_pdf_dialog, select_folder_dialog};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum SplitToolState {
@@ -620,14 +620,4 @@ impl SplitPage {
             let _ = sender.output(SplitPageOutput::Loading(is_loading));
         }
     }
-}
-
-fn file_stem(file: &gio::File) -> String {
-    file.basename()
-        .and_then(|name| {
-            std::path::Path::new(&name)
-                .file_stem()
-                .map(|stem| stem.to_string_lossy().into_owned())
-        })
-        .unwrap_or_else(|| file.uri().to_string())
 }
