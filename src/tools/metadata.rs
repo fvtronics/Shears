@@ -9,52 +9,52 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
-use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
+use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, file_stem, open_pdf_dialog, select_folder_dialog};
+use crate::tools::{Tool, file_stem, open_pdf_dialog, save_pdf_dialog};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum SplitToolState {
+pub enum MetadataToolState {
     Empty,
     LoadingNewFile,
     Ready,
     Processing,
 }
 
-pub struct SplitTool {
-    state: SplitToolState,
+pub struct MetadataTool {
+    state: MetadataToolState,
     _empty_page: Controller<ToolPage>,
-    split_page: Controller<SplitPage>,
+    metadata_page: Controller<MetadataPage>,
 }
 
 #[derive(Debug)]
-pub enum SplitToolMsg {
+pub enum MetadataToolMsg {
     AddFiles(Vec<gio::File>),
     UpdateFileActive(Option<String>),
     Loading(bool),
 }
 
 #[derive(Debug)]
-pub enum SplitToolOutput {
+pub enum MetadataToolOutput {
     FileActive(Option<String>),
     Loading(bool),
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for SplitTool {
+impl SimpleComponent for MetadataTool {
     type Init = ();
-    type Input = SplitToolMsg;
-    type Output = SplitToolOutput;
+    type Input = MetadataToolMsg;
+    type Output = MetadataToolOutput;
 
     view! {
         gtk::Stack {
             set_vhomogeneous: false,
 
             add_named: (model._empty_page.widget(), Some("empty")),
-            add_named: (model.split_page.widget(), Some("split")),
+            add_named: (model.metadata_page.widget(), Some("metadata")),
 
             #[watch]
-            set_visible_child_name: if matches!(model.state, SplitToolState::Ready | SplitToolState::Processing) { "split" } else { "empty" },
+            set_visible_child_name: if matches!(model.state, MetadataToolState::Ready | MetadataToolState::Processing) { "metadata" } else { "empty" },
         }
     }
 
@@ -64,20 +64,23 @@ impl SimpleComponent for SplitTool {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let empty_page = ToolPage::builder()
-            .launch(Tool::Split)
-            .forward(sender.input_sender(), SplitToolMsg::AddFiles);
+            .launch(Tool::Metadata)
+            .forward(sender.input_sender(), MetadataToolMsg::AddFiles);
 
-        let split_page = SplitPage::builder()
-            .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                SplitPageOutput::FileActive(file_stem) => SplitToolMsg::UpdateFileActive(file_stem),
-                SplitPageOutput::Loading(is_loading) => SplitToolMsg::Loading(is_loading),
-            });
+        let metadata_page =
+            MetadataPage::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    MetadataPageOutput::FileActive(file_stem) => {
+                        MetadataToolMsg::UpdateFileActive(file_stem)
+                    }
+                    MetadataPageOutput::Loading(is_loading) => MetadataToolMsg::Loading(is_loading),
+                });
 
         let model = Self {
-            state: SplitToolState::Empty,
+            state: MetadataToolState::Empty,
             _empty_page: empty_page,
-            split_page,
+            metadata_page,
         };
         let widgets = view_output!();
 
@@ -86,33 +89,33 @@ impl SimpleComponent for SplitTool {
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
-            SplitToolMsg::AddFiles(mut files) => {
+            MetadataToolMsg::AddFiles(mut files) => {
                 if let Some(file) = files.pop() {
-                    self.split_page.emit(SplitPageMsg::AddFile(file));
+                    self.metadata_page.emit(MetadataPageMsg::AddFile(file));
                 }
             }
-            SplitToolMsg::UpdateFileActive(file_stem) => {
+            MetadataToolMsg::UpdateFileActive(file_stem) => {
                 if file_stem.is_none() {
-                    self.state = SplitToolState::Empty;
+                    self.state = MetadataToolState::Empty;
                 }
-                let _ = sender.output(SplitToolOutput::FileActive(file_stem));
+                let _ = sender.output(MetadataToolOutput::FileActive(file_stem));
             }
-            SplitToolMsg::Loading(is_loading) => {
+            MetadataToolMsg::Loading(is_loading) => {
                 if is_loading {
-                    if self.state == SplitToolState::Empty {
-                        self.state = SplitToolState::LoadingNewFile;
-                    } else if self.state == SplitToolState::Ready {
-                        self.state = SplitToolState::Processing;
+                    if self.state == MetadataToolState::Empty {
+                        self.state = MetadataToolState::LoadingNewFile;
+                    } else if self.state == MetadataToolState::Ready {
+                        self.state = MetadataToolState::Processing;
                     }
                 } else {
-                    if self.state == SplitToolState::LoadingNewFile
-                        || self.state == SplitToolState::Processing
+                    if self.state == MetadataToolState::LoadingNewFile
+                        || self.state == MetadataToolState::Processing
                     {
-                        self.state = SplitToolState::Ready;
+                        self.state = MetadataToolState::Ready;
                     }
                 }
                 self._empty_page.emit(is_loading);
-                let _ = sender.output(SplitToolOutput::Loading(is_loading));
+                let _ = sender.output(MetadataToolOutput::Loading(is_loading));
             }
         }
     }
@@ -125,74 +128,55 @@ pub enum PreviewStatus {
     PasswordRequired,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
-pub enum DivideMode {
-    #[default]
-    EachPage,
-    EvenPages,
-    OddPages,
-    EveryNPages,
-    SpecificPages,
-}
-
-impl From<u32> for DivideMode {
-    fn from(value: u32) -> Self {
-        match value {
-            1 => Self::EvenPages,
-            2 => Self::OddPages,
-            3 => Self::EveryNPages,
-            4 => Self::SpecificPages,
-            _ => Self::EachPage,
-        }
-    }
-}
-
-struct SplitPage {
+struct MetadataPage {
     file: Option<gio::File>,
     password: Option<String>,
-    prefix: String,
-    prefix_changed: bool,
-    divide_mode: DivideMode,
-    every_n: u32,
-    specific_pages: String,
-    specific_pages_error: Option<String>,
-    page_count: u32,
-    is_splitting: bool,
+
+    title: String,
+    author: String,
+    subject: String,
+    keywords: String,
+    creator: String,
+    producer: String,
+
+    is_saving: bool,
     is_loading: bool,
     modern_pdf_format: bool,
     remove_metadata: bool,
+    sync_entries: bool,
     thumbnail: Option<gdk::MemoryTexture>,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
 }
 
 #[derive(Debug)]
-enum SplitPageMsg {
+enum MetadataPageMsg {
     AddFile(gio::File),
-    SetDivideMode(DivideMode),
-    SetEveryN(u32),
-    SetSpecificPages(String),
-    SetPrefix(String),
-    SplitTo(gio::File),
+    SetTitle(String),
+    SetAuthor(String),
+    SetSubject(String),
+    SetKeywords(String),
+    SaveTo(gio::File),
+    SaveComplete(Result<std::path::PathBuf, PdfError>),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
-    SplitComplete(Result<std::path::PathBuf, PdfError>),
-    OpenOutput(std::path::PathBuf),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
+    OpenOutput(std::path::PathBuf),
+    MetadataReady(Result<PdfMetadata, PdfError>),
 }
 
 #[derive(Debug)]
-pub enum SplitPageOutput {
+pub enum MetadataPageOutput {
     FileActive(Option<String>),
     Loading(bool),
 }
 
 #[relm4::component]
-impl Component for SplitPage {
+impl Component for MetadataPage {
     type Init = ();
-    type Input = SplitPageMsg;
-    type Output = SplitPageOutput;
+    type Input = MetadataPageMsg;
+    type Output = MetadataPageOutput;
     type CommandOutput = ();
 
     view! {
@@ -216,30 +200,30 @@ impl Component for SplitPage {
                         set_sensitive: !model.is_loading,
 
                         gtk::Button {
-                            set_label: &Tool::Split.action_label(),
+                            set_label: &Tool::Metadata.action_label(),
                             set_tooltip_text: Some(&gettext("Select PDF File")),
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
-                                open_pdf_dialog(button, Tool::Split, move |mut files| {
+                                open_pdf_dialog(button, Tool::Metadata, move |mut files| {
                                     if let Some(file) = files.pop() {
-                                        sender_clone.input(SplitPageMsg::AddFile(file));
+                                        sender_clone.input(MetadataPageMsg::AddFile(file));
                                     }
                                 });
                             },
                         },
 
                         gtk::Button {
-                            set_label: &gettext("Split"),
-                            set_tooltip_text: Some(&gettext("Split")),
+                            set_label: &gettext("Save"),
+                            set_tooltip_text: Some(&gettext("Save modified PDF")),
                             add_css_class: "suggested-action",
                             #[watch]
-                            set_sensitive: model.file.is_some() && !model.is_splitting,
+                            set_sensitive: model.file.is_some() && !model.is_saving,
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
-                                select_folder_dialog(button, &gettext("Select Output Folder"), move |folder| {
-                                    sender_clone.input(SplitPageMsg::SplitTo(folder));
+                                save_pdf_dialog(button, Tool::Metadata, &gettext("Save PDF"), move |file| {
+                                    sender_clone.input(MetadataPageMsg::SaveTo(file));
                                 });
                             }
                         },
@@ -260,7 +244,7 @@ impl Component for SplitPage {
                                         set_active: model.modern_pdf_format,
 
                                         connect_active_notify[sender] => move |row| {
-                                            sender.input(SplitPageMsg::SetModernPdfFormat(row.is_active()));
+                                            sender.input(MetadataPageMsg::SetModernPdfFormat(row.is_active()));
                                         }
                                     },
 
@@ -271,7 +255,7 @@ impl Component for SplitPage {
                                         set_active: model.remove_metadata,
 
                                         connect_active_notify[sender] => move |row| {
-                                            sender.input(SplitPageMsg::SetRemoveMetadata(row.is_active()));
+                                            sender.input(MetadataPageMsg::SetRemoveMetadata(row.is_active()));
                                         }
                                     },
                                 }
@@ -279,7 +263,7 @@ impl Component for SplitPage {
                         }
                     },
 
-                    #[name(split_box)]
+                    #[name(metadata_box)]
                     gtk::Box {
                         set_orientation: gtk::Orientation::Horizontal,
                         set_spacing: 24,
@@ -312,69 +296,58 @@ impl Component for SplitPage {
                                 set_orientation: gtk::Orientation::Vertical,
 
                                 adw::PreferencesGroup {
-                                    adw::ComboRow {
-                                        set_title: &gettext("Divide after"),
-                                        set_model: Some(&gtk::StringList::new(&[
-                                            gettext("Each page").as_str(),
-                                            gettext("Even pages").as_str(),
-                                            gettext("Odd pages").as_str(),
-                                            gettext("Every N pages").as_str(),
-                                            gettext("Specific pages").as_str(),
-                                        ])),
-                                        connect_selected_notify[sender] => move |row| {
-                                            sender.input(SplitPageMsg::SetDivideMode(DivideMode::from(row.selected())));
-                                        }
-                                    },
-
-                                    adw::SpinRow {
-                                        set_title: &gettext("Pages"),
-                                        set_numeric: true,
-                                        #[wrap(Some)]
-                                        set_adjustment = &gtk::Adjustment {
-                                            set_lower: 1.0,
-                                            #[watch]
-                                            set_upper: model.page_count.max(1) as f64,
-                                            set_value: 1.0,
-                                            set_step_increment: 1.0,
-                                            set_page_increment: 10.0,
-                                        },
-                                        #[watch]
-                                        set_visible: matches!(model.divide_mode, DivideMode::EveryNPages),
-                                        connect_value_notify[sender] => move |row| {
-                                            sender.input(SplitPageMsg::SetEveryN(row.value() as u32));
-                                        }
-                                    },
-
                                     adw::EntryRow {
-                                        set_title: &gettext("Pages"),
-                                        #[watch]
-                                        set_visible: matches!(model.divide_mode, DivideMode::SpecificPages),
-                                        set_text: &model.specific_pages,
+                                        set_title: &gettext("Title"),
+                                        #[track = "model.sync_entries"]
+                                        set_text: &model.title,
                                         set_show_apply_button: false,
-                                        #[watch]
-                                        set_class_active: ("error", model.specific_pages_error.is_some()),
                                         connect_changed[sender] => move |entry| {
-                                            sender.input(SplitPageMsg::SetSpecificPages(entry.text().to_string()));
-                                        },
+                                            sender.input(MetadataPageMsg::SetTitle(entry.text().to_string()));
+                                        }
+                                    },
+                                    adw::EntryRow {
+                                        set_title: &gettext("Author"),
+                                        #[track = "model.sync_entries"]
+                                        set_text: &model.author,
+                                        set_show_apply_button: false,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(MetadataPageMsg::SetAuthor(entry.text().to_string()));
+                                        }
+                                    },
+                                    adw::EntryRow {
+                                        set_title: &gettext("Subject"),
+                                        #[track = "model.sync_entries"]
+                                        set_text: &model.subject,
+                                        set_show_apply_button: false,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(MetadataPageMsg::SetSubject(entry.text().to_string()));
+                                        }
+                                    },
+                                    adw::EntryRow {
+                                        set_title: &gettext("Keywords"),
+                                        #[track = "model.sync_entries"]
+                                        set_text: &model.keywords,
+                                        set_show_apply_button: false,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(MetadataPageMsg::SetKeywords(entry.text().to_string()));
+                                        }
+                                    },
+                                    adw::ActionRow {
+                                        set_title: &gettext("Creator"),
+                                        #[track = "model.sync_entries"]
+                                        set_subtitle: &model.creator,
+                                    },
+                                    adw::ActionRow {
+                                        set_title: &gettext("Producer"),
+                                        #[track = "model.sync_entries"]
+                                        set_subtitle: &model.producer,
+
                                         add_suffix = &gtk::Image {
-                                            set_icon_name: Some("dialog-error-symbolic"),
-                                            #[watch]
-                                            set_tooltip_text: model.specific_pages_error.as_deref(),
-                                            #[watch]
-                                            set_visible: model.specific_pages_error.is_some(),
-                                            add_css_class: "error",
+                                            set_icon_name: Some("dialog-warning-symbolic"),
+                                            set_tooltip_text: Some(&gettext("Producer will be replaced when saving")),
+                                            add_css_class: "warning",
                                         }
                                     },
-
-                                    adw::EntryRow {
-                                        set_title: &gettext("Output prefix"),
-                                        #[track = "model.prefix_changed"]
-                                        set_text: &model.prefix,
-                                        set_show_apply_button: false,
-                                        connect_changed[sender] => move |entry| {
-                                            sender.input(SplitPageMsg::SetPrefix(entry.text().to_string()));
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -391,22 +364,22 @@ impl Component for SplitPage {
     ) -> ComponentParts<Self> {
         let password_dialog = PasswordDialog::builder()
             .launch(())
-            .forward(sender.input_sender(), SplitPageMsg::PasswordDialogOutput);
+            .forward(sender.input_sender(), MetadataPageMsg::PasswordDialogOutput);
 
         let model = Self {
             file: None,
             password: None,
-            prefix: gettext("output_file"),
-            prefix_changed: true,
-            divide_mode: DivideMode::default(),
-            every_n: 1,
-            specific_pages: String::new(),
-            specific_pages_error: None,
-            page_count: 0,
-            is_splitting: false,
+            title: String::new(),
+            author: String::new(),
+            subject: String::new(),
+            keywords: String::new(),
+            creator: gettext("N/A"),
+            producer: gettext("N/A"),
+            is_saving: false,
             is_loading: false,
             modern_pdf_format: false,
             remove_metadata: false,
+            sync_entries: false,
             thumbnail: None,
             password_dialog,
             preview_status: PreviewStatus::Ready,
@@ -420,7 +393,7 @@ impl Component for SplitPage {
         );
         let bp = adw::Breakpoint::new(condition);
         bp.add_setters(&[(
-            &widgets.split_box,
+            &widgets.metadata_box,
             "orientation",
             gtk::Orientation::Vertical,
         )]);
@@ -431,155 +404,178 @@ impl Component for SplitPage {
     }
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
-        self.prefix_changed = false;
+        self.sync_entries = false;
         match message {
-            SplitPageMsg::AddFile(file) => {
-                self.prefix = file_stem(&file);
-                self.prefix_changed = true;
+            MetadataPageMsg::AddFile(file) => {
                 self.password = None;
                 self.preview_status = PreviewStatus::InitialPending;
+
+                self.title.clear();
+                self.author.clear();
+                self.subject.clear();
+                self.keywords.clear();
+                self.creator = gettext("N/A");
+                self.producer = gettext("N/A");
+                self.sync_entries = true;
+
+                let stem = file_stem(&file);
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(SplitPageOutput::FileActive(Some(self.prefix.clone())));
+                let _ = sender.output(MetadataPageOutput::FileActive(Some(stem)));
 
                 self.request_thumbnail(None, &sender);
+                self.request_metadata(None, &sender);
             }
-            SplitPageMsg::SetDivideMode(divide_mode) => {
-                self.divide_mode = divide_mode;
+            MetadataPageMsg::SetTitle(val) => {
+                self.title = val;
             }
-            SplitPageMsg::SetEveryN(every_n) => {
-                self.every_n = every_n;
+            MetadataPageMsg::SetAuthor(val) => {
+                self.author = val;
             }
-            SplitPageMsg::SetSpecificPages(pages) => {
-                self.specific_pages = pages;
-                self.specific_pages_error = None;
+            MetadataPageMsg::SetSubject(val) => {
+                self.subject = val;
             }
-            SplitPageMsg::SetPrefix(prefix) => {
-                self.prefix = prefix;
+            MetadataPageMsg::SetKeywords(val) => {
+                self.keywords = val;
             }
-            SplitPageMsg::SplitTo(output_folder) => {
+            MetadataPageMsg::SaveTo(output_file) => {
                 if let (Some(file_path), Some(output_path)) = (
                     self.file.as_ref().and_then(|f| f.path()),
-                    output_folder.path(),
+                    output_file.path(),
                 ) {
-                    let divide_after = match self.divide_mode {
-                        DivideMode::EachPage => DivideAfter::EachPage,
-                        DivideMode::EvenPages => DivideAfter::EvenPages,
-                        DivideMode::OddPages => DivideAfter::OddPages,
-                        DivideMode::EveryNPages => {
-                            DivideAfter::EveryNPages(self.every_n.min(self.page_count.max(1)))
-                        }
-                        DivideMode::SpecificPages => {
-                            match super::validate_specific_pages(
-                                &self.specific_pages,
-                                self.page_count,
-                            ) {
-                                Ok(cleaned) => DivideAfter::SpecificPages(cleaned),
-                                Err(err) => {
-                                    self.specific_pages_error = Some(err);
-                                    return;
-                                }
-                            }
-                        }
+                    self.is_saving = true;
+                    self.check_loading_state(&sender);
+
+                    let options = MetadataOptions {
+                        metadata: PdfMetadata {
+                            title: self.title.clone(),
+                            author: self.author.clone(),
+                            subject: self.subject.clone(),
+                            keywords: self.keywords.clone(),
+                            creator: self.creator.clone(),
+                            producer: self.producer.clone(),
+                        },
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
                     };
 
-                    self.is_splitting = true;
-                    self.check_loading_state(&sender);
-                    let options = SplitOptions {
-                        divide_after,
-                        prefix: self.prefix.clone(),
-                        password: self.password.clone(),
-                        modern_format: self.modern_pdf_format,
-                        remove_metadata: self.remove_metadata,
-                    };
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = split_file(&(file_path, 0), output_path.clone(), &options);
-                        let msg_result = result.map(|_| output_path);
-                        sender.input(SplitPageMsg::SplitComplete(msg_result));
+                        let result =
+                            update_metadata(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(MetadataPageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(MetadataPageMsg::SaveComplete(Err(e))),
+                        }
                     });
                 }
             }
-            SplitPageMsg::SetModernPdfFormat(active) => {
+            MetadataPageMsg::SetModernPdfFormat(active) => {
                 self.modern_pdf_format = active;
             }
-            SplitPageMsg::SetRemoveMetadata(active) => {
+            MetadataPageMsg::SetRemoveMetadata(active) => {
                 self.remove_metadata = active;
             }
-            SplitPageMsg::SplitComplete(result) => {
-                self.is_splitting = false;
+            MetadataPageMsg::SaveComplete(result) => {
+                self.is_saving = false;
                 self.check_loading_state(&sender);
                 match result {
                     Ok(path) => {
-                        tracing::info!("Split PDF complete");
-                        let toast = adw::Toast::new(&gettext("Split PDFs saved"));
-                        toast.set_button_label(Some(&gettext("Open Folder")));
+                        tracing::info!("Save metadata complete");
+                        let toast = adw::Toast::new(&gettext("Metadata saved successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
                         let sender_clone = sender.clone();
                         toast.connect_button_clicked(move |_| {
-                            sender_clone.input(SplitPageMsg::OpenOutput(path.clone()));
+                            sender_clone.input(MetadataPageMsg::OpenOutput(path.clone()));
                         });
                         root.add_toast(toast);
                     }
                     Err(err) => {
-                        tracing::error!("Failed to split PDF: {:?}", err);
-                        root.add_toast(adw::Toast::new(&gettext("Failed to split PDF")));
+                        tracing::error!("Failed to save metadata: {:?}", err);
+                        root.add_toast(adw::Toast::new(&gettext("Failed to save metadata")));
                     }
                 }
             }
-            SplitPageMsg::OpenOutput(path) => {
+            MetadataPageMsg::OpenOutput(path) => {
                 let file = gio::File::for_path(&path);
                 if let Err(e) = gio::AppInfo::launch_default_for_uri(
                     file.uri().as_str(),
                     None::<&gio::AppLaunchContext>,
                 ) {
-                    let toast = adw::Toast::new(&gettext("Failed to open output folder"));
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
                     root.add_toast(toast);
-                    tracing::error!("Failed to open output folder: {:?}", e);
+                    tracing::error!("Failed to open output file: {:?}", e);
                 }
             }
-            SplitPageMsg::ThumbnailReady(result) => {
+            MetadataPageMsg::ThumbnailReady(result) => {
                 match result {
                     Ok(thumb_res) => {
                         self.thumbnail = thumb_res.texture;
-                        self.page_count = thumb_res.page_count as u32;
                         self.preview_status = PreviewStatus::Ready;
                     }
                     Err(PreviewError::Encrypted) => {
                         self.preview_status = PreviewStatus::PasswordRequired;
                         let is_error = self.password.is_some();
-                        let filename = format!("{}.pdf", self.prefix);
+                        let filename = self.file.as_ref().map(file_stem).unwrap_or_default();
                         if let Some(window) = root.root().and_downcast::<gtk::Window>() {
                             self.password_dialog.emit(PasswordDialogMsg::Show {
                                 index: None,
-                                filename,
+                                filename: format!("{}.pdf", filename),
                                 is_error,
                                 parent_window: window,
                             });
                         }
                     }
                     Err(err) => {
-                        tracing::warn!("Failed to generate thumbnail for split page: {:?}", err);
+                        tracing::warn!("Failed to generate thumbnail for metadata page: {:?}", err);
                         self.thumbnail = None;
                         self.preview_status = PreviewStatus::Ready;
                     }
                 }
                 self.check_loading_state(&sender);
             }
-            SplitPageMsg::PasswordDialogOutput(output) => match output {
+            MetadataPageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { password, .. } => {
                     self.password = Some(password.clone());
-                    self.request_thumbnail(Some(password), &sender);
+                    self.request_thumbnail(Some(password.clone()), &sender);
+                    self.request_metadata(Some(password), &sender);
                 }
                 PasswordDialogOutput::Cancelled(_) => {
                     self.clear_file(&sender);
+                }
+            },
+            MetadataPageMsg::MetadataReady(result) => match result {
+                Ok(options) => {
+                    self.title = options.title;
+                    self.author = options.author;
+                    self.subject = options.subject;
+                    self.keywords = options.keywords;
+                    self.creator = if options.creator.is_empty() {
+                        gettext("N/A")
+                    } else {
+                        options.creator
+                    };
+                    self.producer = if options.producer.is_empty() {
+                        gettext("N/A")
+                    } else {
+                        options.producer
+                    };
+                    self.sync_entries = true;
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to read metadata: {:?}", e);
+                    root.add_toast(adw::Toast::new(&gettext(
+                        "Failed to load document's metadata",
+                    )));
                 }
             },
         }
     }
 }
 
-impl SplitPage {
+impl MetadataPage {
     fn request_thumbnail(&self, password: Option<String>, sender: &ComponentSender<Self>) {
         if let Some(file) = &self.file {
             let sender_clone = sender.clone();
@@ -592,9 +588,21 @@ impl SplitPage {
                     password.as_deref(),
                     800.0,
                 );
-                sender_clone.input(SplitPageMsg::ThumbnailReady(result));
+                sender_clone.input(MetadataPageMsg::ThumbnailReady(result));
             }) {
                 tracing::error!("Failed to enqueue thumbnail task: {}", e);
+            }
+        }
+    }
+
+    fn request_metadata(&self, password: Option<String>, sender: &ComponentSender<Self>) {
+        if let Some(file) = &self.file {
+            let sender_clone = sender.clone();
+            if let Some(path) = file.path() {
+                relm4::spawn_blocking(move || {
+                    let result = read_metadata(&path, password.as_deref());
+                    sender_clone.input(MetadataPageMsg::MetadataReady(result));
+                });
             }
         }
     }
@@ -605,11 +613,11 @@ impl SplitPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(SplitPageOutput::FileActive(None));
+        let _ = sender.output(MetadataPageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
-        let is_loading = self.is_splitting
+        let is_loading = self.is_saving
             || matches!(
                 self.preview_status,
                 PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
@@ -617,7 +625,7 @@ impl SplitPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(SplitPageOutput::Loading(is_loading));
+            let _ = sender.output(MetadataPageOutput::Loading(is_loading));
         }
     }
 }

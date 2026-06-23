@@ -11,7 +11,9 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
-use crate::tools::{Tool, merge::MergeTool, page::ToolPage, split::SplitTool};
+use crate::tools::{
+    Tool, merge::MergeTool, metadata::MetadataTool, page::ToolPage, split::SplitTool,
+};
 
 pub(super) struct App {
     selected_tool: Tool,
@@ -22,10 +24,12 @@ pub(super) struct App {
     _split: Controller<SplitTool>,
     _compress: Controller<ToolPage>,
     _watermark: Controller<ToolPage>,
-    _metadata: Controller<ToolPage>,
+    _metadata: Controller<MetadataTool>,
     merge_is_loading: bool,
     split_is_loading: bool,
     split_file_stem: Option<String>,
+    metadata_is_loading: bool,
+    metadata_file_active: Option<String>,
 }
 
 #[derive(Debug)]
@@ -35,6 +39,8 @@ pub(super) enum AppMsg {
     UpdateMergeLoading(bool),
     UpdateSplitLoading(bool),
     UpdateSplitFileStem(Option<String>),
+    UpdateMetadataLoading(bool),
+    UpdateMetadataFileActive(Option<String>),
     Quit,
 }
 
@@ -148,7 +154,6 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Edit Metadata")) {
                                             set_icon_name: Some(Tool::Metadata.icon_name()),
                                             set_subtitle: Some(gettext("Update document details").as_str()),
-                                            set_visible: false,
                                         },
                                     }
                                 }
@@ -228,7 +233,16 @@ impl SimpleComponent for App {
                 });
         let compress = ToolPage::builder().launch(Tool::Compress).detach();
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
-        let metadata = ToolPage::builder().launch(Tool::Metadata).detach();
+        let metadata = MetadataTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                crate::tools::metadata::MetadataToolOutput::Loading(is_loading) => {
+                    AppMsg::UpdateMetadataLoading(is_loading)
+                }
+                crate::tools::metadata::MetadataToolOutput::FileActive(stem) => {
+                    AppMsg::UpdateMetadataFileActive(stem)
+                }
+            });
 
         let model = Self {
             selected_tool: Tool::Merge,
@@ -243,6 +257,8 @@ impl SimpleComponent for App {
             merge_is_loading: false,
             split_is_loading: false,
             split_file_stem: None,
+            metadata_is_loading: false,
+            metadata_file_active: None,
         };
         let widgets = view_output!();
         widgets
@@ -299,6 +315,12 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateSplitFileStem(stem) => {
                 self.split_file_stem = stem;
+            }
+            AppMsg::UpdateMetadataLoading(is_loading) => {
+                self.metadata_is_loading = is_loading;
+            }
+            AppMsg::UpdateMetadataFileActive(title) => {
+                self.metadata_file_active = title;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -367,6 +389,15 @@ impl App {
                     gettext("Processing…")
                 } else if let Some(stem) = &self.split_file_stem {
                     stem.clone()
+                } else {
+                    self.selected_tool.subtitle()
+                }
+            }
+            Tool::Metadata => {
+                if self.metadata_is_loading {
+                    gettext("Processing…")
+                } else if let Some(title) = &self.metadata_file_active {
+                    title.clone()
                 } else {
                     self.selected_tool.subtitle()
                 }
