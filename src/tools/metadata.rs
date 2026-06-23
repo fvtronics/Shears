@@ -9,6 +9,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
+use crate::pdf::{MetadataOptions, PdfError, update_metadata};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -152,11 +153,12 @@ enum MetadataPageMsg {
     SetSubject(String),
     SetKeywords(String),
     SaveTo(gio::File),
-    SaveComplete(Result<std::path::PathBuf, String>),
+    SaveComplete(Result<std::path::PathBuf, PdfError>),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
+    OpenOutput(std::path::PathBuf),
 }
 
 #[derive(Debug)]
@@ -408,13 +410,29 @@ impl Component for MetadataPage {
             MetadataPageMsg::SetSubject(val) => { self.subject = val; }
             MetadataPageMsg::SetKeywords(val) => { self.keywords = val; }
             MetadataPageMsg::SaveTo(output_file) => {
-                if let Some(output_path) = output_file.path() {
+                if let (Some(file_path), Some(output_path)) = (self.file.as_ref().and_then(|f| f.path()), output_file.path()) {
                     self.is_saving = true;
                     self.check_loading_state(&sender);
 
+                    let options = MetadataOptions {
+                        title: self.title.clone(),
+                        author: self.author.clone(),
+                        subject: self.subject.clone(),
+                        keywords: self.keywords.clone(),
+                        creator: self.creator.clone(),
+                        producer: self.producer.clone(),
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
+                    };
+
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        sender.input(MetadataPageMsg::SaveComplete(Ok(output_path)));
+                        let result = update_metadata(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(MetadataPageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(MetadataPageMsg::SaveComplete(Err(e))),
+                        }
                     });
                 }
             }
@@ -428,15 +446,31 @@ impl Component for MetadataPage {
                 self.is_saving = false;
                 self.check_loading_state(&sender);
                 match result {
-                    Ok(_path) => {
+                    Ok(path) => {
                         tracing::info!("Save metadata complete");
                         let toast = adw::Toast::new(&gettext("Metadata saved successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(MetadataPageMsg::OpenOutput(path.clone()));
+                        });
                         root.add_toast(toast);
                     }
                     Err(err) => {
                         tracing::error!("Failed to save metadata: {:?}", err);
                         root.add_toast(adw::Toast::new(&gettext("Failed to save metadata")));
                     }
+                }
+            }
+            MetadataPageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                    root.add_toast(toast);
+                    tracing::error!("Failed to open output file: {:?}", e);
                 }
             }
             MetadataPageMsg::ThumbnailReady(result) => {
