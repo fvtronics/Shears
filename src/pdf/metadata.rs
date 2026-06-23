@@ -122,11 +122,7 @@ fn get_existing_info(doc: &Document) -> Dictionary {
     }
 }
 
-fn apply_metadata(
-    info_dict: &mut Dictionary,
-    metadata: &PdfMetadata,
-    producer: &str,
-) {
+fn apply_metadata(info_dict: &mut Dictionary, metadata: &PdfMetadata, producer: &str) {
     set_or_remove_string(info_dict, b"Title", &metadata.title);
     set_or_remove_string(info_dict, b"Author", &metadata.author);
     set_or_remove_string(info_dict, b"Subject", &metadata.subject);

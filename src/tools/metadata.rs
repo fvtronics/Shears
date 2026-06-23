@@ -9,7 +9,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
-use crate::pdf::{MetadataOptions, PdfMetadata, PdfError, update_metadata, read_metadata};
+use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -67,12 +67,15 @@ impl SimpleComponent for MetadataTool {
             .launch(Tool::Metadata)
             .forward(sender.input_sender(), MetadataToolMsg::AddFiles);
 
-        let metadata_page = MetadataPage::builder()
-            .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                MetadataPageOutput::FileActive(file_stem) => MetadataToolMsg::UpdateFileActive(file_stem),
-                MetadataPageOutput::Loading(is_loading) => MetadataToolMsg::Loading(is_loading),
-            });
+        let metadata_page =
+            MetadataPage::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    MetadataPageOutput::FileActive(file_stem) => {
+                        MetadataToolMsg::UpdateFileActive(file_stem)
+                    }
+                    MetadataPageOutput::Loading(is_loading) => MetadataToolMsg::Loading(is_loading),
+                });
 
         let model = Self {
             state: MetadataToolState::Empty,
@@ -406,7 +409,7 @@ impl Component for MetadataPage {
             MetadataPageMsg::AddFile(file) => {
                 self.password = None;
                 self.preview_status = PreviewStatus::InitialPending;
-                
+
                 self.title.clear();
                 self.author.clear();
                 self.subject.clear();
@@ -424,12 +427,23 @@ impl Component for MetadataPage {
                 self.request_thumbnail(None, &sender);
                 self.request_metadata(None, &sender);
             }
-            MetadataPageMsg::SetTitle(val) => { self.title = val; }
-            MetadataPageMsg::SetAuthor(val) => { self.author = val; }
-            MetadataPageMsg::SetSubject(val) => { self.subject = val; }
-            MetadataPageMsg::SetKeywords(val) => { self.keywords = val; }
+            MetadataPageMsg::SetTitle(val) => {
+                self.title = val;
+            }
+            MetadataPageMsg::SetAuthor(val) => {
+                self.author = val;
+            }
+            MetadataPageMsg::SetSubject(val) => {
+                self.subject = val;
+            }
+            MetadataPageMsg::SetKeywords(val) => {
+                self.keywords = val;
+            }
             MetadataPageMsg::SaveTo(output_file) => {
-                if let (Some(file_path), Some(output_path)) = (self.file.as_ref().and_then(|f| f.path()), output_file.path()) {
+                if let (Some(file_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    output_file.path(),
+                ) {
                     self.is_saving = true;
                     self.check_loading_state(&sender);
 
@@ -449,7 +463,8 @@ impl Component for MetadataPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = update_metadata(&(file_path, 0), output_path.clone(), &options);
+                        let result =
+                            update_metadata(&(file_path, 0), output_path.clone(), &options);
                         match result {
                             Ok(_) => sender.input(MetadataPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(MetadataPageMsg::SaveComplete(Err(e))),
@@ -531,23 +546,31 @@ impl Component for MetadataPage {
                     self.clear_file(&sender);
                 }
             },
-            MetadataPageMsg::MetadataReady(result) => {
-                match result {
-                    Ok(options) => {
-                        self.title = options.title;
-                        self.author = options.author;
-                        self.subject = options.subject;
-                        self.keywords = options.keywords;
-                        self.creator = if options.creator.is_empty() { gettext("N/A") } else { options.creator };
-                        self.producer = if options.producer.is_empty() { gettext("N/A") } else { options.producer };
-                        self.sync_entries = true;
-                    }
-                    Err(e) => {
-                        tracing::warn!("Failed to read metadata: {:?}", e);
-                        root.add_toast(adw::Toast::new(&gettext("Failed to load document's metadata")));
-                    }
+            MetadataPageMsg::MetadataReady(result) => match result {
+                Ok(options) => {
+                    self.title = options.title;
+                    self.author = options.author;
+                    self.subject = options.subject;
+                    self.keywords = options.keywords;
+                    self.creator = if options.creator.is_empty() {
+                        gettext("N/A")
+                    } else {
+                        options.creator
+                    };
+                    self.producer = if options.producer.is_empty() {
+                        gettext("N/A")
+                    } else {
+                        options.producer
+                    };
+                    self.sync_entries = true;
                 }
-            }
+                Err(e) => {
+                    tracing::warn!("Failed to read metadata: {:?}", e);
+                    root.add_toast(adw::Toast::new(&gettext(
+                        "Failed to load document's metadata",
+                    )));
+                }
+            },
         }
     }
 }
