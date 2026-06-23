@@ -137,6 +137,8 @@ struct MetadataPage {
 
     is_saving: bool,
     is_loading: bool,
+    modern_pdf_format: bool,
+    remove_metadata: bool,
     thumbnail: Option<gdk::MemoryTexture>,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
@@ -151,6 +153,8 @@ enum MetadataPageMsg {
     SetKeywords(String),
     SaveTo(gio::File),
     SaveComplete(Result<std::path::PathBuf, String>),
+    SetModernPdfFormat(bool),
+    SetRemoveMetadata(bool),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
 }
@@ -216,6 +220,40 @@ impl Component for MetadataPage {
                                 });
                             }
                         },
+
+                        gtk::MenuButton {
+                            set_icon_name: "view-more-symbolic",
+                            add_css_class: "flat",
+                            set_tooltip_text: Some(&gettext("Advanced Options")),
+
+                            #[wrap(Some)]
+                            set_popover = &gtk::Popover {
+                                add_css_class: "menu",
+                                adw::PreferencesGroup {
+                                    add = &adw::SwitchRow {
+                                        set_title: &gettext("_Modern PDF format"),
+                                        set_use_underline: true,
+                                        set_subtitle: &gettext("Save with PDF 1.5 object streams"),
+                                        set_active: model.modern_pdf_format,
+
+                                        connect_active_notify[sender] => move |row| {
+                                            sender.input(MetadataPageMsg::SetModernPdfFormat(row.is_active()));
+                                        }
+                                    },
+
+                                    add = &adw::SwitchRow {
+                                        set_title: &gettext("_Remove metadata"),
+                                        set_use_underline: true,
+                                        set_subtitle: &gettext("Remove existing metadata before saving"),
+                                        set_active: model.remove_metadata,
+
+                                        connect_active_notify[sender] => move |row| {
+                                            sender.input(MetadataPageMsg::SetRemoveMetadata(row.is_active()));
+                                        }
+                                    },
+                                }
+                            }
+                        }
                     },
 
                     #[name(metadata_box)]
@@ -326,6 +364,8 @@ impl Component for MetadataPage {
             producer: gettext("N/A"),
             is_saving: false,
             is_loading: false,
+            modern_pdf_format: false,
+            remove_metadata: false,
             thumbnail: None,
             password_dialog,
             preview_status: PreviewStatus::Ready,
@@ -377,6 +417,12 @@ impl Component for MetadataPage {
                         sender.input(MetadataPageMsg::SaveComplete(Ok(output_path)));
                     });
                 }
+            }
+            MetadataPageMsg::SetModernPdfFormat(active) => {
+                self.modern_pdf_format = active;
+            }
+            MetadataPageMsg::SetRemoveMetadata(active) => {
+                self.remove_metadata = active;
             }
             MetadataPageMsg::SaveComplete(result) => {
                 self.is_saving = false;
