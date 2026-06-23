@@ -9,7 +9,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
-use crate::pdf::{MetadataOptions, PdfError, update_metadata};
+use crate::pdf::{MetadataOptions, PdfMetadata, PdfError, update_metadata, read_metadata};
 use crate::tools::page::ToolPage;
 use crate::tools::{Tool, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -140,6 +140,7 @@ struct MetadataPage {
     is_loading: bool,
     modern_pdf_format: bool,
     remove_metadata: bool,
+    sync_entries: bool,
     thumbnail: Option<gdk::MemoryTexture>,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
@@ -159,6 +160,7 @@ enum MetadataPageMsg {
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     OpenOutput(std::path::PathBuf),
+    MetadataReady(Result<PdfMetadata, PdfError>),
 }
 
 #[derive(Debug)]
@@ -293,6 +295,7 @@ impl Component for MetadataPage {
                                 adw::PreferencesGroup {
                                     adw::EntryRow {
                                         set_title: &gettext("Title"),
+                                        #[track = "model.sync_entries"]
                                         set_text: &model.title,
                                         set_show_apply_button: false,
                                         connect_changed[sender] => move |entry| {
@@ -301,6 +304,7 @@ impl Component for MetadataPage {
                                     },
                                     adw::EntryRow {
                                         set_title: &gettext("Author"),
+                                        #[track = "model.sync_entries"]
                                         set_text: &model.author,
                                         set_show_apply_button: false,
                                         connect_changed[sender] => move |entry| {
@@ -309,6 +313,7 @@ impl Component for MetadataPage {
                                     },
                                     adw::EntryRow {
                                         set_title: &gettext("Subject"),
+                                        #[track = "model.sync_entries"]
                                         set_text: &model.subject,
                                         set_show_apply_button: false,
                                         connect_changed[sender] => move |entry| {
@@ -317,6 +322,7 @@ impl Component for MetadataPage {
                                     },
                                     adw::EntryRow {
                                         set_title: &gettext("Keywords"),
+                                        #[track = "model.sync_entries"]
                                         set_text: &model.keywords,
                                         set_show_apply_button: false,
                                         connect_changed[sender] => move |entry| {
@@ -325,10 +331,12 @@ impl Component for MetadataPage {
                                     },
                                     adw::ActionRow {
                                         set_title: &gettext("Creator"),
+                                        #[track = "model.sync_entries"]
                                         set_subtitle: &model.creator,
                                     },
                                     adw::ActionRow {
                                         set_title: &gettext("Producer"),
+                                        #[track = "model.sync_entries"]
                                         set_subtitle: &model.producer,
 
                                         add_suffix = &gtk::Image {
@@ -368,6 +376,7 @@ impl Component for MetadataPage {
             is_loading: false,
             modern_pdf_format: false,
             remove_metadata: false,
+            sync_entries: false,
             thumbnail: None,
             password_dialog,
             preview_status: PreviewStatus::Ready,
@@ -392,11 +401,20 @@ impl Component for MetadataPage {
     }
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+        self.sync_entries = false;
         match message {
             MetadataPageMsg::AddFile(file) => {
                 self.password = None;
                 self.preview_status = PreviewStatus::InitialPending;
                 
+                self.title.clear();
+                self.author.clear();
+                self.subject.clear();
+                self.keywords.clear();
+                self.creator = gettext("N/A");
+                self.producer = gettext("N/A");
+                self.sync_entries = true;
+
                 let stem = file_stem(&file);
                 self.file = Some(file.clone());
 
@@ -404,6 +422,7 @@ impl Component for MetadataPage {
                 let _ = sender.output(MetadataPageOutput::FileActive(Some(stem)));
 
                 self.request_thumbnail(None, &sender);
+                self.request_metadata(None, &sender);
             }
             MetadataPageMsg::SetTitle(val) => { self.title = val; }
             MetadataPageMsg::SetAuthor(val) => { self.author = val; }
@@ -415,12 +434,14 @@ impl Component for MetadataPage {
                     self.check_loading_state(&sender);
 
                     let options = MetadataOptions {
-                        title: self.title.clone(),
-                        author: self.author.clone(),
-                        subject: self.subject.clone(),
-                        keywords: self.keywords.clone(),
-                        creator: self.creator.clone(),
-                        producer: self.producer.clone(),
+                        metadata: PdfMetadata {
+                            title: self.title.clone(),
+                            author: self.author.clone(),
+                            subject: self.subject.clone(),
+                            keywords: self.keywords.clone(),
+                            creator: self.creator.clone(),
+                            producer: self.producer.clone(),
+                        },
                         modern_pdf_format: self.modern_pdf_format,
                         remove_metadata: self.remove_metadata,
                         password: self.password.clone(),
@@ -503,12 +524,30 @@ impl Component for MetadataPage {
             MetadataPageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { password, .. } => {
                     self.password = Some(password.clone());
-                    self.request_thumbnail(Some(password), &sender);
+                    self.request_thumbnail(Some(password.clone()), &sender);
+                    self.request_metadata(Some(password), &sender);
                 }
                 PasswordDialogOutput::Cancelled(_) => {
                     self.clear_file(&sender);
                 }
             },
+            MetadataPageMsg::MetadataReady(result) => {
+                match result {
+                    Ok(options) => {
+                        self.title = options.title;
+                        self.author = options.author;
+                        self.subject = options.subject;
+                        self.keywords = options.keywords;
+                        self.creator = if options.creator.is_empty() { gettext("N/A") } else { options.creator };
+                        self.producer = if options.producer.is_empty() { gettext("N/A") } else { options.producer };
+                        self.sync_entries = true;
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to read metadata: {:?}", e);
+                        root.add_toast(adw::Toast::new(&gettext("Failed to load document's metadata")));
+                    }
+                }
+            }
         }
     }
 }
@@ -529,6 +568,18 @@ impl MetadataPage {
                 sender_clone.input(MetadataPageMsg::ThumbnailReady(result));
             }) {
                 tracing::error!("Failed to enqueue thumbnail task: {}", e);
+            }
+        }
+    }
+
+    fn request_metadata(&self, password: Option<String>, sender: &ComponentSender<Self>) {
+        if let Some(file) = &self.file {
+            let sender_clone = sender.clone();
+            if let Some(path) = file.path() {
+                relm4::spawn_blocking(move || {
+                    let result = read_metadata(&path, password.as_deref());
+                    sender_clone.input(MetadataPageMsg::MetadataReady(result));
+                });
             }
         }
     }

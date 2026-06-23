@@ -14,5 +14,5 @@ pub mod util;
 
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};
-pub use metadata::{MetadataOptions, update_metadata};
+pub use metadata::{MetadataOptions, PdfMetadata, update_metadata, read_metadata};
 pub use split::{DivideAfter, SplitOptions, split_file};
