@@ -13,7 +13,7 @@ lto = true
 [dependencies]
 cairo-rs = { version = "0.22.0", features = ["png"] }
 gettext-rs = { version = "0.7.7", features = ["gettext-system"] }
-lopdf = { version = "0.41.0", default-features = false }
+lopdf = { version = "0.42.0", default-features = false }
 poppler-rs = "0.26.0"
 relm4 = { version = "0.11.0", features = ["libadwaita", "gnome_50"] }
 tracing = "0.1.44"
