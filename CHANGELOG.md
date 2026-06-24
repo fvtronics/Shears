@@ -1,10 +1,6 @@
-# v0.2.0
+# v0.2.1
 
 <p>New</p>
 <ul>
-  <li>Add the split PDF functionality</li>
-</ul>
-<p>Changes</p>
-<ul>
-  <li>Make the open file action in the merge page more intuitive</li>
+  <li>Add section to visualize and edit a document's metadata</li>
 </ul>

@@ -12,11 +12,11 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.2.0/data/resources/screenshots/merge.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.2.1/data/resources/screenshots/merge.png</image>
       <caption>Merge multiple PDF files into a single document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.2.0/data/resources/screenshots/split.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.2.1/data/resources/screenshots/split.png</image>
       <caption>Split a PDF into multiple documents</caption>
     </screenshot>
   </screenshots>
@@ -26,6 +26,14 @@
   <url type="translate">https://codeberg.org/translate/Quire/src/branch/main/po</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.2.1" date="2026-06-24" >
+      <description>
+        <p>New</p>
+        <ul>
+          <li>Add section to visualize and edit a document's metadata</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-06-21" >
       <description>
         <p>New</p>
