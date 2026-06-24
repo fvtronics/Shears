@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: quire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-24 07:43-0400\n"
+"POT-Creation-Date: 2026-06-24 08:00-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -63,54 +63,58 @@ msgstr ""
 msgid "Split a PDF into multiple documents"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:31
-#: data/com.fvtronics.quire.metainfo.xml.in.in:39
-#: data/com.fvtronics.quire.metainfo.xml.in.in:51
+#: data/com.fvtronics.quire.metainfo.xml.in.in:24
+msgid "View and edit PDF metadata"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:35
+#: data/com.fvtronics.quire.metainfo.xml.in.in:43
+#: data/com.fvtronics.quire.metainfo.xml.in.in:55
 msgid "New"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:33
+#: data/com.fvtronics.quire.metainfo.xml.in.in:37
 msgid "Add section to visualize and edit a document's metadata"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:41
+#: data/com.fvtronics.quire.metainfo.xml.in.in:45
 msgid "Add the split PDF functionality"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:43
-#: data/com.fvtronics.quire.metainfo.xml.in.in:57
+#: data/com.fvtronics.quire.metainfo.xml.in.in:47
+#: data/com.fvtronics.quire.metainfo.xml.in.in:61
 msgid "Changes"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:45
+#: data/com.fvtronics.quire.metainfo.xml.in.in:49
 msgid "Make the open file action in the merge page more intuitive"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:53
+#: data/com.fvtronics.quire.metainfo.xml.in.in:57
 msgid "Add support for opening password protected files"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:54
+#: data/com.fvtronics.quire.metainfo.xml.in.in:58
 msgid "Add option to insert blank page"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:55
+#: data/com.fvtronics.quire.metainfo.xml.in.in:59
 msgid "Add option to duplicate a file in the list view"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:59
+#: data/com.fvtronics.quire.metainfo.xml.in.in:63
 msgid "Collapse secondary options into a menu"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:60
+#: data/com.fvtronics.quire.metainfo.xml.in.in:64
 msgid "Add handler to rows for drag and drop"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:66
+#: data/com.fvtronics.quire.metainfo.xml.in.in:70
 msgid "Initial release"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:68
+#: data/com.fvtronics.quire.metainfo.xml.in.in:72
 msgid "Merge and rotate PDF files"
 msgstr ""
 
