@@ -11,18 +11,12 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, file_stem, open_pdf_dialog, select_folder_dialog};
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum SplitToolState {
-    Empty,
-    LoadingNewFile,
-    Ready,
-    Processing,
-}
+use crate::tools::{
+    PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, select_folder_dialog,
+};
 
 pub struct SplitTool {
-    state: SplitToolState,
+    state: ToolState,
     _empty_page: Controller<ToolPage>,
     split_page: Controller<SplitPage>,
 }
@@ -54,7 +48,7 @@ impl SimpleComponent for SplitTool {
             add_named: (model.split_page.widget(), Some("split")),
 
             #[watch]
-            set_visible_child_name: if matches!(model.state, SplitToolState::Ready | SplitToolState::Processing) { "split" } else { "empty" },
+            set_visible_child_name: if matches!(model.state, ToolState::Ready | ToolState::Processing) { "split" } else { "empty" },
         }
     }
 
@@ -75,7 +69,7 @@ impl SimpleComponent for SplitTool {
             });
 
         let model = Self {
-            state: SplitToolState::Empty,
+            state: ToolState::Empty,
             _empty_page: empty_page,
             split_page,
         };
@@ -93,22 +87,22 @@ impl SimpleComponent for SplitTool {
             }
             SplitToolMsg::UpdateFileActive(file_stem) => {
                 if file_stem.is_none() {
-                    self.state = SplitToolState::Empty;
+                    self.state = ToolState::Empty;
                 }
                 let _ = sender.output(SplitToolOutput::FileActive(file_stem));
             }
             SplitToolMsg::Loading(is_loading) => {
                 if is_loading {
-                    if self.state == SplitToolState::Empty {
-                        self.state = SplitToolState::LoadingNewFile;
-                    } else if self.state == SplitToolState::Ready {
-                        self.state = SplitToolState::Processing;
+                    if self.state == ToolState::Empty {
+                        self.state = ToolState::LoadingNewFile;
+                    } else if self.state == ToolState::Ready {
+                        self.state = ToolState::Processing;
                     }
                 } else {
-                    if self.state == SplitToolState::LoadingNewFile
-                        || self.state == SplitToolState::Processing
+                    if self.state == ToolState::LoadingNewFile
+                        || self.state == ToolState::Processing
                     {
-                        self.state = SplitToolState::Ready;
+                        self.state = ToolState::Ready;
                     }
                 }
                 self._empty_page.emit(is_loading);
@@ -116,13 +110,6 @@ impl SimpleComponent for SplitTool {
             }
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum PreviewStatus {
-    InitialPending,
-    Ready,
-    PasswordRequired,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]

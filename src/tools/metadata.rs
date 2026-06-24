@@ -11,18 +11,10 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, file_stem, open_pdf_dialog, save_pdf_dialog};
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum MetadataToolState {
-    Empty,
-    LoadingNewFile,
-    Ready,
-    Processing,
-}
+use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
 pub struct MetadataTool {
-    state: MetadataToolState,
+    state: ToolState,
     _empty_page: Controller<ToolPage>,
     metadata_page: Controller<MetadataPage>,
 }
@@ -54,7 +46,7 @@ impl SimpleComponent for MetadataTool {
             add_named: (model.metadata_page.widget(), Some("metadata")),
 
             #[watch]
-            set_visible_child_name: if matches!(model.state, MetadataToolState::Ready | MetadataToolState::Processing) { "metadata" } else { "empty" },
+            set_visible_child_name: if matches!(model.state, ToolState::Ready | ToolState::Processing) { "metadata" } else { "empty" },
         }
     }
 
@@ -78,7 +70,7 @@ impl SimpleComponent for MetadataTool {
                 });
 
         let model = Self {
-            state: MetadataToolState::Empty,
+            state: ToolState::Empty,
             _empty_page: empty_page,
             metadata_page,
         };
@@ -96,22 +88,22 @@ impl SimpleComponent for MetadataTool {
             }
             MetadataToolMsg::UpdateFileActive(file_stem) => {
                 if file_stem.is_none() {
-                    self.state = MetadataToolState::Empty;
+                    self.state = ToolState::Empty;
                 }
                 let _ = sender.output(MetadataToolOutput::FileActive(file_stem));
             }
             MetadataToolMsg::Loading(is_loading) => {
                 if is_loading {
-                    if self.state == MetadataToolState::Empty {
-                        self.state = MetadataToolState::LoadingNewFile;
-                    } else if self.state == MetadataToolState::Ready {
-                        self.state = MetadataToolState::Processing;
+                    if self.state == ToolState::Empty {
+                        self.state = ToolState::LoadingNewFile;
+                    } else if self.state == ToolState::Ready {
+                        self.state = ToolState::Processing;
                     }
                 } else {
-                    if self.state == MetadataToolState::LoadingNewFile
-                        || self.state == MetadataToolState::Processing
+                    if self.state == ToolState::LoadingNewFile
+                        || self.state == ToolState::Processing
                     {
-                        self.state = MetadataToolState::Ready;
+                        self.state = ToolState::Ready;
                     }
                 }
                 self._empty_page.emit(is_loading);
@@ -119,13 +111,6 @@ impl SimpleComponent for MetadataTool {
             }
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum PreviewStatus {
-    InitialPending,
-    Ready,
-    PasswordRequired,
 }
 
 struct MetadataPage {

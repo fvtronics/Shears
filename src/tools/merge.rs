@@ -12,7 +12,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{Tool, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{PreviewStatus, Tool, open_pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
@@ -665,14 +665,6 @@ impl Component for MergePage {
             },
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum PreviewStatus {
-    InitialPending,
-    Ready,
-    PasswordRequired,
-    Reloading,
 }
 
 impl MergePage {

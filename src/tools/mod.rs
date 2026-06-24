@@ -16,6 +16,22 @@ use relm4::gtk;
 use gtk::gio;
 use gtk::prelude::{Cast, CastNone, FileExt, ListModelExt, WidgetExt};
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ToolState {
+    Empty,
+    LoadingNewFile,
+    Ready,
+    Processing,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PreviewStatus {
+    InitialPending,
+    Ready,
+    PasswordRequired,
+    Reloading,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Tool {
     Merge,
