@@ -13,7 +13,7 @@ pub mod preview;
 pub mod split;
 pub mod util;
 
-pub use compress::{CompressOptions, compress_file};
+pub use compress::{CompressOptions, QualityLevel, compress_file};
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};
 pub use metadata::{MetadataOptions, PdfMetadata, read_metadata, update_metadata};

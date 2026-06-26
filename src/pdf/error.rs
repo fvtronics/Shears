@@ -9,6 +9,7 @@
 pub enum PdfError {
     Io(std::io::Error),
     Lopdf(lopdf::Error),
+    Image(image::ImageError),
     Other(String),
 }
 
@@ -17,6 +18,7 @@ impl std::fmt::Display for PdfError {
         match self {
             Self::Io(err) => write!(f, "I/O error: {}", err),
             Self::Lopdf(err) => write!(f, "PDF error: {}", err),
+            Self::Image(err) => write!(f, "Image error: {}", err),
             Self::Other(msg) => write!(f, "{}", msg),
         }
     }
@@ -33,5 +35,11 @@ impl From<std::io::Error> for PdfError {
 impl From<lopdf::Error> for PdfError {
     fn from(err: lopdf::Error) -> Self {
         Self::Lopdf(err)
+    }
+}
+
+impl From<image::ImageError> for PdfError {
+    fn from(err: image::ImageError) -> Self {
+        Self::Image(err)
     }
 }

@@ -9,7 +9,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
-use crate::pdf::{CompressOptions, PdfError, compress_file};
+use crate::pdf::{CompressOptions, PdfError, QualityLevel, compress_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -119,6 +119,7 @@ struct CompressPage {
 
     remove_unused_data: bool,
     remove_empty_streams: bool,
+    image_quality: QualityLevel,
     modern_pdf_format: bool,
     remove_metadata: bool,
 
@@ -134,6 +135,7 @@ enum CompressPageMsg {
     AddFile(gio::File),
     SetRemoveUnusedData(bool),
     SetRemoveEmptyStreams(bool),
+    SetImageQuality(QualityLevel),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
     SaveTo(gio::File),
@@ -273,6 +275,25 @@ impl Component for CompressPage {
                                 set_orientation: gtk::Orientation::Vertical,
 
                                 adw::PreferencesGroup {
+                                    add = &adw::ComboRow {
+                                        set_title: &gettext("Image Quality Level"),
+                                        set_model: Some(&gtk::StringList::new(&[
+                                            gettext("Original").as_str(),
+                                            gettext("Print").as_str(),
+                                            gettext("Display").as_str(),
+                                            gettext("Draft").as_str(),
+                                        ])),
+                                        set_selected: match model.image_quality {
+                                            QualityLevel::Original => 0,
+                                            QualityLevel::Print => 1,
+                                            QualityLevel::Display => 2,
+                                            QualityLevel::Draft => 3,
+                                        },
+                                        connect_selected_notify[sender] => move |row| {
+                                            sender.input(CompressPageMsg::SetImageQuality(QualityLevel::from(row.selected())));
+                                        }
+                                    },
+
                                     add = &adw::SwitchRow {
                                         set_title: &gettext("Remove Unused Data"),
                                         set_use_underline: true,
@@ -317,6 +338,7 @@ impl Component for CompressPage {
             password: None,
             remove_unused_data: true,
             remove_empty_streams: true,
+            image_quality: QualityLevel::Display,
             modern_pdf_format: false,
             remove_metadata: false,
             is_saving: false,
@@ -364,6 +386,9 @@ impl Component for CompressPage {
             CompressPageMsg::SetRemoveEmptyStreams(val) => {
                 self.remove_empty_streams = val;
             }
+            CompressPageMsg::SetImageQuality(val) => {
+                self.image_quality = val;
+            }
             CompressPageMsg::SetModernPdfFormat(val) => {
                 self.modern_pdf_format = val;
             }
@@ -381,6 +406,7 @@ impl Component for CompressPage {
                     let options = CompressOptions {
                         remove_unused_data: self.remove_unused_data,
                         remove_empty_streams: self.remove_empty_streams,
+                        image_quality: self.image_quality,
                         modern_pdf_format: self.modern_pdf_format,
                         remove_metadata: self.remove_metadata,
                         password: self.password.clone(),
