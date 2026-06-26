@@ -12,7 +12,7 @@ use gtk::{gio, glib};
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
 use crate::tools::{
-    Tool, merge::MergeTool, metadata::MetadataTool, page::ToolPage, split::SplitTool,
+    Tool, compress::CompressTool, merge::MergeTool, metadata::MetadataTool, page::ToolPage, split::SplitTool,
 };
 
 pub(super) struct App {
@@ -22,7 +22,7 @@ pub(super) struct App {
     _organize: Controller<ToolPage>,
     _extract: Controller<ToolPage>,
     _split: Controller<SplitTool>,
-    _compress: Controller<ToolPage>,
+    _compress: Controller<CompressTool>,
     _watermark: Controller<ToolPage>,
     _metadata: Controller<MetadataTool>,
     merge_is_loading: bool,
@@ -30,6 +30,8 @@ pub(super) struct App {
     split_file_stem: Option<String>,
     metadata_is_loading: bool,
     metadata_file_active: Option<String>,
+    compress_is_loading: bool,
+    compress_file_active: Option<String>,
 }
 
 #[derive(Debug)]
@@ -41,6 +43,8 @@ pub(super) enum AppMsg {
     UpdateSplitFileStem(Option<String>),
     UpdateMetadataLoading(bool),
     UpdateMetadataFileActive(Option<String>),
+    UpdateCompressLoading(bool),
+    UpdateCompressFileActive(Option<String>),
     Quit,
 }
 
@@ -142,7 +146,6 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Compress PDF")) {
                                             set_icon_name: Some(Tool::Compress.icon_name()),
                                             set_subtitle: Some(gettext("Reduce file size").as_str()),
-                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Add Watermark")) {
@@ -231,7 +234,16 @@ impl SimpleComponent for App {
                         AppMsg::UpdateSplitFileStem(stem)
                     }
                 });
-        let compress = ToolPage::builder().launch(Tool::Compress).detach();
+        let compress = CompressTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                crate::tools::compress::CompressToolOutput::Loading(is_loading) => {
+                    AppMsg::UpdateCompressLoading(is_loading)
+                }
+                crate::tools::compress::CompressToolOutput::FileActive(stem) => {
+                    AppMsg::UpdateCompressFileActive(stem)
+                }
+            });
         let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
         let metadata = MetadataTool::builder()
             .launch(())
@@ -259,6 +271,8 @@ impl SimpleComponent for App {
             split_file_stem: None,
             metadata_is_loading: false,
             metadata_file_active: None,
+            compress_is_loading: false,
+            compress_file_active: None,
         };
         let widgets = view_output!();
         widgets
@@ -321,6 +335,12 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateMetadataFileActive(title) => {
                 self.metadata_file_active = title;
+            }
+            AppMsg::UpdateCompressLoading(is_loading) => {
+                self.compress_is_loading = is_loading;
+            }
+            AppMsg::UpdateCompressFileActive(title) => {
+                self.compress_file_active = title;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -397,6 +417,15 @@ impl App {
                 if self.metadata_is_loading {
                     gettext("Processing…")
                 } else if let Some(title) = &self.metadata_file_active {
+                    title.clone()
+                } else {
+                    self.selected_tool.subtitle()
+                }
+            }
+            Tool::Compress => {
+                if self.compress_is_loading {
+                    gettext("Processing…")
+                } else if let Some(title) = &self.compress_file_active {
                     title.clone()
                 } else {
                     self.selected_tool.subtitle()
