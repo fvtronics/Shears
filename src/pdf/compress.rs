@@ -6,6 +6,8 @@
  */
 
 use crate::pdf::error::PdfError;
+use crate::pdf::util::remove_metadata;
+use lopdf::Document;
 use std::path::Path;
 
 #[derive(Debug, Clone, Default)]
@@ -18,12 +20,38 @@ pub struct CompressOptions {
 }
 
 pub fn compress_file<P: AsRef<Path>>(
-    _file: &(P, u16),
-    _output_path: P,
+    file: &(P, u16),
+    output_path: P,
     options: &CompressOptions,
 ) -> Result<(), PdfError> {
-    Err(PdfError::Other(format!(
-        "Test error. Remove unused data: {}, Remove empty streams: {}",
-        options.remove_unused_data, options.remove_empty_streams
-    )))
+    let (input_path, _) = file;
+
+    let mut doc = if let Some(pass) = &options.password {
+        Document::load_with_password(input_path.as_ref(), pass.as_str())?
+    } else {
+        Document::load(input_path.as_ref())?
+    };
+
+    if options.remove_metadata {
+        remove_metadata(&mut doc);
+    }
+
+    if options.remove_unused_data {
+        doc.prune_objects();
+    }
+
+    if options.remove_empty_streams {
+        doc.delete_zero_length_streams();
+    }
+
+    doc.compress();
+
+    if options.modern_pdf_format {
+        let mut file = std::fs::File::create(output_path.as_ref())?;
+        doc.save_modern(&mut file)?;
+    } else {
+        doc.save(output_path.as_ref())?;
+    }
+
+    Ok(())
 }
