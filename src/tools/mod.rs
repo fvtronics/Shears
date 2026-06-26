@@ -5,11 +5,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+pub mod compress;
 pub mod merge;
 pub mod metadata;
 pub mod page;
 pub mod split;
-pub mod compress;
 
 use gettextrs::gettext;
 use relm4::gtk;

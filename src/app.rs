@@ -12,7 +12,8 @@ use gtk::{gio, glib};
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
 use crate::tools::{
-    Tool, compress::CompressTool, merge::MergeTool, metadata::MetadataTool, page::ToolPage, split::SplitTool,
+    Tool, compress::CompressTool, merge::MergeTool, metadata::MetadataTool, page::ToolPage,
+    split::SplitTool,
 };
 
 pub(super) struct App {

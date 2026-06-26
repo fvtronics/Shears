@@ -9,6 +9,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
+use crate::pdf::{CompressOptions, PdfError, compress_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -136,9 +137,10 @@ enum CompressPageMsg {
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
     SaveTo(gio::File),
-    SaveComplete(Result<std::path::PathBuf, String>),
+    SaveComplete(Result<std::path::PathBuf, PdfError>),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
+    OpenOutput(std::path::PathBuf),
 }
 
 #[derive(Debug)]
@@ -369,13 +371,28 @@ impl Component for CompressPage {
                 self.remove_metadata = val;
             }
             CompressPageMsg::SaveTo(output_file) => {
-                if let Some(output_path) = output_file.path() {
+                if let (Some(file_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    output_file.path(),
+                ) {
                     self.is_saving = true;
                     self.check_loading_state(&sender);
 
+                    let options = CompressOptions {
+                        remove_unused_data: self.remove_unused_data,
+                        remove_empty_streams: self.remove_empty_streams,
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
+                    };
+
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        sender.input(CompressPageMsg::SaveComplete(Ok(output_path)));
+                        let result = compress_file(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(CompressPageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(CompressPageMsg::SaveComplete(Err(e))),
+                        }
                     });
                 }
             }
@@ -383,16 +400,31 @@ impl Component for CompressPage {
                 self.is_saving = false;
                 self.check_loading_state(&sender);
                 match result {
-                    Ok(_path) => {
+                    Ok(path) => {
                         tracing::info!("Compress complete");
                         let toast = adw::Toast::new(&gettext("PDF compressed successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(CompressPageMsg::OpenOutput(path.clone()));
+                        });
                         root.add_toast(toast);
                     }
                     Err(err) => {
                         tracing::error!("Failed to compress PDF: {:?}", err);
-
                         root.add_toast(adw::Toast::new(&gettext("Failed to compress PDF")));
                     }
+                }
+            }
+            CompressPageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                    root.add_toast(toast);
+                    tracing::error!("Failed to open output file: {:?}", e);
                 }
             }
             CompressPageMsg::ThumbnailReady(result) => {
