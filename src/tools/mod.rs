@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+pub mod compress;
 pub mod merge;
 pub mod metadata;
 pub mod page;

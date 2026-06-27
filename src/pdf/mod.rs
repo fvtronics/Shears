@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+pub mod compress;
 pub mod error;
 pub mod merge;
 pub mod metadata;
@@ -12,6 +13,7 @@ pub mod preview;
 pub mod split;
 pub mod util;
 
+pub use compress::{CompressOptions, QualityLevel, compress_file};
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};
 pub use metadata::{MetadataOptions, PdfMetadata, read_metadata, update_metadata};
