@@ -1,7 +1,7 @@
 project(
   'quire',
   'rust',
-  version: '0.2.1',
+  version: '0.2.2',
   meson_version: '>= 1.9.2',
   license: 'GPL-3.0-or-later',
 )

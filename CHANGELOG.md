@@ -1,6 +1,6 @@
-# v0.2.1
+# v0.2.2
 
 <p>New</p>
 <ul>
-  <li>Add section to visualize and edit a document's metadata</li>
+  <li>Add section to compress PDF files</li>
 </ul>
