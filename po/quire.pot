@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: quire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-24 08:00-0400\n"
+"POT-Creation-Date: 2026-06-26 20:30-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: data/com.fvtronics.quire.desktop.in.in:2
-#: data/com.fvtronics.quire.metainfo.xml.in.in:7 src/app.rs:101 src/main.rs:33
+#: data/com.fvtronics.quire.metainfo.xml.in.in:7 src/app.rs:106 src/main.rs:33
 msgid "Quire"
 msgstr ""
 
@@ -67,54 +67,63 @@ msgstr ""
 msgid "View and edit PDF metadata"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:35
-#: data/com.fvtronics.quire.metainfo.xml.in.in:43
+#: data/com.fvtronics.quire.metainfo.xml.in.in:28
+msgid "Compress PDF files"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:39
+#: data/com.fvtronics.quire.metainfo.xml.in.in:47
 #: data/com.fvtronics.quire.metainfo.xml.in.in:55
+#: data/com.fvtronics.quire.metainfo.xml.in.in:67
 msgid "New"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:37
-msgid "Add section to visualize and edit a document's metadata"
-msgstr ""
-
-#: data/com.fvtronics.quire.metainfo.xml.in.in:45
-msgid "Add the split PDF functionality"
-msgstr ""
-
-#: data/com.fvtronics.quire.metainfo.xml.in.in:47
-#: data/com.fvtronics.quire.metainfo.xml.in.in:61
-msgid "Changes"
+#: data/com.fvtronics.quire.metainfo.xml.in.in:41
+msgid "Add section to compress PDF files"
 msgstr ""
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:49
-msgid "Make the open file action in the merge page more intuitive"
+msgid "Add section to visualize and edit a document's metadata"
 msgstr ""
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:57
-msgid "Add support for opening password protected files"
-msgstr ""
-
-#: data/com.fvtronics.quire.metainfo.xml.in.in:58
-msgid "Add option to insert blank page"
+msgid "Add the split PDF functionality"
 msgstr ""
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:59
-msgid "Add option to duplicate a file in the list view"
+#: data/com.fvtronics.quire.metainfo.xml.in.in:73
+msgid "Changes"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:63
-msgid "Collapse secondary options into a menu"
+#: data/com.fvtronics.quire.metainfo.xml.in.in:61
+msgid "Make the open file action in the merge page more intuitive"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:64
-msgid "Add handler to rows for drag and drop"
+#: data/com.fvtronics.quire.metainfo.xml.in.in:69
+msgid "Add support for opening password protected files"
 msgstr ""
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:70
+msgid "Add option to insert blank page"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:71
+msgid "Add option to duplicate a file in the list view"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:75
+msgid "Collapse secondary options into a menu"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:76
+msgid "Add handler to rows for drag and drop"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:82
 msgid "Initial release"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:72
+#: data/com.fvtronics.quire.metainfo.xml.in.in:84
 msgid "Merge and rotate PDF files"
 msgstr ""
 
@@ -133,71 +142,71 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr ""
 
-#: src/app.rs:92
+#: src/app.rs:97
 msgid "Sidebar"
 msgstr ""
 
-#: src/app.rs:120 src/tools/mod.rs:58
+#: src/app.rs:125 src/tools/mod.rs:75
 msgid "Merge PDFs"
 msgstr ""
 
-#: src/app.rs:122
+#: src/app.rs:127
 msgid "Combine files"
 msgstr ""
 
-#: src/app.rs:125 src/tools/mod.rs:59
+#: src/app.rs:130 src/tools/mod.rs:76
 msgid "Organize Pages"
 msgstr ""
 
-#: src/app.rs:127
+#: src/app.rs:132
 msgid "Reorder or remove"
 msgstr ""
 
-#: src/app.rs:131 src/tools/mod.rs:60
+#: src/app.rs:136 src/tools/mod.rs:77
 msgid "Extract Pages"
 msgstr ""
 
-#: src/app.rs:133
+#: src/app.rs:138
 msgid "Save page ranges"
 msgstr ""
 
-#: src/app.rs:137 src/tools/mod.rs:61
+#: src/app.rs:142 src/tools/mod.rs:78
 msgid "Split PDF"
 msgstr ""
 
-#: src/app.rs:139
+#: src/app.rs:144
 msgid "Create separate files"
 msgstr ""
 
-#: src/app.rs:142 src/tools/mod.rs:62
+#: src/app.rs:147 src/tools/compress.rs:197 src/tools/mod.rs:79
 msgid "Compress PDF"
 msgstr ""
 
-#: src/app.rs:144
+#: src/app.rs:149
 msgid "Reduce file size"
 msgstr ""
 
-#: src/app.rs:148 src/tools/mod.rs:63
+#: src/app.rs:152 src/tools/mod.rs:80
 msgid "Add Watermark"
 msgstr ""
 
-#: src/app.rs:150
+#: src/app.rs:154
 msgid "Overlay an image"
 msgstr ""
 
-#: src/app.rs:154 src/tools/mod.rs:64
+#: src/app.rs:158 src/tools/mod.rs:81
 msgid "Edit Metadata"
 msgstr ""
 
-#: src/app.rs:156
+#: src/app.rs:160
 msgid "Update document details"
 msgstr ""
 
-#: src/app.rs:378 src/app.rs:389 src/app.rs:398
+#: src/app.rs:399 src/app.rs:410 src/app.rs:419 src/app.rs:428
 msgid "Processing…"
 msgstr ""
 
-#: src/app.rs:383
+#: src/app.rs:404
 #, rust-format
 msgid "{count} file selected"
 msgid_plural "{count} files selected"
@@ -228,7 +237,8 @@ msgstr ""
 msgid "Save Merged PDF"
 msgstr ""
 
-#: src/tools/merge.rs:253 src/tools/split.rs:250 src/tools/metadata.rs:234
+#: src/tools/merge.rs:253 src/tools/split.rs:237 src/tools/metadata.rs:219
+#: src/tools/compress.rs:213
 msgid "Advanced Options"
 msgstr ""
 
@@ -236,11 +246,13 @@ msgstr ""
 msgid "Rotate _all"
 msgstr ""
 
-#: src/tools/merge.rs:270 src/tools/split.rs:257 src/tools/metadata.rs:241
+#: src/tools/merge.rs:270 src/tools/split.rs:244 src/tools/metadata.rs:226
+#: src/tools/compress.rs:220
 msgid "_Modern PDF format"
 msgstr ""
 
-#: src/tools/merge.rs:272 src/tools/split.rs:259 src/tools/metadata.rs:243
+#: src/tools/merge.rs:272 src/tools/split.rs:246 src/tools/metadata.rs:228
+#: src/tools/compress.rs:222
 msgid "Save with PDF 1.5 object streams"
 msgstr ""
 
@@ -252,11 +264,13 @@ msgstr ""
 msgid "Resize output pages to the largest page size"
 msgstr ""
 
-#: src/tools/merge.rs:292 src/tools/split.rs:268 src/tools/metadata.rs:252
+#: src/tools/merge.rs:292 src/tools/split.rs:255 src/tools/metadata.rs:237
+#: src/tools/compress.rs:231
 msgid "_Remove metadata"
 msgstr ""
 
-#: src/tools/merge.rs:294 src/tools/split.rs:270 src/tools/metadata.rs:254
+#: src/tools/merge.rs:294 src/tools/split.rs:257 src/tools/metadata.rs:239
+#: src/tools/compress.rs:233
 msgid "Remove existing metadata before saving"
 msgstr ""
 
@@ -264,7 +278,7 @@ msgstr ""
 msgid "PDFs merged successfully"
 msgstr ""
 
-#: src/tools/merge.rs:431 src/tools/metadata.rs:488
+#: src/tools/merge.rs:431 src/tools/metadata.rs:473 src/tools/compress.rs:432
 msgid "Open File"
 msgstr ""
 
@@ -272,7 +286,7 @@ msgstr ""
 msgid "Could not save PDF"
 msgstr ""
 
-#: src/tools/merge.rs:451 src/tools/metadata.rs:507
+#: src/tools/merge.rs:451 src/tools/metadata.rs:492 src/tools/compress.rs:451
 msgid "Failed to open output file"
 msgstr ""
 
@@ -280,229 +294,277 @@ msgstr ""
 msgid "Blank Page"
 msgstr ""
 
-#: src/tools/merge.rs:875
+#: src/tools/merge.rs:867
 msgid "Rotate Clockwise"
 msgstr ""
 
-#: src/tools/merge.rs:885
+#: src/tools/merge.rs:877
 msgid "Remove File"
 msgstr ""
 
-#: src/tools/merge.rs:899
+#: src/tools/merge.rs:891
 msgid "More Options"
 msgstr ""
 
-#: src/tools/merge.rs:907
+#: src/tools/merge.rs:899
 msgid "Move _Up"
 msgstr ""
 
-#: src/tools/merge.rs:908
+#: src/tools/merge.rs:900
 msgid "_Move Down"
 msgstr ""
 
-#: src/tools/merge.rs:909
+#: src/tools/merge.rs:901
 msgid "_Duplicate"
 msgstr ""
 
-#: src/tools/merge.rs:910
+#: src/tools/merge.rs:902
 msgid "_Insert Blank Page After"
 msgstr ""
 
-#: src/tools/split.rs:220 src/tools/metadata.rs:204
+#: src/tools/split.rs:207 src/tools/metadata.rs:189 src/tools/compress.rs:183
 msgid "Select PDF File"
 msgstr ""
 
-#: src/tools/split.rs:233 src/tools/split.rs:234
+#: src/tools/split.rs:220 src/tools/split.rs:221
 msgid "Split"
 msgstr ""
 
-#: src/tools/split.rs:241
+#: src/tools/split.rs:228
 msgid "Select Output Folder"
 msgstr ""
 
-#: src/tools/split.rs:316
+#: src/tools/split.rs:303
 msgid "Divide after"
 msgstr ""
 
-#: src/tools/split.rs:318
+#: src/tools/split.rs:305
 msgid "Each page"
 msgstr ""
 
-#: src/tools/split.rs:319
+#: src/tools/split.rs:306
 msgid "Even pages"
 msgstr ""
 
-#: src/tools/split.rs:320
+#: src/tools/split.rs:307
 msgid "Odd pages"
 msgstr ""
 
-#: src/tools/split.rs:321
+#: src/tools/split.rs:308
 msgid "Every N pages"
 msgstr ""
 
-#: src/tools/split.rs:322
+#: src/tools/split.rs:309
 msgid "Specific pages"
 msgstr ""
 
-#: src/tools/split.rs:330 src/tools/split.rs:349
+#: src/tools/split.rs:317 src/tools/split.rs:336
 msgid "Pages"
 msgstr ""
 
-#: src/tools/split.rs:370
+#: src/tools/split.rs:357
 msgid "Output prefix"
 msgstr ""
 
-#: src/tools/split.rs:399
+#: src/tools/split.rs:386
 msgid "output_file"
 msgstr ""
 
-#: src/tools/split.rs:516
+#: src/tools/split.rs:503
 msgid "Split PDFs saved"
 msgstr ""
 
-#: src/tools/split.rs:517
+#: src/tools/split.rs:504
 msgid "Open Folder"
 msgstr ""
 
-#: src/tools/split.rs:526
+#: src/tools/split.rs:513
 msgid "Failed to split PDF"
 msgstr ""
 
-#: src/tools/split.rs:536
+#: src/tools/split.rs:523
 msgid "Failed to open output folder"
 msgstr ""
 
-#: src/tools/metadata.rs:217 src/tools/mod.rs:185
+#: src/tools/metadata.rs:202 src/tools/mod.rs:202
 msgid "Save"
 msgstr ""
 
-#: src/tools/metadata.rs:218
+#: src/tools/metadata.rs:203
 msgid "Save modified PDF"
 msgstr ""
 
-#: src/tools/metadata.rs:225
+#: src/tools/metadata.rs:210 src/tools/compress.rs:204
 msgid "Save PDF"
 msgstr ""
 
-#: src/tools/metadata.rs:300
+#: src/tools/metadata.rs:285
 msgid "Title"
 msgstr ""
 
-#: src/tools/metadata.rs:309
+#: src/tools/metadata.rs:294
 msgid "Author"
 msgstr ""
 
-#: src/tools/metadata.rs:318
+#: src/tools/metadata.rs:303
 msgid "Subject"
 msgstr ""
 
-#: src/tools/metadata.rs:327
+#: src/tools/metadata.rs:312
 msgid "Keywords"
 msgstr ""
 
-#: src/tools/metadata.rs:336
+#: src/tools/metadata.rs:321
 msgid "Creator"
 msgstr ""
 
-#: src/tools/metadata.rs:341
+#: src/tools/metadata.rs:326
 msgid "Producer"
 msgstr ""
 
-#: src/tools/metadata.rs:347
+#: src/tools/metadata.rs:332
 msgid "Producer will be replaced when saving"
 msgstr ""
 
-#: src/tools/metadata.rs:376 src/tools/metadata.rs:377
-#: src/tools/metadata.rs:417 src/tools/metadata.rs:418
-#: src/tools/metadata.rs:556 src/tools/metadata.rs:561
+#: src/tools/metadata.rs:361 src/tools/metadata.rs:362
+#: src/tools/metadata.rs:402 src/tools/metadata.rs:403
+#: src/tools/metadata.rs:541 src/tools/metadata.rs:546
 msgid "N/A"
 msgstr ""
 
-#: src/tools/metadata.rs:487
+#: src/tools/metadata.rs:472
 msgid "Metadata saved successfully"
 msgstr ""
 
-#: src/tools/metadata.rs:497
+#: src/tools/metadata.rs:482
 msgid "Failed to save metadata"
 msgstr ""
 
-#: src/tools/metadata.rs:570
+#: src/tools/metadata.rs:555
 msgid "Failed to load document's metadata"
 msgstr ""
 
-#: src/tools/mod.rs:70
+#: src/tools/compress.rs:196
+msgid "Compress"
+msgstr ""
+
+#: src/tools/compress.rs:279
+msgid "Image Quality Level"
+msgstr ""
+
+#: src/tools/compress.rs:281
+msgid "Original"
+msgstr ""
+
+#: src/tools/compress.rs:282
+msgid "Print"
+msgstr ""
+
+#: src/tools/compress.rs:283
+msgid "Display"
+msgstr ""
+
+#: src/tools/compress.rs:284
+msgid "Draft"
+msgstr ""
+
+#: src/tools/compress.rs:298
+msgid "Remove Unused Data"
+msgstr ""
+
+#: src/tools/compress.rs:300
+msgid "Discard unreferenced PDF objects"
+msgstr ""
+
+#: src/tools/compress.rs:309
+msgid "Remove Empty Streams"
+msgstr ""
+
+#: src/tools/compress.rs:311
+msgid "Discard empty PDF data streams"
+msgstr ""
+
+#: src/tools/compress.rs:431
+msgid "PDF compressed successfully"
+msgstr ""
+
+#: src/tools/compress.rs:441
+msgid "Failed to compress PDF"
+msgstr ""
+
+#: src/tools/mod.rs:87
 msgid "No files selected"
 msgstr ""
 
-#: src/tools/mod.rs:76
+#: src/tools/mod.rs:93
 msgid "No file selected"
 msgstr ""
 
-#: src/tools/mod.rs:94
+#: src/tools/mod.rs:111
 msgid "No PDFs Added"
 msgstr ""
 
-#: src/tools/mod.rs:100
+#: src/tools/mod.rs:117
 msgid "No PDF Open"
 msgstr ""
 
-#: src/tools/mod.rs:106
+#: src/tools/mod.rs:123
 msgid "Add two or more PDFs to merge them"
 msgstr ""
 
-#: src/tools/mod.rs:107
+#: src/tools/mod.rs:124
 msgid "Open a PDF to reorder or remove pages"
 msgstr ""
 
-#: src/tools/mod.rs:108
+#: src/tools/mod.rs:125
 msgid "Open a PDF to choose pages to extract"
 msgstr ""
 
-#: src/tools/mod.rs:109
+#: src/tools/mod.rs:126
 msgid "Open a PDF to choose where to split it"
 msgstr ""
 
-#: src/tools/mod.rs:110
+#: src/tools/mod.rs:127
 msgid "Open a PDF to save a smaller copy"
 msgstr ""
 
-#: src/tools/mod.rs:111
+#: src/tools/mod.rs:128
 msgid "Open a PDF to add an image watermark"
 msgstr ""
 
-#: src/tools/mod.rs:112
+#: src/tools/mod.rs:129
 msgid "Open a PDF to edit its metadata"
 msgstr ""
 
-#: src/tools/mod.rs:118
+#: src/tools/mod.rs:135
 msgid "Add PDFs"
 msgstr ""
 
-#: src/tools/mod.rs:124
+#: src/tools/mod.rs:141
 msgid "Open PDF"
 msgstr ""
 
-#: src/tools/mod.rs:131
+#: src/tools/mod.rs:148
 msgid "PDF Documents"
 msgstr ""
 
-#: src/tools/mod.rs:141
+#: src/tools/mod.rs:158
 msgid "output.pdf"
 msgstr ""
 
-#: src/tools/mod.rs:215 src/tools/mod.rs:217
+#: src/tools/mod.rs:232 src/tools/mod.rs:234
 msgid "Invalid input"
 msgstr ""
 
-#: src/tools/mod.rs:220
+#: src/tools/mod.rs:237
 #, rust-format
 msgid "Contains out of range pages (Max: {max})"
 msgstr ""
 
-#: src/tools/mod.rs:229 src/tools/mod.rs:248
+#: src/tools/mod.rs:246 src/tools/mod.rs:265
 msgid "Please specify pages"
 msgstr ""
 
-#: src/tools/mod.rs:241
+#: src/tools/mod.rs:258
 msgid "Ranges are not supported for splitting"
 msgstr ""
