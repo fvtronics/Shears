@@ -67,6 +67,16 @@ pub fn generate_thumbnail(
     password: Option<&str>,
     max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
+    generate_page_thumbnail(file, 0, rotation, password, max_dim)
+}
+
+pub fn generate_page_thumbnail(
+    file: &gio::File,
+    page_index: i32,
+    rotation: i32,
+    password: Option<&str>,
+    max_dim: f64,
+) -> Result<ThumbnailResult, PreviewError> {
     let doc = match poppler::Document::from_gfile(file, password, gio::Cancellable::NONE) {
         Ok(d) => d,
         Err(e) => {
@@ -78,8 +88,8 @@ pub fn generate_thumbnail(
         }
     };
 
-    let Some(page) = doc.page(0) else {
-        tracing::error!("Failed to get first page");
+    let Some(page) = doc.page(page_index) else {
+        tracing::error!("Failed to get page {}", page_index);
         return Ok(ThumbnailResult {
             texture: None,
             original_dimensions: None,
