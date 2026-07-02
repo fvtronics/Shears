@@ -118,10 +118,18 @@ impl SimpleComponent for OrganizeTool {
     }
 }
 
+relm4::new_action_group!(CardActionGroup, "card");
+relm4::new_stateless_action!(MoveLeftAction, CardActionGroup, "move-left");
+relm4::new_stateless_action!(MoveRightAction, CardActionGroup, "move-right");
+relm4::new_stateless_action!(DuplicateAction, CardActionGroup, "duplicate");
+
 #[derive(Debug, Clone)]
 struct OrganizePageRowInit {
     file: gio::File,
     page_index: usize,
+    total_pages: usize,
+    rotation: u16,
+    thumbnail: Option<gdk::MemoryTexture>,
     password: Option<String>,
 }
 
@@ -131,19 +139,34 @@ struct OrganizePageRow {
     rotation: u16,
     password: Option<String>,
     thumbnail: Option<gdk::MemoryTexture>,
+    index: DynamicIndex,
+    total_pages: usize,
+    action_group: gio::SimpleActionGroup,
+    move_left_action: gio::SimpleAction,
+    move_right_action: gio::SimpleAction,
 }
 
 #[derive(Debug)]
 enum OrganizePageRowMsg {
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     RotateClockwise,
+    RefreshBounds(usize),
+}
+
+#[derive(Debug)]
+enum OrganizePageRowOutput {
+    MoveLeft(DynamicIndex),
+    MoveRight(DynamicIndex),
+    Duplicate(DynamicIndex),
+    Delete(DynamicIndex),
+    Move { from: usize, to: DynamicIndex },
 }
 
 #[relm4::factory]
 impl FactoryComponent for OrganizePageRow {
     type Init = OrganizePageRowInit;
     type Input = OrganizePageRowMsg;
-    type Output = ();
+    type Output = OrganizePageRowOutput;
     type CommandOutput = ();
     type ParentWidget = gtk::FlowBox;
 
@@ -152,6 +175,7 @@ impl FactoryComponent for OrganizePageRow {
             set_orientation: gtk::Orientation::Vertical,
             set_width_request: 160,
 
+            #[name(preview_frame)]
             gtk::Overlay {
                 set_margin_top: 12,
                 set_margin_bottom: 12,
@@ -160,8 +184,8 @@ impl FactoryComponent for OrganizePageRow {
 
                 #[wrap(Some)]
                 set_child = &gtk::Box {
-                    set_width_request: 140,
-                    set_height_request: 180,
+                    set_width_request: 126,
+                    set_height_request: 162,
                 },
                 add_overlay = &gtk::Picture {
                     set_can_shrink: true,
@@ -171,6 +195,59 @@ impl FactoryComponent for OrganizePageRow {
                 }
             },
 
+            add_controller = gtk::DragSource {
+                set_actions: gdk::DragAction::MOVE,
+
+                connect_prepare[index] => move |_drag_source, _x, _y| {
+                    let current = index.current_index() as u32;
+                    let value = current.to_value();
+                    Some(gdk::ContentProvider::for_value(&value))
+                },
+
+                connect_drag_begin[preview_frame] => move |_, drag| {
+                    let paintable = gtk::WidgetPaintable::new(Some(&preview_frame));
+                    gtk::DragIcon::set_from_paintable(drag, &paintable, 0, 0);
+                }
+            },
+
+            add_controller = gtk::DropTarget::new(u32::static_type(), gdk::DragAction::MOVE) {
+                connect_drop[sender, index] => move |_drop_target, value, _x, _y| {
+                    if let Ok(from_index) = value.get::<u32>() {
+                        let _ = sender.output(OrganizePageRowOutput::Move {
+                            from: from_index as usize,
+                            to: index.clone(),
+                        });
+                        true
+                    } else {
+                        false
+                    }
+                }
+            },
+
+            add_controller = gtk::GestureClick::new() {
+                set_button: 3,
+                connect_pressed[menu_button] => move |gesture, _, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                    menu_button.popup();
+                }
+            },
+
+            add_controller = gtk::GestureLongPress::new() {
+                connect_pressed[menu_button] => move |gesture, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                    menu_button.popup();
+                }
+            },
+
+            gtk::Label {
+                set_label: &format!("{} {}", gettext("Page"), self.page_index + 1),
+                set_halign: gtk::Align::Start,
+                set_margin_start: 12,
+                set_margin_end: 12,
+                set_margin_top: 4,
+                add_css_class: "heading",
+            },
+
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_margin_start: 12,
@@ -178,7 +255,8 @@ impl FactoryComponent for OrganizePageRow {
                 set_margin_bottom: 6,
 
                 gtk::Label {
-                    set_label: &format!("{}", self.page_index + 1),
+                    #[watch]
+                    set_label: &format!("{}/{}", self.index.current_index() + 1, self.total_pages),
                     set_hexpand: true,
                     set_halign: gtk::Align::Start,
                     add_css_class: "dim-label",
@@ -191,28 +269,87 @@ impl FactoryComponent for OrganizePageRow {
                     connect_clicked => OrganizePageRowMsg::RotateClockwise,
                 },
 
+                gtk::Button {
+                    set_icon_name: "edit-delete-symbolic",
+                    add_css_class: "flat",
+                    set_tooltip_text: Some(&gettext("Remove Page")),
+                    #[watch]
+                    set_sensitive: self.total_pages > 1,
+
+                    connect_clicked[sender, index] => move |_| {
+                        let _ = sender.output(OrganizePageRowOutput::Delete(index.clone()));
+                    }
+                },
+
+                #[name(menu_button)]
                 gtk::MenuButton {
                     set_icon_name: "view-more-symbolic",
                     add_css_class: "flat",
                     set_tooltip_text: Some(&gettext("More Options")),
+
+                    insert_action_group: ("card", Some(&self.action_group)),
+
+                    set_menu_model: Some(&{
+                        relm4::menu! {
+                            card_menu: {
+                                section! {
+                                    &gettext("Move _Left") => MoveLeftAction,
+                                    &gettext("Move _Right") => MoveRightAction,
+                                    &gettext("_Duplicate") => DuplicateAction,
+                                }
+                            }
+                        }
+                        card_menu
+                    }),
                 }
             }
         }
     }
 
-    fn init_model(
-        init: Self::Init,
-        _index: &DynamicIndex,
-        sender: FactorySender<Self>,
-    ) -> Self {
+    fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+        let action_group = gio::SimpleActionGroup::new();
+        let move_left_action = gio::SimpleAction::new("move-left", None);
+        let move_right_action = gio::SimpleAction::new("move-right", None);
+        let duplicate_action = gio::SimpleAction::new("duplicate", None);
+
+        let sender_left = sender.clone();
+        let index_left = index.clone();
+        move_left_action.connect_activate(move |_, _| {
+            let _ = sender_left.output(OrganizePageRowOutput::MoveLeft(index_left.clone()));
+        });
+
+        let sender_right = sender.clone();
+        let index_right = index.clone();
+        move_right_action.connect_activate(move |_, _| {
+            let _ = sender_right.output(OrganizePageRowOutput::MoveRight(index_right.clone()));
+        });
+
+        let sender_dup = sender.clone();
+        let index_dup = index.clone();
+        duplicate_action.connect_activate(move |_, _| {
+            let _ = sender_dup.output(OrganizePageRowOutput::Duplicate(index_dup.clone()));
+        });
+
+        action_group.add_action(&move_left_action);
+        action_group.add_action(&move_right_action);
+        action_group.add_action(&duplicate_action);
+
         let model = Self {
             file: init.file,
             page_index: init.page_index,
-            rotation: 0,
+            rotation: init.rotation,
             password: init.password,
-            thumbnail: None,
+            thumbnail: init.thumbnail,
+            index: index.clone(),
+            total_pages: init.total_pages,
+            action_group,
+            move_left_action,
+            move_right_action,
         };
-        model.request_thumbnail(&sender);
+        model.update_actions();
+        if model.thumbnail.is_none() {
+            model.request_thumbnail(&sender);
+        }
         model
     }
 
@@ -227,7 +364,20 @@ impl FactoryComponent for OrganizePageRow {
                 self.rotation = (self.rotation + 90) % 360;
                 self.request_thumbnail(&sender);
             }
+            OrganizePageRowMsg::RefreshBounds(total_pages) => {
+                self.total_pages = total_pages;
+                self.update_actions();
+            }
         }
+    }
+}
+
+impl OrganizePageRow {
+    fn update_actions(&self) {
+        let pos = self.index.current_index();
+        self.move_left_action.set_enabled(pos > 0);
+        self.move_right_action
+            .set_enabled(pos + 1 < self.total_pages);
     }
 }
 
@@ -249,7 +399,10 @@ impl OrganizePageRow {
             );
             sender.input(OrganizePageRowMsg::ThumbnailReady(result));
         }) {
-            tracing::error!("Failed to enqueue thumbnail task for organize page row: {}", e);
+            tracing::error!(
+                "Failed to enqueue thumbnail task for organize page row: {}",
+                e
+            );
         }
     }
 }
@@ -268,6 +421,12 @@ enum OrganizePageMsg {
     AddFile(gio::File),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
+    MovePageLeft(DynamicIndex),
+    MovePageRight(DynamicIndex),
+    DuplicatePage(DynamicIndex),
+    DeletePage(DynamicIndex),
+    MovePage { from: usize, to: DynamicIndex },
+    ResetFile,
 }
 
 #[derive(Debug)]
@@ -311,6 +470,17 @@ impl Component for OrganizePage {
                             });
                         },
                     },
+
+                    gtk::Button {
+                        set_label: &gettext("Reset"),
+                        set_tooltip_text: Some(&gettext("Reset Page Order and Rotations")),
+                        #[watch]
+                        set_sensitive: model.file.is_some(),
+
+                        connect_clicked[sender] => move |_| {
+                            sender.input(OrganizePageMsg::ResetFile);
+                        },
+                    },
                 },
 
                 gtk::ScrolledWindow {
@@ -334,7 +504,13 @@ impl Component for OrganizePage {
 
         let pages = FactoryVecDeque::<OrganizePageRow>::builder()
             .launch(gtk::FlowBox::default())
-            .detach();
+            .forward(sender.input_sender(), |output| match output {
+                OrganizePageRowOutput::MoveLeft(idx) => OrganizePageMsg::MovePageLeft(idx),
+                OrganizePageRowOutput::MoveRight(idx) => OrganizePageMsg::MovePageRight(idx),
+                OrganizePageRowOutput::Duplicate(idx) => OrganizePageMsg::DuplicatePage(idx),
+                OrganizePageRowOutput::Delete(idx) => OrganizePageMsg::DeletePage(idx),
+                OrganizePageRowOutput::Move { from, to } => OrganizePageMsg::MovePage { from, to },
+            });
 
         pages.widget().set_selection_mode(gtk::SelectionMode::None);
         pages.widget().set_homogeneous(true);
@@ -382,6 +558,9 @@ impl Component for OrganizePage {
                                     guard.push_back(OrganizePageRowInit {
                                         file: file.clone(),
                                         page_index: i as usize,
+                                        total_pages: res.page_count as usize,
+                                        rotation: 0,
+                                        thumbnail: None,
                                         password: self.password.clone(),
                                     });
                                 }
@@ -417,6 +596,65 @@ impl Component for OrganizePage {
                     self.clear_file(&sender);
                 }
             },
+            OrganizePageMsg::MovePageLeft(index) => {
+                let current = index.current_index();
+                if current > 0 {
+                    self.pages.guard().move_to(current, current - 1);
+                    self.refresh_range(current - 1, current);
+                }
+            }
+            OrganizePageMsg::MovePageRight(index) => {
+                let current = index.current_index();
+                let new_index = current + 1;
+                if new_index < self.pages.len() {
+                    self.pages.guard().move_to(current, new_index);
+                    self.refresh_range(current, new_index);
+                }
+            }
+            OrganizePageMsg::DuplicatePage(index) => {
+                let current = index.current_index();
+                let total = self.pages.len() + 1;
+                let prepared = self
+                    .pages
+                    .guard()
+                    .get(current)
+                    .map(|row| OrganizePageRowInit {
+                        file: row.file.clone(),
+                        page_index: row.page_index,
+                        total_pages: total,
+                        rotation: row.rotation,
+                        thumbnail: row.thumbnail.clone(),
+                        password: row.password.clone(),
+                    });
+                if let Some(prepared) = prepared {
+                    self.pages.guard().insert(current + 1, prepared);
+                    self.refresh_all_bounds();
+                }
+            }
+            OrganizePageMsg::DeletePage(index) => {
+                let current = index.current_index();
+                if self.pages.len() > 1 {
+                    self.pages.guard().remove(current);
+                    self.refresh_all_bounds();
+                }
+            }
+            OrganizePageMsg::MovePage { from, to } => {
+                let to_idx = to.current_index();
+                if from != to_idx && from < self.pages.len() && to_idx < self.pages.len() {
+                    self.pages.guard().move_to(from, to_idx);
+                    let start = from.min(to_idx);
+                    let end = from.max(to_idx);
+                    self.refresh_range(start, end);
+                }
+            }
+            OrganizePageMsg::ResetFile => {
+                if self.file.is_some() {
+                    self.pages.guard().clear();
+                    self.preview_status = PreviewStatus::InitialPending;
+                    self.check_loading_state(&sender);
+                    self.request_thumbnail(self.password.clone(), &sender);
+                }
+            }
         }
     }
 }
@@ -459,6 +697,23 @@ impl OrganizePage {
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
             let _ = sender.output(OrganizePageOutput::Loading(is_loading));
+        }
+    }
+
+    fn refresh_range(&mut self, start: usize, end: usize) {
+        let length = self.pages.len();
+        let guard = self.pages.guard();
+        for i in start..=end {
+            if i < length {
+                guard.send(i, OrganizePageRowMsg::RefreshBounds(length));
+            }
+        }
+    }
+
+    fn refresh_all_bounds(&mut self) {
+        let length = self.pages.len();
+        if length > 0 {
+            self.refresh_range(0, length - 1);
         }
     }
 }
