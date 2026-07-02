@@ -8,6 +8,7 @@
 pub mod compress;
 pub mod merge;
 pub mod metadata;
+pub mod organize;
 pub mod page;
 pub mod split;
 

@@ -25,6 +25,7 @@ impl SimpleComponent for AboutDialog {
             .copyright("© 2026 Francisco Vásquez Cuevas")
             .developers(vec!["Francisco Vásquez Cuevas"])
             .designers(vec!["Francisco Vásquez Cuevas"])
+            .artists(vec!["Matthew Thu https://matthew-thu.netlify.app/"])
             .build()
     }
 

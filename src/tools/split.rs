@@ -221,7 +221,7 @@ impl Component for SplitPage {
                             set_tooltip_text: Some(&gettext("Split")),
                             add_css_class: "suggested-action",
                             #[watch]
-                            set_sensitive: model.file.is_some() && !model.is_splitting,
+                            set_sensitive: model.file.is_some(),
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
