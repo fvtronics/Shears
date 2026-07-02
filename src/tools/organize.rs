@@ -17,8 +17,9 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
+use crate::pdf::{OrganizeOptions, PdfError, organize_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog};
+use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
 pub struct OrganizeTool {
     state: ToolState,
@@ -411,6 +412,9 @@ struct OrganizePage {
     file: Option<gio::File>,
     password: Option<String>,
     is_loading: bool,
+    is_saving: bool,
+    modern_pdf_format: bool,
+    remove_metadata: bool,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
     pages: FactoryVecDeque<OrganizePageRow>,
@@ -427,6 +431,11 @@ enum OrganizePageMsg {
     DeletePage(DynamicIndex),
     MovePage { from: usize, to: DynamicIndex },
     ResetFile,
+    SetModernPdfFormat(bool),
+    SetRemoveMetadata(bool),
+    SaveTo(gio::File),
+    SaveComplete(Result<std::path::PathBuf, PdfError>),
+    OpenOutput(std::path::PathBuf),
 }
 
 #[derive(Debug)]
@@ -481,6 +490,55 @@ impl Component for OrganizePage {
                             sender.input(OrganizePageMsg::ResetFile);
                         },
                     },
+
+                    gtk::Button {
+                        set_label: &gettext("Save"),
+                        set_tooltip_text: Some(&gettext("Save organized PDF")),
+                        add_css_class: "suggested-action",
+                        #[watch]
+                        set_sensitive: model.file.is_some(),
+
+                        connect_clicked[sender] => move |button| {
+                            let sender_clone = sender.clone();
+                            save_pdf_dialog(button, Tool::Organize, &gettext("Save PDF"), move |file| {
+                                sender_clone.input(OrganizePageMsg::SaveTo(file));
+                            });
+                        }
+                    },
+
+                    gtk::MenuButton {
+                        set_icon_name: "view-more-symbolic",
+                        add_css_class: "flat",
+                        set_tooltip_text: Some(&gettext("Advanced Options")),
+
+                        #[wrap(Some)]
+                        set_popover = &gtk::Popover {
+                            add_css_class: "menu",
+                            adw::PreferencesGroup {
+                                add = &adw::SwitchRow {
+                                    set_title: &gettext("_Modern PDF format"),
+                                    set_use_underline: true,
+                                    set_subtitle: &gettext("Save with PDF 1.5 object streams"),
+                                    set_active: model.modern_pdf_format,
+
+                                    connect_active_notify[sender] => move |row| {
+                                        sender.input(OrganizePageMsg::SetModernPdfFormat(row.is_active()));
+                                    }
+                                },
+
+                                add = &adw::SwitchRow {
+                                    set_title: &gettext("_Remove metadata"),
+                                    set_use_underline: true,
+                                    set_subtitle: &gettext("Remove existing metadata before saving"),
+                                    set_active: model.remove_metadata,
+
+                                    connect_active_notify[sender] => move |row| {
+                                        sender.input(OrganizePageMsg::SetRemoveMetadata(row.is_active()));
+                                    }
+                                },
+                            }
+                        }
+                    },
                 },
 
                 gtk::ScrolledWindow {
@@ -523,6 +581,9 @@ impl Component for OrganizePage {
             file: None,
             password: None,
             is_loading: false,
+            is_saving: false,
+            modern_pdf_format: false,
+            remove_metadata: false,
             password_dialog,
             preview_status: PreviewStatus::Ready,
             pages,
@@ -655,6 +716,76 @@ impl Component for OrganizePage {
                     self.request_thumbnail(self.password.clone(), &sender);
                 }
             }
+            OrganizePageMsg::SetModernPdfFormat(val) => {
+                self.modern_pdf_format = val;
+            }
+            OrganizePageMsg::SetRemoveMetadata(val) => {
+                self.remove_metadata = val;
+            }
+            OrganizePageMsg::SaveTo(output_file) => {
+                if let (Some(file_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    output_file.path(),
+                ) {
+                    self.is_saving = true;
+                    self.check_loading_state(&sender);
+
+                    let pages = self
+                        .pages
+                        .guard()
+                        .iter()
+                        .map(|row| (row.page_index, row.rotation))
+                        .collect();
+
+                    let options = OrganizeOptions {
+                        pages,
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
+                    };
+
+                    let sender = sender.clone();
+                    relm4::spawn_blocking(move || {
+                        let result = organize_file(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(OrganizePageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(OrganizePageMsg::SaveComplete(Err(e))),
+                        }
+                    });
+                }
+            }
+            OrganizePageMsg::SaveComplete(result) => {
+                self.is_saving = false;
+                self.check_loading_state(&sender);
+                match result {
+                    Ok(path) => {
+                        tracing::info!("Organize complete");
+                        let toast = adw::Toast::new(&gettext("PDF organized successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(OrganizePageMsg::OpenOutput(path.clone()));
+                        });
+                        root.add_toast(toast);
+                    }
+                    Err(err) => {
+                        tracing::error!("Failed to organize PDF: {:?}", err);
+                        root.add_toast(adw::Toast::new(&gettext("Failed to organize PDF")));
+                    }
+                }
+            }
+            OrganizePageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                    root.add_toast(toast);
+
+                    tracing::error!("Failed to open output file: {:?}", e);
+                }
+            }
         }
     }
 }
@@ -689,10 +820,11 @@ impl OrganizePage {
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
-        let is_loading = matches!(
-            self.preview_status,
-            PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
-        );
+        let is_loading = self.is_saving
+            || matches!(
+                self.preview_status,
+                PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
+            );
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;

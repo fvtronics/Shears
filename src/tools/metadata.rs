@@ -203,7 +203,7 @@ impl Component for MetadataPage {
                             set_tooltip_text: Some(&gettext("Save modified PDF")),
                             add_css_class: "suggested-action",
                             #[watch]
-                            set_sensitive: model.file.is_some() && !model.is_saving,
+                            set_sensitive: model.file.is_some(),
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
