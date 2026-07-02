@@ -1,6 +1,6 @@
-# v0.2.2
+# v0.3.0
 
 <p>New</p>
 <ul>
-  <li>Add section to compress PDF files</li>
+  <li>Add section to organize and remove a document's pages</li>
 </ul>
