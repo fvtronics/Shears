@@ -18,5 +18,5 @@ pub use compress::{CompressOptions, QualityLevel, compress_file};
 pub use error::PdfError;
 pub use merge::{MergeOptions, merge_files};
 pub use metadata::{MetadataOptions, PdfMetadata, read_metadata, update_metadata};
-pub use organize::{OrganizeOptions, organize_file};
+pub use organize::{OrganizeOptions, OrganizePageInput, organize_file};
 pub use split::{DivideAfter, SplitOptions, split_file};

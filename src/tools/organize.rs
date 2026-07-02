@@ -17,7 +17,7 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
-use crate::pdf::{OrganizeOptions, PdfError, organize_file};
+use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
@@ -123,28 +123,38 @@ relm4::new_action_group!(CardActionGroup, "card");
 relm4::new_stateless_action!(MoveLeftAction, CardActionGroup, "move-left");
 relm4::new_stateless_action!(MoveRightAction, CardActionGroup, "move-right");
 relm4::new_stateless_action!(DuplicateAction, CardActionGroup, "duplicate");
+relm4::new_stateless_action!(InsertBlankAction, CardActionGroup, "insert-blank");
+
+#[derive(Debug, Clone)]
+pub enum OrganizeItemType {
+    Page(usize),
+    BlankPage { width: f64, height: f64 },
+}
 
 #[derive(Debug, Clone)]
 struct OrganizePageRowInit {
     file: gio::File,
-    page_index: usize,
+    item_type: OrganizeItemType,
     total_pages: usize,
     rotation: u16,
     thumbnail: Option<gdk::MemoryTexture>,
+    original_dimensions: Option<(f64, f64)>,
     password: Option<String>,
 }
 
 struct OrganizePageRow {
     file: gio::File,
-    page_index: usize,
+    item_type: OrganizeItemType,
     rotation: u16,
     password: Option<String>,
     thumbnail: Option<gdk::MemoryTexture>,
+    original_dimensions: Option<(f64, f64)>,
     index: DynamicIndex,
     total_pages: usize,
     action_group: gio::SimpleActionGroup,
     move_left_action: gio::SimpleAction,
     move_right_action: gio::SimpleAction,
+    insert_blank_action: gio::SimpleAction,
 }
 
 #[derive(Debug)]
@@ -160,6 +170,7 @@ enum OrganizePageRowOutput {
     MoveRight(DynamicIndex),
     Duplicate(DynamicIndex),
     Delete(DynamicIndex),
+    InsertBlankPageAfter(DynamicIndex),
     Move { from: usize, to: DynamicIndex },
 }
 
@@ -241,7 +252,10 @@ impl FactoryComponent for OrganizePageRow {
             },
 
             gtk::Label {
-                set_label: &format!("{} {}", gettext("Page"), self.page_index + 1),
+                set_label: &match self.item_type {
+                    OrganizeItemType::Page(idx) => format!("{} {}", gettext("Page"), idx + 1),
+                    OrganizeItemType::BlankPage { .. } => gettext("Blank Page"),
+                },
                 set_halign: gtk::Align::Start,
                 set_margin_start: 12,
                 set_margin_end: 12,
@@ -297,6 +311,7 @@ impl FactoryComponent for OrganizePageRow {
                                     &gettext("Move _Left") => MoveLeftAction,
                                     &gettext("Move _Right") => MoveRightAction,
                                     &gettext("_Duplicate") => DuplicateAction,
+                                    &gettext("_Insert Blank Page After") => InsertBlankAction,
                                 }
                             }
                         }
@@ -312,6 +327,7 @@ impl FactoryComponent for OrganizePageRow {
         let move_left_action = gio::SimpleAction::new("move-left", None);
         let move_right_action = gio::SimpleAction::new("move-right", None);
         let duplicate_action = gio::SimpleAction::new("duplicate", None);
+        let insert_blank_action = gio::SimpleAction::new("insert-blank", None);
 
         let sender_left = sender.clone();
         let index_left = index.clone();
@@ -331,23 +347,42 @@ impl FactoryComponent for OrganizePageRow {
             let _ = sender_dup.output(OrganizePageRowOutput::Duplicate(index_dup.clone()));
         });
 
+        let sender_blank = sender.clone();
+        let index_blank = index.clone();
+        insert_blank_action.connect_activate(move |_, _| {
+            let _ = sender_blank.output(OrganizePageRowOutput::InsertBlankPageAfter(
+                index_blank.clone(),
+            ));
+        });
+
+        insert_blank_action.set_enabled(false);
+
         action_group.add_action(&move_left_action);
         action_group.add_action(&move_right_action);
         action_group.add_action(&duplicate_action);
+        action_group.add_action(&insert_blank_action);
 
-        let model = Self {
+        let mut model = Self {
             file: init.file,
-            page_index: init.page_index,
+            item_type: init.item_type,
             rotation: init.rotation,
             password: init.password,
             thumbnail: init.thumbnail,
+            original_dimensions: init.original_dimensions,
             index: index.clone(),
             total_pages: init.total_pages,
             action_group,
             move_left_action,
             move_right_action,
+            insert_blank_action,
         };
         model.update_actions();
+        if model.original_dimensions.is_some() {
+            model.insert_blank_action.set_enabled(true);
+        } else if let OrganizeItemType::BlankPage { width, height } = model.item_type {
+            model.original_dimensions = Some((width, height));
+            model.insert_blank_action.set_enabled(true);
+        }
         if model.thumbnail.is_none() {
             model.request_thumbnail(&sender);
         }
@@ -359,6 +394,10 @@ impl FactoryComponent for OrganizePageRow {
             OrganizePageRowMsg::ThumbnailReady(res) => {
                 if let Ok(thumb) = res {
                     self.thumbnail = thumb.texture;
+                    if let Some(dim) = thumb.original_dimensions {
+                        self.original_dimensions = Some(dim);
+                        self.insert_blank_action.set_enabled(true);
+                    }
                 }
             }
             OrganizePageRowMsg::RotateClockwise => {
@@ -384,20 +423,25 @@ impl OrganizePageRow {
 
 impl OrganizePageRow {
     fn request_thumbnail(&self, sender: &FactorySender<Self>) {
+        let item_type = self.item_type.clone();
         let file = self.file.clone();
-        let page_index = self.page_index as i32;
         let rotation = self.rotation as i32;
         let password = self.password.clone();
         let sender = sender.clone();
 
         if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-            let result = crate::pdf::preview::generate_page_thumbnail(
-                &file,
-                page_index,
-                rotation,
-                password.as_deref(),
-                200.0,
-            );
+            let result = match item_type {
+                OrganizeItemType::Page(page_index) => crate::pdf::preview::generate_page_thumbnail(
+                    &file,
+                    page_index as i32,
+                    rotation,
+                    password.as_deref(),
+                    200.0,
+                ),
+                OrganizeItemType::BlankPage { width, height } => {
+                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation, 200.0)
+                }
+            };
             sender.input(OrganizePageRowMsg::ThumbnailReady(result));
         }) {
             tracing::error!(
@@ -429,6 +473,7 @@ enum OrganizePageMsg {
     MovePageRight(DynamicIndex),
     DuplicatePage(DynamicIndex),
     DeletePage(DynamicIndex),
+    InsertBlankPageAfter(DynamicIndex),
     MovePage { from: usize, to: DynamicIndex },
     ResetFile,
     SetModernPdfFormat(bool),
@@ -567,6 +612,9 @@ impl Component for OrganizePage {
                 OrganizePageRowOutput::MoveRight(idx) => OrganizePageMsg::MovePageRight(idx),
                 OrganizePageRowOutput::Duplicate(idx) => OrganizePageMsg::DuplicatePage(idx),
                 OrganizePageRowOutput::Delete(idx) => OrganizePageMsg::DeletePage(idx),
+                OrganizePageRowOutput::InsertBlankPageAfter(idx) => {
+                    OrganizePageMsg::InsertBlankPageAfter(idx)
+                }
                 OrganizePageRowOutput::Move { from, to } => OrganizePageMsg::MovePage { from, to },
             });
 
@@ -618,10 +666,11 @@ impl Component for OrganizePage {
                                 for i in 0..res.page_count {
                                     guard.push_back(OrganizePageRowInit {
                                         file: file.clone(),
-                                        page_index: i as usize,
+                                        item_type: OrganizeItemType::Page(i as usize),
                                         total_pages: res.page_count as usize,
                                         rotation: 0,
                                         thumbnail: None,
+                                        original_dimensions: None,
                                         password: self.password.clone(),
                                     });
                                 }
@@ -681,13 +730,39 @@ impl Component for OrganizePage {
                     .get(current)
                     .map(|row| OrganizePageRowInit {
                         file: row.file.clone(),
-                        page_index: row.page_index,
+                        item_type: row.item_type.clone(),
                         total_pages: total,
                         rotation: row.rotation,
                         thumbnail: row.thumbnail.clone(),
+                        original_dimensions: row.original_dimensions,
                         password: row.password.clone(),
                     });
                 if let Some(prepared) = prepared {
+                    self.pages.guard().insert(current + 1, prepared);
+                    self.refresh_all_bounds();
+                }
+            }
+            OrganizePageMsg::InsertBlankPageAfter(index) => {
+                let current = index.current_index();
+                let total = self.pages.len() + 1;
+                let info = self
+                    .pages
+                    .guard()
+                    .get(current)
+                    .map(|row| (row.file.clone(), row.original_dimensions, row.rotation));
+                if let Some((file, Some((w, h)), rotation)) = info {
+                    let prepared = OrganizePageRowInit {
+                        file,
+                        item_type: OrganizeItemType::BlankPage {
+                            width: w,
+                            height: h,
+                        },
+                        total_pages: total,
+                        rotation,
+                        thumbnail: None,
+                        original_dimensions: Some((w, h)),
+                        password: None,
+                    };
                     self.pages.guard().insert(current + 1, prepared);
                     self.refresh_all_bounds();
                 }
@@ -734,7 +809,18 @@ impl Component for OrganizePage {
                         .pages
                         .guard()
                         .iter()
-                        .map(|row| (row.page_index, row.rotation))
+                        .map(|row| {
+                            let input = match &row.item_type {
+                                OrganizeItemType::Page(idx) => OrganizePageInput::Page(*idx),
+                                OrganizeItemType::BlankPage { width, height } => {
+                                    OrganizePageInput::BlankPage {
+                                        width: *width,
+                                        height: *height,
+                                    }
+                                }
+                            };
+                            (input, row.rotation)
+                        })
                         .collect();
 
                     let options = OrganizeOptions {
