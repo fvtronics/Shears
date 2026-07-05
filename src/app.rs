@@ -12,8 +12,8 @@ use gtk::{gio, glib};
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
 use crate::tools::{
-    Tool, compress::CompressTool, merge::MergeTool, metadata::MetadataTool, organize::OrganizeTool,
-    page::ToolPage, split::SplitTool,
+    Tool, compress::CompressTool, extract::ExtractTool, merge::MergeTool, metadata::MetadataTool,
+    organize::OrganizeTool, page::ToolPage, split::SplitTool,
 };
 
 pub(super) struct App {
@@ -21,7 +21,7 @@ pub(super) struct App {
     merge_file_count: usize,
     _merge: Controller<MergeTool>,
     _organize: Controller<OrganizeTool>,
-    _extract: Controller<ToolPage>,
+    _extract: Controller<ExtractTool>,
     _split: Controller<SplitTool>,
     _compress: Controller<CompressTool>,
     _watermark: Controller<ToolPage>,
@@ -35,6 +35,8 @@ pub(super) struct App {
     compress_file_active: Option<String>,
     organize_is_loading: bool,
     organize_file_active: Option<String>,
+    extract_is_loading: bool,
+    extract_file_active: Option<String>,
 }
 
 #[derive(Debug)]
@@ -50,6 +52,8 @@ pub(super) enum AppMsg {
     UpdateCompressFileActive(Option<String>),
     UpdateOrganizeLoading(bool),
     UpdateOrganizeFileActive(Option<String>),
+    UpdateExtractLoading(bool),
+    UpdateExtractFileActive(Option<String>),
     Quit,
 }
 
@@ -139,7 +143,6 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Extract Pages")) {
                                             set_icon_name: Some(Tool::Extract.icon_name()),
                                             set_subtitle: Some(gettext("Save page ranges").as_str()),
-                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Split PDF")) {
@@ -235,7 +238,16 @@ impl SimpleComponent for App {
                     AppMsg::UpdateOrganizeFileActive(stem)
                 }
             });
-        let extract = ToolPage::builder().launch(Tool::Extract).detach();
+        let extract = ExtractTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                crate::tools::extract::ExtractToolOutput::Loading(is_loading) => {
+                    AppMsg::UpdateExtractLoading(is_loading)
+                }
+                crate::tools::extract::ExtractToolOutput::FileActive(stem) => {
+                    AppMsg::UpdateExtractFileActive(stem)
+                }
+            });
         let split =
             SplitTool::builder()
                 .launch(())
@@ -288,6 +300,8 @@ impl SimpleComponent for App {
             compress_file_active: None,
             organize_is_loading: false,
             organize_file_active: None,
+            extract_is_loading: false,
+            extract_file_active: None,
         };
         let widgets = view_output!();
         widgets
@@ -362,6 +376,12 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateOrganizeFileActive(title) => {
                 self.organize_file_active = title;
+            }
+            AppMsg::UpdateExtractLoading(is_loading) => {
+                self.extract_is_loading = is_loading;
+            }
+            AppMsg::UpdateExtractFileActive(title) => {
+                self.extract_file_active = title;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -456,6 +476,15 @@ impl App {
                 if self.organize_is_loading {
                     gettext("Processing…")
                 } else if let Some(title) = &self.organize_file_active {
+                    title.clone()
+                } else {
+                    self.selected_tool.subtitle()
+                }
+            }
+            Tool::Extract => {
+                if self.extract_is_loading {
+                    gettext("Processing…")
+                } else if let Some(title) = &self.extract_file_active {
                     title.clone()
                 } else {
                     self.selected_tool.subtitle()

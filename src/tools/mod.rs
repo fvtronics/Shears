@@ -6,6 +6,7 @@
  */
 
 pub mod compress;
+pub mod extract;
 pub mod merge;
 pub mod metadata;
 pub mod organize;
