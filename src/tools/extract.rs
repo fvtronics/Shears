@@ -142,14 +142,20 @@ struct ExtractPageRow {
 enum ExtractPageRowMsg {
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     ToggleSelected,
+    SetSelected(bool),
     RotateClockwise,
+}
+
+#[derive(Debug)]
+enum ExtractPageRowOutput {
+    SelectionChanged,
 }
 
 #[relm4::factory]
 impl FactoryComponent for ExtractPageRow {
     type Init = ExtractPageRowInit;
     type Input = ExtractPageRowMsg;
-    type Output = ();
+    type Output = ExtractPageRowOutput;
     type CommandOutput = ();
     type ParentWidget = gtk::FlowBox;
 
@@ -249,6 +255,10 @@ impl FactoryComponent for ExtractPageRow {
             }
             ExtractPageRowMsg::ToggleSelected => {
                 self.selected = !self.selected;
+                let _ = sender.output(ExtractPageRowOutput::SelectionChanged);
+            }
+            ExtractPageRowMsg::SetSelected(selected) => {
+                self.selected = selected;
             }
             ExtractPageRowMsg::RotateClockwise => {
                 self.rotation = (self.rotation + 90) % 360;
@@ -287,6 +297,9 @@ impl ExtractPageRow {
 struct ExtractPage {
     file: Option<gio::File>,
     password: Option<String>,
+    page_ranges: String,
+    page_ranges_changed: bool,
+    page_ranges_error: Option<String>,
     is_loading: bool,
     modern_pdf_format: bool,
     remove_metadata: bool,
@@ -303,6 +316,8 @@ enum ExtractPageMsg {
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
     RotateAll,
+    SetPageRanges(String),
+    CardSelectionChanged,
 }
 
 #[derive(Debug)]
@@ -392,6 +407,33 @@ impl Component for ExtractPage {
                     },
                 },
 
+                adw::PreferencesGroup {
+                    #[watch]
+                    set_sensitive: !model.is_loading,
+                    #[watch]
+                    set_visible: model.file.is_some(),
+
+                    adw::EntryRow {
+                        set_title: &gettext("Pages"),
+                        #[track = "model.page_ranges_changed"]
+                        set_text: &model.page_ranges,
+                        set_show_apply_button: false,
+                        #[watch]
+                        set_class_active: ("error", model.page_ranges_error.is_some()),
+                        connect_changed[sender] => move |entry| {
+                            sender.input(ExtractPageMsg::SetPageRanges(entry.text().to_string()));
+                        },
+                        add_suffix = &gtk::Image {
+                            set_icon_name: Some("dialog-error-symbolic"),
+                            #[watch]
+                            set_tooltip_text: model.page_ranges_error.as_deref(),
+                            #[watch]
+                            set_visible: model.page_ranges_error.is_some(),
+                            add_css_class: "error",
+                        }
+                    }
+                },
+
                 gtk::ScrolledWindow {
                     set_vexpand: true,
 
@@ -413,7 +455,9 @@ impl Component for ExtractPage {
 
         let pages = FactoryVecDeque::<ExtractPageRow>::builder()
             .launch(gtk::FlowBox::default())
-            .detach();
+            .forward(sender.input_sender(), |output| match output {
+                ExtractPageRowOutput::SelectionChanged => ExtractPageMsg::CardSelectionChanged,
+            });
 
         pages.widget().set_selection_mode(gtk::SelectionMode::None);
         pages.widget().set_homogeneous(true);
@@ -425,6 +469,9 @@ impl Component for ExtractPage {
         let model = Self {
             file: None,
             password: None,
+            page_ranges: String::new(),
+            page_ranges_changed: true,
+            page_ranges_error: None,
             is_loading: false,
             modern_pdf_format: false,
             remove_metadata: false,
@@ -438,8 +485,12 @@ impl Component for ExtractPage {
     }
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+        self.page_ranges_changed = false;
         match message {
             ExtractPageMsg::AddFile(file) => {
+                self.page_ranges.clear();
+                self.page_ranges_changed = true;
+                self.page_ranges_error = None;
                 self.password = None;
                 self.preview_status = PreviewStatus::InitialPending;
                 self.pages.guard().clear();
@@ -512,6 +563,34 @@ impl Component for ExtractPage {
                     self.pages.send(i, ExtractPageRowMsg::RotateClockwise);
                 }
             }
+            ExtractPageMsg::SetPageRanges(text) => {
+                self.page_ranges = text;
+                self.page_ranges_error = None;
+                match super::validate_page_ranges(&self.page_ranges, self.pages.len() as u32) {
+                    Ok(selected_pages) => {
+                        let selected_set: std::collections::HashSet<u32> =
+                            selected_pages.into_iter().collect();
+                        for i in 0..self.pages.len() {
+                            let is_selected = selected_set.contains(&(i as u32 + 1));
+                            self.pages.send(i, ExtractPageRowMsg::SetSelected(is_selected));
+                        }
+                    }
+                    Err(err) => {
+                        self.page_ranges_error = Some(err);
+                    }
+                }
+            }
+            ExtractPageMsg::CardSelectionChanged => {
+                let mut selected_pages = Vec::new();
+                for row in self.pages.guard().iter() {
+                    if row.selected {
+                        selected_pages.push((row.page_index + 1) as u32);
+                    }
+                }
+                self.page_ranges = super::format_page_ranges(&selected_pages);
+                self.page_ranges_changed = true;
+                self.page_ranges_error = None;
+            }
         }
     }
 }
@@ -539,6 +618,9 @@ impl ExtractPage {
     fn clear_file(&mut self, sender: &ComponentSender<Self>) {
         self.file = None;
         self.password = None;
+        self.page_ranges.clear();
+        self.page_ranges_changed = true;
+        self.page_ranges_error = None;
         self.preview_status = PreviewStatus::Ready;
         self.pages.guard().clear();
         self.check_loading_state(sender);
