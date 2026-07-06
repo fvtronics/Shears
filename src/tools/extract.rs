@@ -123,7 +123,6 @@ impl SimpleComponent for ExtractTool {
 struct ExtractPageRowInit {
     file: gio::File,
     page_index: usize,
-    total_pages: usize,
     rotation: u16,
     thumbnail: Option<gdk::MemoryTexture>,
     password: Option<String>,
@@ -132,7 +131,6 @@ struct ExtractPageRowInit {
 struct ExtractPageRow {
     file: gio::File,
     page_index: usize,
-    total_pages: usize,
     selected: bool,
     rotation: u16,
     password: Option<String>,
@@ -191,26 +189,18 @@ impl FactoryComponent for ExtractPageRow {
                 }
             },
 
-            gtk::Label {
-                set_label: &format!("{} {}", gettext("Page"), self.page_index + 1),
-                set_halign: gtk::Align::Start,
-                set_margin_start: 12,
-                set_margin_end: 12,
-                set_margin_top: 4,
-                add_css_class: "heading",
-            },
-
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_margin_start: 12,
                 set_margin_end: 12,
+                set_margin_top: 4,
                 set_margin_bottom: 6,
 
                 gtk::Label {
-                    set_label: &format!("{}/{}", self.page_index + 1, self.total_pages),
+                    set_label: &format!("{} {}", gettext("Page"), self.page_index + 1),
                     set_hexpand: true,
                     set_halign: gtk::Align::Start,
-                    add_css_class: "dim-label",
+                    add_css_class: "heading",
                 },
 
                 gtk::Button {
@@ -235,7 +225,6 @@ impl FactoryComponent for ExtractPageRow {
         let model = Self {
             file: init.file,
             page_index: init.page_index,
-            total_pages: init.total_pages,
             selected: false,
             rotation: init.rotation,
             password: init.password,
@@ -535,7 +524,6 @@ impl Component for ExtractPage {
                                     guard.push_back(ExtractPageRowInit {
                                         file: file.clone(),
                                         page_index: i as usize,
-                                        total_pages: res.page_count as usize,
                                         rotation: 0,
                                         thumbnail: None,
                                         password: self.password.clone(),
