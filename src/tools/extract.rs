@@ -581,7 +581,8 @@ impl Component for ExtractPage {
                             selected_pages.into_iter().collect();
                         for i in 0..self.pages.len() {
                             let is_selected = selected_set.contains(&(i as u32 + 1));
-                            self.pages.send(i, ExtractPageRowMsg::SetSelected(is_selected));
+                            self.pages
+                                .send(i, ExtractPageRowMsg::SetSelected(is_selected));
                         }
                     }
                     Err(err) => {
