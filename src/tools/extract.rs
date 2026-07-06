@@ -302,6 +302,7 @@ enum ExtractPageMsg {
     PasswordDialogOutput(PasswordDialogOutput),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
+    RotateAll,
 }
 
 #[derive(Debug)]
@@ -355,6 +356,16 @@ impl Component for ExtractPage {
                         set_popover = &gtk::Popover {
                             add_css_class: "menu",
                             adw::PreferencesGroup {
+                                add = &adw::ActionRow {
+                                    set_title: &gettext("Rotate _all"),
+                                    set_use_underline: true,
+                                    set_activatable: true,
+
+                                    connect_activated[sender] => move |_| {
+                                        sender.input(ExtractPageMsg::RotateAll);
+                                    }
+                                },
+
                                 add = &adw::SwitchRow {
                                     set_title: &gettext("_Modern PDF format"),
                                     set_use_underline: true,
@@ -495,6 +506,11 @@ impl Component for ExtractPage {
             }
             ExtractPageMsg::SetRemoveMetadata(val) => {
                 self.remove_metadata = val;
+            }
+            ExtractPageMsg::RotateAll => {
+                for i in 0..self.pages.len() {
+                    self.pages.send(i, ExtractPageRowMsg::RotateClockwise);
+                }
             }
         }
     }
