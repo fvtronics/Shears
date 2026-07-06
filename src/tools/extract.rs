@@ -17,8 +17,9 @@ use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
 use crate::pdf::preview::PreviewError;
+use crate::pdf::{ExtractOptions, PdfError, extract_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog};
+use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
 
 pub struct ExtractTool {
     state: ToolState,
@@ -301,6 +302,7 @@ struct ExtractPage {
     page_ranges_changed: bool,
     page_ranges_error: Option<String>,
     is_loading: bool,
+    is_saving: bool,
     modern_pdf_format: bool,
     remove_metadata: bool,
     password_dialog: Controller<PasswordDialog>,
@@ -318,6 +320,9 @@ enum ExtractPageMsg {
     RotateAll,
     SetPageRanges(String),
     CardSelectionChanged,
+    SaveTo(gio::File),
+    SaveComplete(Result<std::path::PathBuf, PdfError>),
+    OpenOutput(std::path::PathBuf),
 }
 
 #[derive(Debug)]
@@ -360,6 +365,21 @@ impl Component for ExtractPage {
                                 }
                             });
                         },
+                    },
+
+                    gtk::Button {
+                        set_label: &gettext("Save"),
+                        set_tooltip_text: Some(&gettext("Save extracted PDF")),
+                        add_css_class: "suggested-action",
+                        #[watch]
+                        set_sensitive: model.file.is_some(),
+
+                        connect_clicked[sender] => move |button| {
+                            let sender_clone = sender.clone();
+                            save_pdf_dialog(button, Tool::Extract, &gettext("Save PDF"), move |file| {
+                                sender_clone.input(ExtractPageMsg::SaveTo(file));
+                            });
+                        }
                     },
 
                     gtk::MenuButton {
@@ -473,6 +493,7 @@ impl Component for ExtractPage {
             page_ranges_changed: true,
             page_ranges_error: None,
             is_loading: false,
+            is_saving: false,
             modern_pdf_format: false,
             remove_metadata: false,
             password_dialog,
@@ -591,6 +612,71 @@ impl Component for ExtractPage {
                 self.page_ranges_changed = true;
                 self.page_ranges_error = None;
             }
+            ExtractPageMsg::SaveTo(output_file) => {
+                if let (Some(file_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    output_file.path(),
+                ) {
+                    self.is_saving = true;
+                    self.check_loading_state(&sender);
+
+                    let pages = self
+                        .pages
+                        .guard()
+                        .iter()
+                        .filter(|row| row.selected)
+                        .map(|row| (row.page_index, row.rotation))
+                        .collect();
+
+                    let options = ExtractOptions {
+                        pages,
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
+                    };
+
+                    let sender = sender.clone();
+                    relm4::spawn_blocking(move || {
+                        let result = extract_file(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(ExtractPageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(ExtractPageMsg::SaveComplete(Err(e))),
+                        }
+                    });
+                }
+            }
+            ExtractPageMsg::SaveComplete(result) => {
+                self.is_saving = false;
+                self.check_loading_state(&sender);
+                match result {
+                    Ok(path) => {
+                        tracing::info!("Extract complete");
+                        let toast = adw::Toast::new(&gettext("PDF extracted successfully"));
+                        toast.set_button_label(Some(&gettext("Open File")));
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(ExtractPageMsg::OpenOutput(path.clone()));
+                        });
+                        root.add_toast(toast);
+                    }
+                    Err(err) => {
+                        tracing::error!("Failed to extract PDF: {:?}", err);
+                        root.add_toast(adw::Toast::new(&gettext("Failed to extract PDF")));
+                    }
+                }
+            }
+            ExtractPageMsg::OpenOutput(path) => {
+                let file = gio::File::for_path(&path);
+                if let Err(e) = gio::AppInfo::launch_default_for_uri(
+                    file.uri().as_str(),
+                    None::<&gio::AppLaunchContext>,
+                ) {
+                    let toast = adw::Toast::new(&gettext("Failed to open output file"));
+                    root.add_toast(toast);
+
+                    tracing::error!("Failed to open output file: {:?}", e);
+                }
+            }
         }
     }
 }
@@ -628,10 +714,11 @@ impl ExtractPage {
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
-        let is_loading = matches!(
-            self.preview_status,
-            PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
-        );
+        let is_loading = self.is_saving
+            || matches!(
+                self.preview_status,
+                PreviewStatus::InitialPending | PreviewStatus::PasswordRequired
+            );
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
