@@ -123,6 +123,7 @@ struct ExtractPageRowInit {
     file: gio::File,
     page_index: usize,
     total_pages: usize,
+    rotation: u16,
     thumbnail: Option<gdk::MemoryTexture>,
     password: Option<String>,
 }
@@ -132,6 +133,7 @@ struct ExtractPageRow {
     page_index: usize,
     total_pages: usize,
     selected: bool,
+    rotation: u16,
     password: Option<String>,
     thumbnail: Option<gdk::MemoryTexture>,
 }
@@ -140,6 +142,7 @@ struct ExtractPageRow {
 enum ExtractPageRowMsg {
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     ToggleSelected,
+    RotateClockwise,
 }
 
 #[relm4::factory]
@@ -203,6 +206,13 @@ impl FactoryComponent for ExtractPageRow {
                     add_css_class: "dim-label",
                 },
 
+                gtk::Button {
+                    set_icon_name: "object-rotate-right-symbolic",
+                    add_css_class: "flat",
+                    set_tooltip_text: Some(&gettext("Rotate Clockwise")),
+                    connect_clicked => ExtractPageRowMsg::RotateClockwise,
+                },
+
                 gtk::CheckButton {
                     #[watch]
                     set_active: self.selected,
@@ -220,6 +230,7 @@ impl FactoryComponent for ExtractPageRow {
             page_index: init.page_index,
             total_pages: init.total_pages,
             selected: false,
+            rotation: init.rotation,
             password: init.password,
             thumbnail: init.thumbnail,
         };
@@ -229,7 +240,7 @@ impl FactoryComponent for ExtractPageRow {
         model
     }
 
-    fn update(&mut self, message: Self::Input, _sender: FactorySender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             ExtractPageRowMsg::ThumbnailReady(res) => {
                 if let Ok(thumb) = res {
@@ -239,6 +250,10 @@ impl FactoryComponent for ExtractPageRow {
             ExtractPageRowMsg::ToggleSelected => {
                 self.selected = !self.selected;
             }
+            ExtractPageRowMsg::RotateClockwise => {
+                self.rotation = (self.rotation + 90) % 360;
+                self.request_thumbnail(&sender);
+            }
         }
     }
 }
@@ -247,6 +262,7 @@ impl ExtractPageRow {
     fn request_thumbnail(&self, sender: &FactorySender<Self>) {
         let file = self.file.clone();
         let page_index = self.page_index as i32;
+        let rotation = self.rotation as i32;
         let password = self.password.clone();
         let sender = sender.clone();
 
@@ -254,7 +270,7 @@ impl ExtractPageRow {
             let result = crate::pdf::preview::generate_page_thumbnail(
                 &file,
                 page_index,
-                0,
+                rotation,
                 password.as_deref(),
                 200.0,
             );
@@ -272,6 +288,8 @@ struct ExtractPage {
     file: Option<gio::File>,
     password: Option<String>,
     is_loading: bool,
+    modern_pdf_format: bool,
+    remove_metadata: bool,
     password_dialog: Controller<PasswordDialog>,
     preview_status: PreviewStatus,
     pages: FactoryVecDeque<ExtractPageRow>,
@@ -282,6 +300,8 @@ enum ExtractPageMsg {
     AddFile(gio::File),
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
+    SetModernPdfFormat(bool),
+    SetRemoveMetadata(bool),
 }
 
 #[derive(Debug)]
@@ -325,6 +345,40 @@ impl Component for ExtractPage {
                             });
                         },
                     },
+
+                    gtk::MenuButton {
+                        set_icon_name: "view-more-symbolic",
+                        add_css_class: "flat",
+                        set_tooltip_text: Some(&gettext("Advanced Options")),
+
+                        #[wrap(Some)]
+                        set_popover = &gtk::Popover {
+                            add_css_class: "menu",
+                            adw::PreferencesGroup {
+                                add = &adw::SwitchRow {
+                                    set_title: &gettext("_Modern PDF format"),
+                                    set_use_underline: true,
+                                    set_subtitle: &gettext("Save with PDF 1.5 object streams"),
+                                    set_active: model.modern_pdf_format,
+
+                                    connect_active_notify[sender] => move |row| {
+                                        sender.input(ExtractPageMsg::SetModernPdfFormat(row.is_active()));
+                                    }
+                                },
+
+                                add = &adw::SwitchRow {
+                                    set_title: &gettext("_Remove metadata"),
+                                    set_use_underline: true,
+                                    set_subtitle: &gettext("Remove existing metadata before saving"),
+                                    set_active: model.remove_metadata,
+
+                                    connect_active_notify[sender] => move |row| {
+                                        sender.input(ExtractPageMsg::SetRemoveMetadata(row.is_active()));
+                                    }
+                                },
+                            }
+                        }
+                    },
                 },
 
                 gtk::ScrolledWindow {
@@ -361,6 +415,8 @@ impl Component for ExtractPage {
             file: None,
             password: None,
             is_loading: false,
+            modern_pdf_format: false,
+            remove_metadata: false,
             password_dialog,
             preview_status: PreviewStatus::Ready,
             pages,
@@ -397,6 +453,7 @@ impl Component for ExtractPage {
                                         file: file.clone(),
                                         page_index: i as usize,
                                         total_pages: res.page_count as usize,
+                                        rotation: 0,
                                         thumbnail: None,
                                         password: self.password.clone(),
                                     });
@@ -433,6 +490,12 @@ impl Component for ExtractPage {
                     self.clear_file(&sender);
                 }
             },
+            ExtractPageMsg::SetModernPdfFormat(val) => {
+                self.modern_pdf_format = val;
+            }
+            ExtractPageMsg::SetRemoveMetadata(val) => {
+                self.remove_metadata = val;
+            }
         }
     }
 }
