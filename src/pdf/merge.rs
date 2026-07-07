@@ -9,10 +9,10 @@ use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 
-use lopdf::{Bookmark, Document, Object, ObjectId};
+use lopdf::{Bookmark, Document, Object};
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::{apply_file_rotation, remove_metadata};
+use crate::pdf::util::{apply_file_rotation, get_inherited_mediabox, remove_metadata};
 
 #[derive(Debug, Clone, Default)]
 pub struct MergeOptions {
@@ -123,37 +123,6 @@ fn create_blank_pdf(width: f32, height: f32) -> Document {
     doc.trailer.set("Root", catalog_id);
 
     doc
-}
-
-fn get_inherited_mediabox(doc: &Document, page_id: ObjectId) -> Option<Vec<f32>> {
-    let mut current_id = page_id;
-    loop {
-        if let Ok(Object::Dictionary(dict)) = doc.get_object(current_id) {
-            if let Ok(Object::Array(arr)) = dict.get(b"MediaBox")
-                && arr.len() == 4
-            {
-                let get_num = |obj: &Object| -> f32 {
-                    match obj {
-                        Object::Real(f) => *f,
-                        Object::Integer(i) => *i as f32,
-                        _ => 0.0,
-                    }
-                };
-                return Some(vec![
-                    get_num(&arr[0]),
-                    get_num(&arr[1]),
-                    get_num(&arr[2]),
-                    get_num(&arr[3]),
-                ]);
-            }
-            if let Ok(Object::Reference(parent_id)) = dict.get(b"Parent") {
-                current_id = *parent_id;
-                continue;
-            }
-        }
-        break;
-    }
-    None
 }
 
 fn normalize_page_sizes(doc: &mut Document) {

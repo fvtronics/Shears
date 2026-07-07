@@ -507,15 +507,21 @@ impl Component for WatermarkPage {
                     self.image_file.as_ref().and_then(|f| f.path()),
                     output_file.path(),
                 ) {
-                    if matches!(self.pages, WatermarkPages::SpecificPages)
-                        && let Err(err) = crate::tools::validate_page_ranges(
+                    let specific_pages_list = if matches!(self.pages, WatermarkPages::SpecificPages)
+                    {
+                        match crate::tools::validate_page_ranges(
                             &self.specific_pages,
                             self.page_count,
-                        )
-                    {
-                        self.specific_pages_error = Some(err);
-                        return;
-                    }
+                        ) {
+                            Ok(pages) => pages,
+                            Err(err) => {
+                                self.specific_pages_error = Some(err);
+                                return;
+                            }
+                        }
+                    } else {
+                        Vec::new()
+                    };
 
                     self.is_saving = true;
                     self.check_loading_state(&sender);
@@ -525,7 +531,7 @@ impl Component for WatermarkPage {
                         layer: self.layer,
                         opacity: self.opacity,
                         pages: self.pages,
-                        specific_pages: self.specific_pages.clone(),
+                        specific_pages: specific_pages_list,
                         modern_pdf_format: self.modern_pdf_format,
                         remove_metadata: self.remove_metadata,
                         password: self.password.clone(),
