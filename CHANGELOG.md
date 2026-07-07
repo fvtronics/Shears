@@ -1,6 +1,6 @@
-# v0.3.1
+# v0.4.0
 
 <p>New</p>
 <ul>
-  <li>Add section to extract specific pages from a PDF file</li>
+    <li>Add tool to watermark PDF files</li>
 </ul>

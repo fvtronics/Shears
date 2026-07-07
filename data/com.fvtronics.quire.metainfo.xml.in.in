@@ -12,27 +12,27 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/merge.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/merge.png</image>
       <caption>Merge multiple PDF files into a single document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/organize.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/organize.png</image>
       <caption>Organize and remove a document's pages</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/extract.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/extract.png</image>
       <caption>Extract selected pages into a new document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/split.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/split.png</image>
       <caption>Split a PDF into multiple documents</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/compress.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/compress.png</image>
       <caption>Compress a PDF file</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/metadata.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.4.0/data/resources/screenshots/metadata.png</image>
       <caption>View and edit PDF metadata</caption>
     </screenshot>
   </screenshots>
@@ -41,6 +41,14 @@
   <url type="vcs-browser">https://codeberg.org/fvtronics/quire</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.0" date="2026-07-07" >
+      <description>
+        <p>New</p>
+        <ul>
+          <li>Add tool to watermark PDF files</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-07-07" >
       <description>
         <p>New</p>
@@ -82,21 +90,6 @@
         <p>Changes</p>
         <ul>
           <li>Make the open file action in the merge page more intuitive</li>
-        </ul>
-      </description>
-    </release>
-    <release version="0.1.1" date="2026-06-18" >
-      <description>
-        <p>New</p>
-        <ul>
-          <li>Add support for opening password protected files</li>
-          <li>Add option to insert blank page</li>
-          <li>Add option to duplicate a file in the list view</li>
-        </ul>
-        <p>Changes</p>
-        <ul>
-          <li>Collapse secondary options into a menu</li>
-          <li>Add handler to rows for drag and drop</li>
         </ul>
       </description>
     </release>
