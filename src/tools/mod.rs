@@ -12,6 +12,7 @@ pub mod metadata;
 pub mod organize;
 pub mod page;
 pub mod split;
+pub mod watermark;
 
 use gettextrs::gettext;
 use relm4::gtk;
