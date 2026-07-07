@@ -206,7 +206,6 @@ fn open_image_dialog(button: &gtk::Button, callback: impl FnOnce(gio::File) + 's
     let image_filter = gtk::FileFilter::new();
     image_filter.set_name(Some(&gettext("Images")));
     image_filter.add_mime_type("image/*");
-    image_filter.add_mime_type("application/pdf");
 
     let filters = gio::ListStore::new::<gtk::FileFilter>();
     filters.append(&image_filter);
@@ -516,12 +515,14 @@ impl Component for WatermarkPage {
             }
             WatermarkPageMsg::SetImageFile(file) => {
                 self.image_file = file;
+                self.request_thumbnail(self.password.clone(), &sender);
             }
             WatermarkPageMsg::SetLayer(layer) => {
                 self.layer = layer;
             }
             WatermarkPageMsg::SetOpacity(opacity) => {
                 self.opacity = opacity;
+                self.request_thumbnail(self.password.clone(), &sender);
             }
             WatermarkPageMsg::SetPages(pages) => {
                 self.pages = pages;
@@ -637,13 +638,18 @@ impl WatermarkPage {
         if let Some(file) = &self.file {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
+            let image_file_clone = self.image_file.clone();
+            let opacity = self.opacity as f64 / 100.0;
 
             if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_thumbnail(
+                let result = crate::pdf::preview::generate_watermark_thumbnail(
                     &file_clone,
+                    0,
                     0,
                     password.as_deref(),
                     800.0,
+                    image_file_clone.as_ref(),
+                    opacity,
                 );
                 sender_clone.input(WatermarkPageMsg::ThumbnailReady(result));
             }) {

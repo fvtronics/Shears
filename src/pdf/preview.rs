@@ -1,5 +1,5 @@
 use relm4::gtk::cairo;
-use relm4::gtk::{gdk, gio, glib};
+use relm4::gtk::{gdk, gio, glib, prelude::FileExt};
 use std::sync::OnceLock;
 
 pub fn thread_pool() -> &'static glib::ThreadPool {
@@ -77,6 +77,18 @@ pub fn generate_page_thumbnail(
     password: Option<&str>,
     max_dim: f64,
 ) -> Result<ThumbnailResult, PreviewError> {
+    generate_watermark_thumbnail(file, page_index, rotation, password, max_dim, None, 1.0)
+}
+
+pub fn generate_watermark_thumbnail(
+    file: &gio::File,
+    page_index: i32,
+    rotation: i32,
+    password: Option<&str>,
+    max_dim: f64,
+    watermark_file: Option<&gio::File>,
+    opacity: f64,
+) -> Result<ThumbnailResult, PreviewError> {
     let doc = match poppler::Document::from_gfile(file, password, gio::Cancellable::NONE) {
         Ok(d) => d,
         Err(e) => {
@@ -109,6 +121,7 @@ pub fn generate_page_thumbnail(
     let scaled_height = (height * scale) as i32;
 
     let texture = render_to_texture(scaled_width, scaled_height, |cr| {
+        let _ = cr.save();
         cr.scale(scale, scale);
         let angle = (rotation as f64) * std::f64::consts::PI / 180.0;
 
@@ -129,6 +142,11 @@ pub fn generate_page_thumbnail(
         }
 
         page.render(cr);
+        let _ = cr.restore();
+
+        if let Some(wm_file) = watermark_file {
+            render_watermark_on_preview(cr, scale, width, height, wm_file, opacity);
+        }
     });
 
     Ok(ThumbnailResult {
@@ -136,6 +154,71 @@ pub fn generate_page_thumbnail(
         original_dimensions: Some((orig_width, orig_height)),
         page_count: doc.n_pages(),
     })
+}
+
+fn render_watermark_on_preview(
+    cr: &cairo::Context,
+    scale: f64,
+    width: f64,
+    height: f64,
+    wm_file: &gio::File,
+    opacity: f64,
+) {
+    if let Some(path) = wm_file.path()
+        && let Ok(img) = image::open(&path)
+    {
+        let rgba = img.to_rgba8();
+        let wm_w = rgba.width() as f64;
+        let wm_h = rgba.height() as f64;
+        let wm_scale = (width / wm_w).min(height / wm_h).min(1.0);
+        let scaled_wm_w = wm_w * wm_scale;
+        let scaled_wm_h = wm_h * wm_scale;
+        let x = (width - scaled_wm_w) / 2.0;
+        let y = (height - scaled_wm_h) / 2.0;
+
+        if let Ok(mut surface) = cairo::ImageSurface::create(
+            cairo::Format::ARgb32,
+            rgba.width() as i32,
+            rgba.height() as i32,
+        ) {
+            let stride = surface.stride() as usize;
+            if let Ok(mut data) = surface.data() {
+                for (iy, row) in rgba.rows().enumerate() {
+                    for (ix, pixel) in row.enumerate() {
+                        let r = pixel[0] as u32;
+                        let g = pixel[1] as u32;
+                        let b = pixel[2] as u32;
+                        let a = pixel[3] as u32;
+
+                        let pr = (r * a) / 255;
+                        let pg = (g * a) / 255;
+                        let pb = (b * a) / 255;
+
+                        let offset = iy * stride + ix * 4;
+                        data[offset] = pb as u8;
+                        data[offset + 1] = pg as u8;
+                        data[offset + 2] = pr as u8;
+                        data[offset + 3] = a as u8;
+                    }
+                }
+            }
+            surface.mark_dirty();
+
+            let _ = cr.save();
+            cr.scale(scale, scale);
+            cr.rectangle(0.0, 0.0, width, height);
+            cr.clip();
+
+            cr.push_group();
+            cr.translate(x, y);
+            cr.scale(wm_scale, wm_scale);
+            let _ = cr.set_source_surface(&surface, 0.0, 0.0);
+            let _ = cr.paint();
+            let _ = cr.pop_group_to_source();
+            let _ = cr.paint_with_alpha(opacity);
+            let _ = cr.restore();
+        }
+    }
 }
 
 pub fn generate_blank_thumbnail(
