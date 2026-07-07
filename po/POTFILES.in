@@ -9,5 +9,6 @@ src/tools/organize.rs
 src/tools/extract.rs
 src/tools/split.rs
 src/tools/metadata.rs
+src/tools/watermark.rs
 src/tools/compress.rs
 src/tools/mod.rs
