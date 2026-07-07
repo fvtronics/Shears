@@ -6,6 +6,7 @@ src/app.rs
 src/main.rs
 src/tools/merge.rs
 src/tools/organize.rs
+src/tools/extract.rs
 src/tools/split.rs
 src/tools/metadata.rs
 src/tools/compress.rs
