@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: quire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 18:16-0400\n"
+"POT-Creation-Date: 2026-07-07 18:24-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,47 +78,51 @@ msgid "Compress a PDF file"
 msgstr ""
 
 #: data/com.fvtronics.quire.metainfo.xml.in.in:36
+msgid "Add a watermark to specific PDF pages"
+msgstr ""
+
+#: data/com.fvtronics.quire.metainfo.xml.in.in:40
 msgid "View and edit PDF metadata"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:46
-#: data/com.fvtronics.quire.metainfo.xml.in.in:54
-#: data/com.fvtronics.quire.metainfo.xml.in.in:62
-#: data/com.fvtronics.quire.metainfo.xml.in.in:70
-#: data/com.fvtronics.quire.metainfo.xml.in.in:78
-#: data/com.fvtronics.quire.metainfo.xml.in.in:86
+#: data/com.fvtronics.quire.metainfo.xml.in.in:50
+#: data/com.fvtronics.quire.metainfo.xml.in.in:58
+#: data/com.fvtronics.quire.metainfo.xml.in.in:66
+#: data/com.fvtronics.quire.metainfo.xml.in.in:74
+#: data/com.fvtronics.quire.metainfo.xml.in.in:82
+#: data/com.fvtronics.quire.metainfo.xml.in.in:90
 msgid "New"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:48
+#: data/com.fvtronics.quire.metainfo.xml.in.in:52
 msgid "Add tool to watermark PDF files"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:56
+#: data/com.fvtronics.quire.metainfo.xml.in.in:60
 msgid "Add option to extract specific pages from a PDF file"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:64
+#: data/com.fvtronics.quire.metainfo.xml.in.in:68
 msgid "Add section to organize and remove a document's pages"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:72
+#: data/com.fvtronics.quire.metainfo.xml.in.in:76
 msgid "Add section to compress PDF files"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:80
+#: data/com.fvtronics.quire.metainfo.xml.in.in:84
 msgid "Add section to visualize and edit a document's metadata"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:88
+#: data/com.fvtronics.quire.metainfo.xml.in.in:92
 msgid "Add the split PDF functionality"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:90
+#: data/com.fvtronics.quire.metainfo.xml.in.in:94
 msgid "Changes"
 msgstr ""
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:92
+#: data/com.fvtronics.quire.metainfo.xml.in.in:96
 msgid "Make the open file action in the merge page more intuitive"
 msgstr ""
 
