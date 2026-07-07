@@ -15,8 +15,8 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::PdfError;
 use crate::pdf::preview::PreviewError;
+use crate::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
 
@@ -118,42 +118,6 @@ impl SimpleComponent for WatermarkTool {
                 self._empty_page.emit(is_loading);
                 let _ = sender.output(WatermarkToolOutput::Loading(is_loading));
             }
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
-pub enum WatermarkLayer {
-    #[default]
-    Front,
-    Back,
-}
-
-impl From<u32> for WatermarkLayer {
-    fn from(value: u32) -> Self {
-        match value {
-            1 => Self::Back,
-            _ => Self::Front,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
-pub enum WatermarkPages {
-    #[default]
-    AllPages,
-    FirstPage,
-    LastPage,
-    SpecificPages,
-}
-
-impl From<u32> for WatermarkPages {
-    fn from(value: u32) -> Self {
-        match value {
-            1 => Self::FirstPage,
-            2 => Self::LastPage,
-            3 => Self::SpecificPages,
-            _ => Self::AllPages,
         }
     }
 }
@@ -538,7 +502,11 @@ impl Component for WatermarkPage {
                 self.remove_metadata = val;
             }
             WatermarkPageMsg::SaveTo(output_file) => {
-                if let Some(output_path) = output_file.path() {
+                if let (Some(file_path), Some(image_path), Some(output_path)) = (
+                    self.file.as_ref().and_then(|f| f.path()),
+                    self.image_file.as_ref().and_then(|f| f.path()),
+                    output_file.path(),
+                ) {
                     if matches!(self.pages, WatermarkPages::SpecificPages)
                         && let Err(err) = crate::tools::validate_page_ranges(
                             &self.specific_pages,
@@ -552,9 +520,24 @@ impl Component for WatermarkPage {
                     self.is_saving = true;
                     self.check_loading_state(&sender);
 
+                    let options = WatermarkOptions {
+                        image_path,
+                        layer: self.layer,
+                        opacity: self.opacity,
+                        pages: self.pages,
+                        specific_pages: self.specific_pages.clone(),
+                        modern_pdf_format: self.modern_pdf_format,
+                        remove_metadata: self.remove_metadata,
+                        password: self.password.clone(),
+                    };
+
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        sender.input(WatermarkPageMsg::SaveComplete(Ok(output_path)));
+                        let result = watermark_file(&(file_path, 0), output_path.clone(), &options);
+                        match result {
+                            Ok(_) => sender.input(WatermarkPageMsg::SaveComplete(Ok(output_path))),
+                            Err(e) => sender.input(WatermarkPageMsg::SaveComplete(Err(e))),
+                        }
                     });
                 }
             }
