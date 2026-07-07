@@ -13,7 +13,7 @@ use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
 use crate::tools::{
     Tool, compress::CompressTool, extract::ExtractTool, merge::MergeTool, metadata::MetadataTool,
-    organize::OrganizeTool, page::ToolPage, split::SplitTool,
+    organize::OrganizeTool, split::SplitTool, watermark::WatermarkTool,
 };
 
 pub(super) struct App {
@@ -24,7 +24,7 @@ pub(super) struct App {
     _extract: Controller<ExtractTool>,
     _split: Controller<SplitTool>,
     _compress: Controller<CompressTool>,
-    _watermark: Controller<ToolPage>,
+    _watermark: Controller<WatermarkTool>,
     _metadata: Controller<MetadataTool>,
     merge_is_loading: bool,
     split_is_loading: bool,
@@ -37,6 +37,8 @@ pub(super) struct App {
     organize_file_active: Option<String>,
     extract_is_loading: bool,
     extract_file_active: Option<String>,
+    watermark_is_loading: bool,
+    watermark_file_active: Option<String>,
 }
 
 #[derive(Debug)]
@@ -54,6 +56,8 @@ pub(super) enum AppMsg {
     UpdateOrganizeFileActive(Option<String>),
     UpdateExtractLoading(bool),
     UpdateExtractFileActive(Option<String>),
+    UpdateWatermarkLoading(bool),
+    UpdateWatermarkFileActive(Option<String>),
     Quit,
 }
 
@@ -158,7 +162,6 @@ impl SimpleComponent for App {
                                         append = adw::SidebarItem::new(&gettext("Add Watermark")) {
                                             set_icon_name: Some(Tool::Watermark.icon_name()),
                                             set_subtitle: Some(gettext("Overlay an image").as_str()),
-                                            set_visible: false,
                                         },
 
                                         append = adw::SidebarItem::new(&gettext("Edit Metadata")) {
@@ -269,7 +272,16 @@ impl SimpleComponent for App {
                     AppMsg::UpdateCompressFileActive(stem)
                 }
             });
-        let watermark = ToolPage::builder().launch(Tool::Watermark).detach();
+        let watermark = WatermarkTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), |msg| match msg {
+                crate::tools::watermark::WatermarkToolOutput::Loading(is_loading) => {
+                    AppMsg::UpdateWatermarkLoading(is_loading)
+                }
+                crate::tools::watermark::WatermarkToolOutput::FileActive(stem) => {
+                    AppMsg::UpdateWatermarkFileActive(stem)
+                }
+            });
         let metadata = MetadataTool::builder()
             .launch(())
             .forward(sender.input_sender(), |msg| match msg {
@@ -302,6 +314,8 @@ impl SimpleComponent for App {
             organize_file_active: None,
             extract_is_loading: false,
             extract_file_active: None,
+            watermark_is_loading: false,
+            watermark_file_active: None,
         };
         let widgets = view_output!();
         widgets
@@ -382,6 +396,12 @@ impl SimpleComponent for App {
             }
             AppMsg::UpdateExtractFileActive(title) => {
                 self.extract_file_active = title;
+            }
+            AppMsg::UpdateWatermarkLoading(is_loading) => {
+                self.watermark_is_loading = is_loading;
+            }
+            AppMsg::UpdateWatermarkFileActive(title) => {
+                self.watermark_file_active = title;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -490,7 +510,15 @@ impl App {
                     self.selected_tool.subtitle()
                 }
             }
-            tool => tool.subtitle(),
+            Tool::Watermark => {
+                if self.watermark_is_loading {
+                    gettext("Processing…")
+                } else if let Some(title) = &self.watermark_file_active {
+                    title.clone()
+                } else {
+                    self.selected_tool.subtitle()
+                }
+            }
         }
     }
 }

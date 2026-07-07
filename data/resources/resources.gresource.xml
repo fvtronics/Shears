@@ -11,5 +11,6 @@
     <file compressed="true">icons/scalable/actions/package-x-generic-symbolic.svg</file>
     <file compressed="true">icons/scalable/actions/view-paged-symbolic.svg</file>
     <file compressed="true">icons/scalable/actions/list-drag-handle-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/folder-open-symbolic.svg</file>
   </gresource>
 </gresources>

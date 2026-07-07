@@ -12,6 +12,7 @@ pub mod metadata;
 pub mod organize;
 pub mod page;
 pub mod split;
+pub mod watermark;
 
 use gettextrs::gettext;
 use relm4::gtk;
@@ -348,5 +349,11 @@ pub(super) fn file_stem(file: &gio::File) -> String {
                 .file_stem()
                 .map(|stem| stem.to_string_lossy().into_owned())
         })
+        .unwrap_or_else(|| file.uri().to_string())
+}
+
+pub(super) fn file_name(file: &gio::File) -> String {
+    file.basename()
+        .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_else(|| file.uri().to_string())
 }
