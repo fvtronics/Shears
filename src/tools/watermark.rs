@@ -15,12 +15,10 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::preview::PreviewError;
 use crate::pdf::PdfError;
+use crate::pdf::preview::PreviewError;
 use crate::tools::page::ToolPage;
-use crate::tools::{
-    PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog,
-};
+use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
 
 pub struct WatermarkTool {
     state: ToolState,
@@ -68,14 +66,17 @@ impl SimpleComponent for WatermarkTool {
             .launch(Tool::Watermark)
             .forward(sender.input_sender(), WatermarkToolMsg::AddFiles);
 
-        let watermark_page = WatermarkPage::builder()
-            .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                WatermarkPageOutput::FileActive(file_stem) => {
-                    WatermarkToolMsg::UpdateFileActive(file_stem)
-                }
-                WatermarkPageOutput::Loading(is_loading) => WatermarkToolMsg::Loading(is_loading),
-            });
+        let watermark_page =
+            WatermarkPage::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    WatermarkPageOutput::FileActive(file_stem) => {
+                        WatermarkToolMsg::UpdateFileActive(file_stem)
+                    }
+                    WatermarkPageOutput::Loading(is_loading) => {
+                        WatermarkToolMsg::Loading(is_loading)
+                    }
+                });
 
         let model = Self {
             state: ToolState::Empty,
@@ -201,10 +202,7 @@ pub enum WatermarkPageOutput {
     Loading(bool),
 }
 
-fn open_image_dialog(
-    button: &gtk::Button,
-    callback: impl FnOnce(gio::File) + 'static,
-) {
+fn open_image_dialog(button: &gtk::Button, callback: impl FnOnce(gio::File) + 'static) {
     let image_filter = gtk::FileFilter::new();
     image_filter.set_name(Some(&gettext("Images")));
     image_filter.add_mime_type("image/*");
@@ -358,7 +356,7 @@ impl Component for WatermarkPage {
                                         set_subtitle: &model
                                             .image_file
                                             .as_ref()
-                                            .map(file_stem)
+                                            .map(file_name)
                                             .unwrap_or_else(|| gettext("No image selected")),
 
                                         add_suffix = &gtk::Button {
@@ -443,6 +441,7 @@ impl Component for WatermarkPage {
                                             set_tooltip_text: model.specific_pages_error.as_deref(),
                                             #[watch]
                                             set_visible: model.specific_pages_error.is_some(),
+                                            add_css_class: "error",
                                         }
                                     },
                                 }
@@ -459,9 +458,10 @@ impl Component for WatermarkPage {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let password_dialog = PasswordDialog::builder()
-            .launch(())
-            .forward(sender.input_sender(), WatermarkPageMsg::PasswordDialogOutput);
+        let password_dialog = PasswordDialog::builder().launch(()).forward(
+            sender.input_sender(),
+            WatermarkPageMsg::PasswordDialogOutput,
+        );
 
         let model = Self {
             file: None,
@@ -506,11 +506,11 @@ impl Component for WatermarkPage {
                 self.password = None;
                 self.preview_status = PreviewStatus::InitialPending;
 
-                let stem = file_stem(&file);
+                let name = file_name(&file);
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(WatermarkPageOutput::FileActive(Some(stem)));
+                let _ = sender.output(WatermarkPageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -598,18 +598,21 @@ impl Component for WatermarkPage {
                     Err(PreviewError::Encrypted) => {
                         self.preview_status = PreviewStatus::PasswordRequired;
                         let is_error = self.password.is_some();
-                        let filename = self.file.as_ref().map(file_stem).unwrap_or_default();
+                        let filename = self.file.as_ref().map(file_name).unwrap_or_default();
                         if let Some(window) = root.root().and_downcast::<gtk::Window>() {
                             self.password_dialog.emit(PasswordDialogMsg::Show {
                                 index: None,
-                                filename: format!("{}.pdf", filename),
+                                filename,
                                 is_error,
                                 parent_window: window,
                             });
                         }
                     }
                     Err(err) => {
-                        tracing::warn!("Failed to generate thumbnail for watermark page: {:?}", err);
+                        tracing::warn!(
+                            "Failed to generate thumbnail for watermark page: {:?}",
+                            err
+                        );
                         self.thumbnail = None;
                         self.preview_status = PreviewStatus::Ready;
                     }

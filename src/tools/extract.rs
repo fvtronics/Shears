@@ -19,7 +19,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{ExtractOptions, PdfError, extract_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
 
 pub struct ExtractTool {
     state: ToolState,
@@ -505,11 +505,11 @@ impl Component for ExtractPage {
                 self.preview_status = PreviewStatus::InitialPending;
                 self.pages.guard().clear();
 
-                let stem = file_stem(&file);
+                let name = file_name(&file);
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(ExtractPageOutput::FileActive(Some(stem)));
+                let _ = sender.output(ExtractPageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -535,11 +535,11 @@ impl Component for ExtractPage {
                     Err(PreviewError::Encrypted) => {
                         self.preview_status = PreviewStatus::PasswordRequired;
                         let is_error = self.password.is_some();
-                        let filename = self.file.as_ref().map(file_stem).unwrap_or_default();
+                        let filename = self.file.as_ref().map(file_name).unwrap_or_default();
                         if let Some(window) = root.root().and_downcast::<gtk::Window>() {
                             self.password_dialog.emit(PasswordDialogMsg::Show {
                                 index: None,
-                                filename: format!("{}.pdf", filename),
+                                filename,
                                 is_error,
                                 parent_window: window,
                             });

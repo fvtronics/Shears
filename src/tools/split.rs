@@ -12,7 +12,7 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolState, file_stem, open_pdf_dialog, select_folder_dialog,
+    PreviewStatus, Tool, ToolState, file_name, file_stem, open_pdf_dialog, select_folder_dialog,
 };
 
 pub struct SplitTool {
@@ -428,7 +428,7 @@ impl Component for SplitPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(SplitPageOutput::FileActive(Some(self.prefix.clone())));
+                let _ = sender.output(SplitPageOutput::FileActive(Some(file_name(&file))));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -535,7 +535,7 @@ impl Component for SplitPage {
                     Err(PreviewError::Encrypted) => {
                         self.preview_status = PreviewStatus::PasswordRequired;
                         let is_error = self.password.is_some();
-                        let filename = format!("{}.pdf", self.prefix);
+                        let filename = self.file.as_ref().map(file_name).unwrap_or_default();
                         if let Some(window) = root.root().and_downcast::<gtk::Window>() {
                             self.password_dialog.emit(PasswordDialogMsg::Show {
                                 index: None,

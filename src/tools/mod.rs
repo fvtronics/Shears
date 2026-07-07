@@ -351,3 +351,9 @@ pub(super) fn file_stem(file: &gio::File) -> String {
         })
         .unwrap_or_else(|| file.uri().to_string())
 }
+
+pub(super) fn file_name(file: &gio::File) -> String {
+    file.basename()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| file.uri().to_string())
+}
