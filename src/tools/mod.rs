@@ -6,6 +6,7 @@
  */
 
 pub mod compress;
+pub mod extract;
 pub mod merge;
 pub mod metadata;
 pub mod organize;
@@ -270,6 +271,74 @@ pub(super) fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec
     pages.dedup();
 
     Ok(pages)
+}
+
+pub(super) fn validate_page_ranges(input: &str, max_pages: u32) -> Result<Vec<u32>, String> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut pages = Vec::new();
+
+    for part in input.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            let start = parse_page_number(start_str, max_pages)?;
+            let end = parse_page_number(end_str, max_pages)?;
+            if start > end {
+                return Err(gettext("Invalid page range: {start}-{end}")
+                    .replace("{start}", &start.to_string())
+                    .replace("{end}", &end.to_string()));
+            }
+            for p in start..=end {
+                pages.push(p);
+            }
+        } else {
+            pages.push(parse_page_number(part, max_pages)?);
+        }
+    }
+
+    pages.sort_unstable();
+    pages.dedup();
+
+    Ok(pages)
+}
+
+pub(super) fn format_page_ranges(pages: &[u32]) -> String {
+    if pages.is_empty() {
+        return String::new();
+    }
+
+    let mut result = Vec::new();
+    let mut start = pages[0];
+    let mut prev = pages[0];
+
+    for &page in &pages[1..] {
+        if page == prev + 1 {
+            prev = page;
+        } else {
+            if start == prev {
+                result.push(start.to_string());
+            } else {
+                result.push(format!("{}-{}", start, prev));
+            }
+            start = page;
+            prev = page;
+        }
+    }
+
+    if start == prev {
+        result.push(start.to_string());
+    } else {
+        result.push(format!("{}-{}", start, prev));
+    }
+
+    result.join(",")
 }
 
 pub(super) fn file_stem(file: &gio::File) -> String {

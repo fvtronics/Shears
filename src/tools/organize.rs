@@ -481,6 +481,7 @@ enum OrganizePageMsg {
     SaveTo(gio::File),
     SaveComplete(Result<std::path::PathBuf, PdfError>),
     OpenOutput(std::path::PathBuf),
+    RotateAll,
 }
 
 #[derive(Debug)]
@@ -560,6 +561,16 @@ impl Component for OrganizePage {
                         set_popover = &gtk::Popover {
                             add_css_class: "menu",
                             adw::PreferencesGroup {
+                                add = &adw::ActionRow {
+                                    set_title: &gettext("Rotate _all"),
+                                    set_use_underline: true,
+                                    set_activatable: true,
+
+                                    connect_activated[sender] => move |_| {
+                                        sender.input(OrganizePageMsg::RotateAll);
+                                    }
+                                },
+
                                 add = &adw::SwitchRow {
                                     set_title: &gettext("_Modern PDF format"),
                                     set_use_underline: true,
@@ -870,6 +881,11 @@ impl Component for OrganizePage {
                     root.add_toast(toast);
 
                     tracing::error!("Failed to open output file: {:?}", e);
+                }
+            }
+            OrganizePageMsg::RotateAll => {
+                for i in 0..self.pages.len() {
+                    self.pages.send(i, OrganizePageRowMsg::RotateClockwise);
                 }
             }
         }
