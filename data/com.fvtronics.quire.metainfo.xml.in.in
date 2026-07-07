@@ -8,36 +8,47 @@
   <summary>Combine and edit PDF files</summary>
   <description>
     <p>Quire is a simple GNOME utility for working with local PDF files without a complex document suite.</p>
-    <p>Merge PDFs without relying on online services.</p>
+    <p>Merge multiple PDFs, organize pages, extract page ranges, split documents, compress files, and edit metadata without relying on online services.</p>
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.0/data/resources/screenshots/merge.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/merge.png</image>
       <caption>Merge multiple PDF files into a single document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.0/data/resources/screenshots/organize.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/organize.png</image>
       <caption>Organize and remove a document's pages</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.0/data/resources/screenshots/split.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/extract.png</image>
+      <caption>Extract selected pages into a new document</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/split.png</image>
       <caption>Split a PDF into multiple documents</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.0/data/resources/screenshots/compress.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/compress.png</image>
       <caption>Compress a PDF file</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.0/data/resources/screenshots/metadata.png</image>
+      <image>https://codeberg.org/fvtronics/quire/raw/tag/v0.3.1/data/resources/screenshots/metadata.png</image>
       <caption>View and edit PDF metadata</caption>
     </screenshot>
   </screenshots>
   <url type="homepage">https://www.fvtronics.com/en/project/quire</url>
   <url type="bugtracker">https://codeberg.org/fvtronics/quire/issues</url>
   <url type="vcs-browser">https://codeberg.org/fvtronics/quire</url>
-  <url type="translate">https://codeberg.org/translate/Quire/src/branch/main/po</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.3.1" date="2026-07-07" >
+      <description>
+        <p>New</p>
+        <ul>
+          <li>Add option to extract specific pages from a PDF file</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-07-02" >
       <description>
         <p>New</p>
@@ -88,15 +99,6 @@
           <li>Add handler to rows for drag and drop</li>
         </ul>
       </description>
-    </release>
-    <release version="0.1.0" date="2026-06-17" >
-      <description>
-        <p>Initial release</p>
-        <ul>
-          <li>Merge and rotate PDF files</li>
-        </ul>
-      </description>
-    </release>
   </releases>
 
   <developer id="com.fvtronics">
