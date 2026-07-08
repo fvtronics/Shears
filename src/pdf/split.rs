@@ -107,3 +107,88 @@ fn extract_document(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+    use crate::pdf::util::load_document;
+    use lopdf::{Dictionary, Object};
+
+    #[test]
+    fn test_spl_01_divide_after_every_n_pages() {
+        let segments = calculate_segments(&DivideAfter::EveryNPages(3), 10);
+        assert_eq!(segments.len(), 4);
+        assert_eq!(segments[0], vec![1, 2, 3]);
+        assert_eq!(segments[1], vec![4, 5, 6]);
+        assert_eq!(segments[2], vec![7, 8, 9]);
+        assert_eq!(segments[3], vec![10]);
+    }
+
+    #[test]
+    fn test_spl_02_divide_after_specific_pages() {
+        let segments = calculate_segments(&DivideAfter::SpecificPages(vec![2, 5]), 6);
+        assert_eq!(segments.len(), 3);
+        assert_eq!(segments[0], vec![1, 2]);
+        assert_eq!(segments[1], vec![3, 4, 5]);
+        assert_eq!(segments[2], vec![6]);
+    }
+
+    #[test]
+    fn test_spl_03_divide_even_odd_pages() {
+        let even_segments = calculate_segments(&DivideAfter::EvenPages, 5);
+        assert_eq!(even_segments, vec![vec![1, 2], vec![3, 4], vec![5]]);
+
+        let odd_segments = calculate_segments(&DivideAfter::OddPages, 5);
+        assert_eq!(odd_segments, vec![vec![1], vec![2, 3], vec![4, 5]]);
+    }
+
+    #[test]
+    fn test_spl_04_outline_pruning_and_bloat_prevention() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_10_pages.pdf");
+
+        let mut doc = create_test_doc(10, 595.0, 842.0);
+        let root_id = doc.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
+        let cat = doc.get_object_mut(root_id).and_then(Object::as_dict_mut).unwrap();
+        cat.set("Outlines", (100, 0));
+
+        let mut outline_dict = Dictionary::new();
+        outline_dict.set("Type", "Outlines");
+        doc.objects.insert((100, 0), Object::Dictionary(outline_dict));
+
+        let mut dummy_dict = Dictionary::new();
+        dummy_dict.set("Type", "DummyUnreferenced");
+        doc.objects.insert((101, 0), Object::Dictionary(dummy_dict));
+
+        let orig_obj_count = doc.objects.len();
+        doc.save(&input_path).unwrap();
+
+        let options = SplitOptions {
+            divide_after: DivideAfter::SpecificPages(vec![1]),
+            prefix: "split_test".to_string(),
+            ..Default::default()
+        };
+        split_file(&(input_path, 0), temp_dir.path().to_path_buf(), &options).unwrap();
+
+        let out_path = temp_dir.path().join("split_test_001.pdf");
+        assert!(out_path.exists());
+
+        let split_doc = load_document(&out_path, None).unwrap();
+        assert_eq!(split_doc.get_pages().len(), 1);
+
+        let split_root_id = split_doc
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let split_cat = split_doc
+            .get_object(split_root_id)
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert!(split_cat.get(b"Outlines").is_err());
+
+        assert!(split_doc.objects.len() < orig_obj_count);
+        assert!(!split_doc.objects.contains_key(&(101, 0)));
+    }
+}
