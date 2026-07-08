@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-use lopdf::{Dictionary, Document, Object, ObjectId};
+use lopdf::{Dictionary, Document, Object, ObjectId, Stream};
 
 pub fn create_test_doc(page_count: u32, width: f32, height: f32) -> Document {
     let mut doc = Document::with_version("1.5");
@@ -135,4 +135,33 @@ pub fn set_root_catalog(doc: &mut Document, pages_id: ObjectId) -> ObjectId {
     doc.objects.insert(id, Object::Dictionary(dict));
     doc.trailer.set("Root", id);
     id
+}
+
+pub fn create_doc_with_image_stream(width: u32, height: u32) -> Document {
+    let mut doc = create_test_doc(1, 595.0, 842.0);
+    let img_id = (doc.max_id + 1, 0);
+    doc.max_id += 1;
+
+    let mut img_dict = Dictionary::new();
+    img_dict.set("Type", "XObject");
+    img_dict.set("Subtype", "Image");
+    img_dict.set("Width", width as i64);
+    img_dict.set("Height", height as i64);
+    img_dict.set("ColorSpace", "DeviceRGB");
+    img_dict.set("BitsPerComponent", 8);
+
+    let raw_bytes = vec![128_u8; (width * height * 3) as usize];
+    let stream = Stream::new(img_dict, raw_bytes);
+    doc.objects.insert(img_id, Object::Stream(stream));
+
+    let page_id = *doc.get_pages().values().next().unwrap();
+    if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
+        let mut xobjects = Dictionary::new();
+        xobjects.set("TestImg", Object::Reference(img_id));
+        let mut res = Dictionary::new();
+        res.set("XObject", Object::Dictionary(xobjects));
+        page_dict.set("Resources", Object::Dictionary(res));
+    }
+
+    doc
 }

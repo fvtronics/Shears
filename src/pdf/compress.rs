@@ -211,3 +211,180 @@ fn is_image(stream: &Stream) -> bool {
         .and_then(Object::as_name)
         .is_ok_and(|subtype| subtype == b"Image")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::{create_doc_with_image_stream, create_test_doc};
+    use crate::pdf::util::load_document;
+    use lopdf::{Dictionary, Object, Stream};
+
+    #[test]
+    fn test_cmp_01_uncompressed_rgb_jpeg_encoding() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_uncompressed_img.pdf");
+        let output_path = temp_dir.path().join("compressed_img.pdf");
+
+        let mut doc = create_doc_with_image_stream(100, 100);
+        let img_id = doc
+            .objects
+            .iter()
+            .find(|(_, obj)| obj.as_stream().is_ok_and(is_image))
+            .map(|(id, _)| *id)
+            .unwrap();
+        let orig_len = match doc.objects.get(&img_id).unwrap() {
+            Object::Stream(s) => s.content.len(),
+            _ => unreachable!(),
+        };
+        doc.save(&input_path).unwrap();
+
+        let options = CompressOptions {
+            image_quality: QualityLevel::Display,
+            ..Default::default()
+        };
+        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_stream = match out_doc.objects.get(&img_id).unwrap() {
+            Object::Stream(s) => s,
+            _ => panic!("Expected stream object"),
+        };
+
+        assert_eq!(
+            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            Some(b"DCTDecode".as_slice())
+        );
+        assert_eq!(
+            out_stream
+                .dict
+                .get(b"ColorSpace")
+                .and_then(Object::as_name)
+                .ok(),
+            Some(b"DeviceRGB".as_slice())
+        );
+        assert!(out_stream.content.len() < orig_len);
+    }
+
+    #[test]
+    fn test_cmp_02_transparency_mask_skip_rule() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_smask_img.pdf");
+        let output_path = temp_dir.path().join("compressed_smask.pdf");
+
+        let mut doc = create_doc_with_image_stream(100, 100);
+        let img_id = doc
+            .objects
+            .iter()
+            .find(|(_, obj)| obj.as_stream().is_ok_and(is_image))
+            .map(|(id, _)| *id)
+            .unwrap();
+
+        if let Some(Object::Stream(stream)) = doc.objects.get_mut(&img_id) {
+            stream.dict.set("SMask", Object::Reference((99, 0)));
+        }
+        doc.save(&input_path).unwrap();
+
+        let options = CompressOptions {
+            image_quality: QualityLevel::Display,
+            ..Default::default()
+        };
+        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_stream = match out_doc.objects.get(&img_id).unwrap() {
+            Object::Stream(s) => s,
+            _ => panic!("Expected stream object"),
+        };
+
+        assert_eq!(
+            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            Some(b"FlateDecode".as_slice())
+        );
+    }
+
+    #[test]
+    fn test_cmp_03_non_8_bit_component_skip_rule() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_4bit_img.pdf");
+        let output_path = temp_dir.path().join("compressed_4bit.pdf");
+
+        let mut doc = create_doc_with_image_stream(100, 100);
+        let img_id = doc
+            .objects
+            .iter()
+            .find(|(_, obj)| obj.as_stream().is_ok_and(is_image))
+            .map(|(id, _)| *id)
+            .unwrap();
+
+        if let Some(Object::Stream(stream)) = doc.objects.get_mut(&img_id) {
+            stream.dict.set("BitsPerComponent", Object::Integer(4));
+        }
+        doc.save(&input_path).unwrap();
+
+        let options = CompressOptions {
+            image_quality: QualityLevel::Display,
+            ..Default::default()
+        };
+        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_stream = match out_doc.objects.get(&img_id).unwrap() {
+            Object::Stream(s) => s,
+            _ => panic!("Expected stream object"),
+        };
+
+        assert_eq!(
+            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            Some(b"FlateDecode".as_slice())
+        );
+        assert_eq!(
+            out_stream
+                .dict
+                .get(b"BitsPerComponent")
+                .and_then(Object::as_i64)
+                .ok(),
+            Some(4)
+        );
+    }
+
+    #[test]
+    fn test_cmp_04_zero_length_stream_and_unused_pruning() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_prune.pdf");
+        let output_path = temp_dir.path().join("compressed_pruned.pdf");
+
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let unref_id = (100, 0);
+        let mut dummy_dict = Dictionary::new();
+        dummy_dict.set("Type", "UnreferencedDummy");
+        doc.objects.insert(unref_id, Object::Dictionary(dummy_dict));
+
+        let zero_id = (101, 0);
+        let mut stream_dict = Dictionary::new();
+        stream_dict.set("Length", 0);
+        let empty_stream = Stream::new(stream_dict, Vec::new());
+        doc.objects.insert(zero_id, Object::Stream(empty_stream));
+
+        let page_id = *doc.get_pages().values().next().unwrap();
+        if let Some(Object::Dictionary(page_dict)) = doc.objects.get_mut(&page_id) {
+            let mut xobjects = Dictionary::new();
+            xobjects.set("ZeroStream", Object::Reference(zero_id));
+            let mut res = Dictionary::new();
+            res.set("XObject", Object::Dictionary(xobjects));
+            page_dict.set("Resources", Object::Dictionary(res));
+        }
+
+        doc.save(&input_path).unwrap();
+
+        let options = CompressOptions {
+            remove_unused_data: true,
+            remove_empty_streams: true,
+            ..Default::default()
+        };
+        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        assert!(!out_doc.objects.contains_key(&unref_id));
+        assert!(!out_doc.objects.contains_key(&zero_id));
+    }
+}
