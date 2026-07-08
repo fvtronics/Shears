@@ -104,3 +104,155 @@ pub fn extract_file<P: AsRef<Path>>(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+    use crate::pdf::util::{get_inherited_mediabox, get_inherited_rotation, load_document};
+    use lopdf::Object;
+
+    #[test]
+    fn test_ext_01_page_reordering_and_subsetting() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_4_pages.pdf");
+        let output_path = temp_dir.path().join("extracted_subset.pdf");
+
+        let mut doc = create_test_doc(4, 595.0, 842.0);
+        for (idx, page_id) in doc.get_pages().values().enumerate() {
+            if let Ok(Object::Dictionary(dict)) = doc.get_object_mut(*page_id) {
+                let width = 100.0 * (idx as f32 + 1.0);
+                dict.set(
+                    "MediaBox",
+                    vec![0.into(), 0.into(), width.into(), 842.into()],
+                );
+                dict.set("PageMarker", idx as i64 + 1);
+            }
+        }
+        doc.save(&input_path).unwrap();
+
+        let options = ExtractOptions {
+            pages: vec![(2, 0), (0, 0)],
+            ..Default::default()
+        };
+
+        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
+        assert_eq!(out_pages.len(), 2);
+
+        let page1_dict = out_doc
+            .get_object(out_pages[0])
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert_eq!(
+            page1_dict
+                .get(b"PageMarker")
+                .and_then(Object::as_i64)
+                .unwrap(),
+            3
+        );
+        assert_eq!(
+            get_inherited_mediabox(&out_doc, out_pages[0]).unwrap(),
+            vec![0.0, 0.0, 300.0, 842.0]
+        );
+
+        let page2_dict = out_doc
+            .get_object(out_pages[1])
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert_eq!(
+            page2_dict
+                .get(b"PageMarker")
+                .and_then(Object::as_i64)
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            get_inherited_mediabox(&out_doc, out_pages[1]).unwrap(),
+            vec![0.0, 0.0, 100.0, 842.0]
+        );
+    }
+
+    #[test]
+    fn test_ext_02_duplicate_page_extraction() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_2_pages.pdf");
+        let output_path = temp_dir.path().join("extracted_dup.pdf");
+
+        let mut doc = create_test_doc(2, 595.0, 842.0);
+        doc.save(&input_path).unwrap();
+
+        let options = ExtractOptions {
+            pages: vec![(0, 0), (0, 90)],
+            ..Default::default()
+        };
+
+        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
+        assert_eq!(out_pages.len(), 2);
+
+        assert_ne!(out_pages[0], out_pages[1]);
+
+        assert_eq!(get_inherited_rotation(&out_doc, out_pages[0]), 0);
+        assert_eq!(get_inherited_rotation(&out_doc, out_pages[1]), 90);
+
+        let page2_dict = out_doc
+            .get_object(out_pages[1])
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert_eq!(
+            page2_dict.get(b"Rotate").and_then(Object::as_i64).unwrap(),
+            90
+        );
+    }
+
+    #[test]
+    fn test_ext_03_inherited_rotation_calculation() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_inherited_rot.pdf");
+        let output_path = temp_dir.path().join("extracted_rot.pdf");
+
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let page_id = *doc.get_pages().values().next().unwrap();
+        let parent_id = match doc.get_object(page_id).and_then(Object::as_dict) {
+            Ok(dict) => dict.get(b"Parent").and_then(Object::as_reference).unwrap(),
+            _ => panic!("Page must have parent"),
+        };
+        if let Ok(Object::Dictionary(pages_dict)) = doc.get_object_mut(parent_id) {
+            pages_dict.set("Rotate", Object::Integer(90));
+        }
+
+        if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
+            assert!(page_dict.get(b"Rotate").is_err());
+        }
+        assert_eq!(get_inherited_rotation(&doc, page_id), 90);
+
+        doc.save(&input_path).unwrap();
+
+        let options = ExtractOptions {
+            pages: vec![(0, 90)],
+            ..Default::default()
+        };
+
+        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+
+        let out_doc = load_document(&output_path, None).unwrap();
+        let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
+        assert_eq!(out_pages.len(), 1);
+
+        assert_eq!(get_inherited_rotation(&out_doc, out_pages[0]), 180);
+        let page_dict = out_doc
+            .get_object(out_pages[0])
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert_eq!(
+            page_dict.get(b"Rotate").and_then(Object::as_i64).unwrap(),
+            180
+        );
+    }
+}
+
