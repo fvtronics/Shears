@@ -12,7 +12,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{CompressOptions, PdfError, QualityLevel, compress_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
+    save_pdf_dialog,
 };
 
 pub struct CompressTool {
@@ -59,10 +60,10 @@ impl SimpleComponent for CompressTool {
             CompressPage::builder()
                 .launch(())
                 .forward(sender.input_sender(), |msg| match msg {
-                    CompressPageOutput::FileActive(file_stem) => {
+                    PageOutput::FileActive(file_stem) => {
                         CompressToolMsg::UpdateFileActive(file_stem)
                     }
-                    CompressPageOutput::Loading(is_loading) => CompressToolMsg::Loading(is_loading),
+                    PageOutput::Loading(is_loading) => CompressToolMsg::Loading(is_loading),
                 });
 
         let model = Self {
@@ -129,17 +130,11 @@ enum CompressPageMsg {
     OpenOutput(std::path::PathBuf),
 }
 
-#[derive(Debug)]
-pub enum CompressPageOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component]
 impl Component for CompressPage {
     type Init = ();
     type Input = CompressPageMsg;
-    type Output = CompressPageOutput;
+    type Output = PageOutput;
     type CommandOutput = ();
 
     view! {
@@ -360,7 +355,7 @@ impl Component for CompressPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(CompressPageOutput::FileActive(Some(name)));
+                let _ = sender.output(PageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -503,7 +498,7 @@ impl CompressPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(CompressPageOutput::FileActive(None));
+        let _ = sender.output(PageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
@@ -515,7 +510,7 @@ impl CompressPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(CompressPageOutput::Loading(is_loading));
+            let _ = sender.output(PageOutput::Loading(is_loading));
         }
     }
 }

@@ -48,6 +48,12 @@ pub enum ToolOutput {
     Subtitle(Option<String>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PageOutput {
+    FileActive(Option<String>),
+    Loading(bool),
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PreviewStatus {
     InitialPending,

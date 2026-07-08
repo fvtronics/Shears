@@ -12,7 +12,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
+    save_pdf_dialog,
 };
 
 pub struct MetadataTool {
@@ -59,10 +60,10 @@ impl SimpleComponent for MetadataTool {
             MetadataPage::builder()
                 .launch(())
                 .forward(sender.input_sender(), |msg| match msg {
-                    MetadataPageOutput::FileActive(file_stem) => {
+                    PageOutput::FileActive(file_stem) => {
                         MetadataToolMsg::UpdateFileActive(file_stem)
                     }
-                    MetadataPageOutput::Loading(is_loading) => MetadataToolMsg::Loading(is_loading),
+                    PageOutput::Loading(is_loading) => MetadataToolMsg::Loading(is_loading),
                 });
 
         let model = Self {
@@ -135,17 +136,11 @@ enum MetadataPageMsg {
     MetadataReady(Result<PdfMetadata, PdfError>),
 }
 
-#[derive(Debug)]
-pub enum MetadataPageOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component]
 impl Component for MetadataPage {
     type Init = ();
     type Input = MetadataPageMsg;
-    type Output = MetadataPageOutput;
+    type Output = PageOutput;
     type CommandOutput = ();
 
     view! {
@@ -391,7 +386,7 @@ impl Component for MetadataPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(MetadataPageOutput::FileActive(Some(name)));
+                let _ = sender.output(PageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
                 self.request_metadata(None, &sender);
@@ -582,7 +577,7 @@ impl MetadataPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(MetadataPageOutput::FileActive(None));
+        let _ = sender.output(PageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
@@ -594,7 +589,7 @@ impl MetadataPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(MetadataPageOutput::Loading(is_loading));
+            let _ = sender.output(PageOutput::Loading(is_loading));
         }
     }
 }

@@ -12,7 +12,7 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolOutput, ToolState, file_name, file_stem, open_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, file_stem, open_pdf_dialog,
     select_folder_dialog,
 };
 
@@ -59,8 +59,8 @@ impl SimpleComponent for SplitTool {
         let split_page = SplitPage::builder()
             .launch(())
             .forward(sender.input_sender(), |msg| match msg {
-                SplitPageOutput::FileActive(file_stem) => SplitToolMsg::UpdateFileActive(file_stem),
-                SplitPageOutput::Loading(is_loading) => SplitToolMsg::Loading(is_loading),
+                PageOutput::FileActive(file_stem) => SplitToolMsg::UpdateFileActive(file_stem),
+                PageOutput::Loading(is_loading) => SplitToolMsg::Loading(is_loading),
             });
 
         let model = Self {
@@ -152,17 +152,11 @@ enum SplitPageMsg {
     PasswordDialogOutput(PasswordDialogOutput),
 }
 
-#[derive(Debug)]
-pub enum SplitPageOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component]
 impl Component for SplitPage {
     type Init = ();
     type Input = SplitPageMsg;
-    type Output = SplitPageOutput;
+    type Output = PageOutput;
     type CommandOutput = ();
 
     view! {
@@ -411,7 +405,7 @@ impl Component for SplitPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(SplitPageOutput::FileActive(Some(file_name(&file))));
+                let _ = sender.output(PageOutput::FileActive(Some(file_name(&file))));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -575,7 +569,7 @@ impl SplitPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(SplitPageOutput::FileActive(None));
+        let _ = sender.output(PageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
@@ -587,7 +581,7 @@ impl SplitPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(SplitPageOutput::Loading(is_loading));
+            let _ = sender.output(PageOutput::Loading(is_loading));
         }
     }
 }

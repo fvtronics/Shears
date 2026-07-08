@@ -19,7 +19,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
+    save_pdf_dialog,
 };
 
 pub struct WatermarkTool {
@@ -66,10 +67,10 @@ impl SimpleComponent for WatermarkTool {
             WatermarkPage::builder()
                 .launch(())
                 .forward(sender.input_sender(), |msg| match msg {
-                    WatermarkPageOutput::FileActive(file_stem) => {
+                    PageOutput::FileActive(file_stem) => {
                         WatermarkToolMsg::UpdateFileActive(file_stem)
                     }
-                    WatermarkPageOutput::Loading(is_loading) => {
+                    PageOutput::Loading(is_loading) => {
                         WatermarkToolMsg::Loading(is_loading)
                     }
                 });
@@ -144,12 +145,6 @@ enum WatermarkPageMsg {
     OpenOutput(std::path::PathBuf),
 }
 
-#[derive(Debug)]
-pub enum WatermarkPageOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 fn open_image_dialog(button: &gtk::Button, callback: impl FnOnce(gio::File) + 'static) {
     let image_filter = gtk::FileFilter::new();
     image_filter.set_name(Some(&gettext("Images")));
@@ -177,7 +172,7 @@ fn open_image_dialog(button: &gtk::Button, callback: impl FnOnce(gio::File) + 's
 impl Component for WatermarkPage {
     type Init = ();
     type Input = WatermarkPageMsg;
-    type Output = WatermarkPageOutput;
+    type Output = PageOutput;
     type CommandOutput = ();
 
     view! {
@@ -457,7 +452,7 @@ impl Component for WatermarkPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(WatermarkPageOutput::FileActive(Some(name)));
+                let _ = sender.output(PageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -637,7 +632,7 @@ impl WatermarkPage {
         self.password = None;
         self.preview_status = PreviewStatus::Ready;
         self.check_loading_state(sender);
-        let _ = sender.output(WatermarkPageOutput::FileActive(None));
+        let _ = sender.output(PageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
@@ -649,7 +644,7 @@ impl WatermarkPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(WatermarkPageOutput::Loading(is_loading));
+            let _ = sender.output(PageOutput::Loading(is_loading));
         }
     }
 }

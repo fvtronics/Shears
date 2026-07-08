@@ -20,7 +20,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{ExtractOptions, PdfError, extract_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
+    save_pdf_dialog,
 };
 
 pub struct ExtractTool {
@@ -67,10 +68,10 @@ impl SimpleComponent for ExtractTool {
             ExtractPage::builder()
                 .launch(())
                 .forward(sender.input_sender(), |msg| match msg {
-                    ExtractPageOutput::FileActive(file_stem) => {
+                    PageOutput::FileActive(file_stem) => {
                         ExtractToolMsg::UpdateFileActive(file_stem)
                     }
-                    ExtractPageOutput::Loading(is_loading) => ExtractToolMsg::Loading(is_loading),
+                    PageOutput::Loading(is_loading) => ExtractToolMsg::Loading(is_loading),
                 });
 
         let model = Self {
@@ -300,17 +301,11 @@ enum ExtractPageMsg {
     OpenOutput(std::path::PathBuf),
 }
 
-#[derive(Debug)]
-pub enum ExtractPageOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component]
 impl Component for ExtractPage {
     type Init = ();
     type Input = ExtractPageMsg;
-    type Output = ExtractPageOutput;
+    type Output = PageOutput;
     type CommandOutput = ();
 
     view! {
@@ -495,7 +490,7 @@ impl Component for ExtractPage {
                 self.file = Some(file.clone());
 
                 self.check_loading_state(&sender);
-                let _ = sender.output(ExtractPageOutput::FileActive(Some(name)));
+                let _ = sender.output(PageOutput::FileActive(Some(name)));
 
                 self.request_thumbnail(None, &sender);
             }
@@ -685,7 +680,7 @@ impl ExtractPage {
         self.preview_status = PreviewStatus::Ready;
         self.pages.guard().clear();
         self.check_loading_state(sender);
-        let _ = sender.output(ExtractPageOutput::FileActive(None));
+        let _ = sender.output(PageOutput::FileActive(None));
     }
 
     fn check_loading_state(&mut self, sender: &ComponentSender<Self>) {
@@ -697,7 +692,7 @@ impl ExtractPage {
 
         if self.is_loading != is_loading {
             self.is_loading = is_loading;
-            let _ = sender.output(ExtractPageOutput::Loading(is_loading));
+            let _ = sender.output(PageOutput::Loading(is_loading));
         }
     }
 }
