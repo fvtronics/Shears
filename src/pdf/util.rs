@@ -216,11 +216,8 @@ mod tests {
         remove_metadata(&mut doc);
 
         assert!(doc.trailer.get(b"Info").is_err());
-        if let Ok(Object::Dictionary(catalog)) = doc.get_object(root_id) {
-            assert!(catalog.get(b"Metadata").is_err());
-        } else {
-            panic!("Root catalog dictionary should exist");
-        }
+        let catalog = doc.get_object(root_id).and_then(Object::as_dict).unwrap();
+        assert!(catalog.get(b"Metadata").is_err());
     }
 
     #[test]
@@ -234,11 +231,8 @@ mod tests {
 
         remove_outlines(&mut doc);
 
-        if let Ok(Object::Dictionary(catalog)) = doc.get_object(root_id) {
-            assert!(catalog.get(b"Outlines").is_err());
-        } else {
-            panic!("Root catalog dictionary should exist");
-        }
+        let catalog = doc.get_object(root_id).and_then(Object::as_dict).unwrap();
+        assert!(catalog.get(b"Outlines").is_err());
     }
 
     #[test]

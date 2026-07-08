@@ -250,3 +250,205 @@ fn merge_documents(documents: Vec<(String, Document)>) -> Result<Document, PdfEr
 
     Ok(document)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+    use crate::pdf::util::{get_inherited_mediabox, get_inherited_rotation, load_document};
+    use lopdf::Object;
+
+    #[test]
+    fn test_mrg_01_page_size_normalization() {
+        let mut doc_a = create_test_doc(2, 595.0, 842.0);
+        for page_id in doc_a.get_pages().values() {
+            if let Ok(Object::Dictionary(dict)) = doc_a.get_object_mut(*page_id) {
+                dict.set("CropBox", vec![0.into(), 0.into(), 595.into(), 842.into()]);
+                dict.set("TrimBox", vec![0.into(), 0.into(), 595.into(), 842.into()]);
+                dict.set("BleedBox", vec![0.into(), 0.into(), 595.into(), 842.into()]);
+                dict.set("ArtBox", vec![0.into(), 0.into(), 595.into(), 842.into()]);
+            }
+        }
+        let doc_b = create_test_doc(1, 842.0, 1191.0);
+
+        let mut merged =
+            merge_documents(vec![("DocA".into(), doc_a), ("DocB".into(), doc_b)]).unwrap();
+
+        normalize_page_sizes(&mut merged);
+
+        for page_id in merged.get_pages().values() {
+            let box_coords = get_inherited_mediabox(&merged, *page_id).unwrap();
+            assert_eq!(box_coords, vec![0.0, 0.0, 842.0, 1191.0]);
+
+            let dict = merged.get_object(*page_id).and_then(Object::as_dict).unwrap();
+            assert!(dict.get(b"CropBox").is_err());
+            assert!(dict.get(b"TrimBox").is_err());
+            assert!(dict.get(b"BleedBox").is_err());
+            assert!(dict.get(b"ArtBox").is_err());
+        }
+    }
+
+    #[test]
+    fn test_mrg_02_explicit_rotation_application() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let doc_a_path = temp_dir.path().join("doc_a.pdf");
+        let output_path = temp_dir.path().join("merged.pdf");
+
+        let mut doc_a = create_test_doc(1, 595.0, 842.0);
+        if let Some((_, page_id)) = doc_a.get_pages().into_iter().next()
+            && let Ok(Object::Dictionary(dict)) = doc_a.get_object_mut(page_id)
+        {
+            dict.set("Rotate", 90);
+        }
+        doc_a.save(&doc_a_path).unwrap();
+
+        let options = MergeOptions::default();
+        merge_files(
+            &[(MergeInput::File(doc_a_path, None), 90)],
+            &output_path,
+            &options,
+        )
+        .unwrap();
+
+        let merged = load_document(&output_path, None).unwrap();
+        let (_, page_id) = merged.get_pages().into_iter().next().unwrap();
+        assert_eq!(get_inherited_rotation(&merged, page_id), 180);
+    }
+
+    #[test]
+    fn test_mrg_03_blank_page_interleaving() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let doc_a_path = temp_dir.path().join("doc_a.pdf");
+        let doc_b_path = temp_dir.path().join("doc_b.pdf");
+        let output_path = temp_dir.path().join("merged_interleaved.pdf");
+
+        create_test_doc(2, 595.0, 842.0).save(&doc_a_path).unwrap();
+        create_test_doc(1, 595.0, 842.0).save(&doc_b_path).unwrap();
+
+        let inputs = vec![
+            (MergeInput::File(doc_a_path, None), 0),
+            (
+                MergeInput::BlankPage {
+                    title: "Blank".into(),
+                    width: 500.0,
+                    height: 500.0,
+                },
+                0,
+            ),
+            (MergeInput::File(doc_b_path, None), 0),
+        ];
+
+        let options = MergeOptions::default();
+        merge_files(&inputs, &output_path, &options).unwrap();
+
+        let merged = load_document(&output_path, None).unwrap();
+        let pages = merged.get_pages();
+        assert_eq!(pages.len(), 4);
+
+        let third_page_id = *pages.get(&3).expect("Page 3 should exist");
+        let box_coords = get_inherited_mediabox(&merged, third_page_id).unwrap();
+        assert_eq!(box_coords, vec![0.0, 0.0, 500.0, 500.0]);
+
+        let dict = merged.get_object(third_page_id).and_then(Object::as_dict).unwrap();
+        assert!(dict.get(b"Resources").is_ok());
+    }
+
+    #[test]
+    fn test_mrg_04_master_catalog_and_bookmarks() {
+        let doc1 = create_test_doc(2, 595.0, 842.0);
+        let doc2 = create_test_doc(1, 595.0, 842.0);
+        let doc3 = create_test_doc(3, 595.0, 842.0);
+
+        let merged = merge_documents(vec![
+            ("Seg 1".into(), doc1),
+            ("Seg 2".into(), doc2),
+            ("Seg 3".into(), doc3),
+        ])
+        .unwrap();
+
+        let root_id = merged
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let catalog = merged
+            .get_object(root_id)
+            .and_then(Object::as_dict)
+            .unwrap();
+        let outlines_id = catalog
+            .get(b"Outlines")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let outlines = merged
+            .get_object(outlines_id)
+            .and_then(Object::as_dict)
+            .unwrap();
+
+        let mut current_item_id = outlines
+            .get(b"First")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let mut titles = Vec::new();
+
+        loop {
+            if let Ok(Object::Dictionary(item_dict)) = merged.get_object(current_item_id) {
+                if let Ok(Object::String(title_bytes, _)) = item_dict.get(b"Title") {
+                    titles.push(String::from_utf8_lossy(title_bytes).to_string());
+                }
+                if let Ok(Object::Reference(next_id)) = item_dict.get(b"Next") {
+                    current_item_id = *next_id;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        assert_eq!(titles, vec!["Seg 1", "Seg 2", "Seg 3"]);
+    }
+
+    #[test]
+    fn test_mrg_05_metadata_stripping_on_merge() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let doc1_path = temp_dir.path().join("doc1.pdf");
+        let doc2_path = temp_dir.path().join("doc2.pdf");
+        let output_path = temp_dir.path().join("merged_no_meta.pdf");
+
+        let mut doc1 = create_test_doc(1, 595.0, 842.0);
+        doc1.trailer.set("Info", (10, 0));
+        let root1 = doc1.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
+        let cat1 = doc1.get_object_mut(root1).and_then(Object::as_dict_mut).unwrap();
+        cat1.set("Metadata", (11, 0));
+        doc1.save(&doc1_path).unwrap();
+
+        let mut doc2 = create_test_doc(1, 595.0, 842.0);
+        doc2.trailer.set("Info", (12, 0));
+        let root2 = doc2.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
+        let cat2 = doc2.get_object_mut(root2).and_then(Object::as_dict_mut).unwrap();
+        cat2.set("Metadata", (13, 0));
+        doc2.save(&doc2_path).unwrap();
+
+        let options = MergeOptions {
+            remove_metadata: true,
+            ..Default::default()
+        };
+        merge_files(
+            &[
+                (MergeInput::File(doc1_path, None), 0),
+                (MergeInput::File(doc2_path, None), 0),
+            ],
+            &output_path,
+            &options,
+        )
+        .unwrap();
+
+        let merged = load_document(&output_path, None).unwrap();
+        assert!(merged.trailer.get(b"Info").is_err());
+        let root_id = merged
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let cat = merged.get_object(root_id).and_then(Object::as_dict).unwrap();
+        assert!(cat.get(b"Metadata").is_err());
+    }
+}
