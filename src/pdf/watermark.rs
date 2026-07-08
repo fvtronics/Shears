@@ -6,7 +6,7 @@
  */
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::{get_inherited_mediabox, remove_metadata};
+use crate::pdf::util::{get_inherited_mediabox, load_document, remove_metadata, save_document};
 use lopdf::{Dictionary, Document, Object, ObjectId, Stream};
 use std::path::{Path, PathBuf};
 
@@ -65,11 +65,7 @@ pub fn watermark_file<P: AsRef<Path>>(
 ) -> Result<(), PdfError> {
     let (input_path, _) = file;
 
-    let mut doc = if let Some(pass) = &options.password {
-        Document::load_with_password(input_path.as_ref(), pass.as_str())?
-    } else {
-        Document::load(input_path.as_ref())?
-    };
+    let mut doc = load_document(input_path, options.password.as_deref())?;
 
     let img = image::open(&options.image_path)?;
     let rgba = img.to_rgba8();
@@ -181,12 +177,7 @@ pub fn watermark_file<P: AsRef<Path>>(
 
     doc.compress();
 
-    if options.modern_pdf_format {
-        let mut out_file = std::fs::File::create(output_path.as_ref())?;
-        doc.save_modern(&mut out_file)?;
-    } else {
-        doc.save(output_path.as_ref())?;
-    }
+    save_document(&mut doc, output_path, options.modern_pdf_format)?;
 
     Ok(())
 }

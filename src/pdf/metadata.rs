@@ -6,7 +6,7 @@
  */
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::remove_metadata;
+use crate::pdf::util::{remove_metadata, save_document};
 use lopdf::{Dictionary, Document, IncrementalDocument, Object, StringFormat};
 use std::fs;
 use std::path::Path;
@@ -54,12 +54,7 @@ pub fn update_metadata<P: AsRef<Path>>(
         apply_metadata(&mut info_dict, &options.metadata, &producer);
         insert_info_dict(&mut doc, info_dict);
 
-        if options.modern_pdf_format {
-            let mut out_file = fs::File::create(output_path.as_ref())?;
-            doc.save_modern(&mut out_file)?;
-        } else {
-            doc.save(output_path.as_ref())?;
-        }
+        save_document(&mut doc, output_path, options.modern_pdf_format)?;
     } else {
         let mut inc_doc = IncrementalDocument::create_from(bytes, doc);
 

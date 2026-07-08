@@ -6,7 +6,7 @@
  */
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::remove_metadata;
+use crate::pdf::util::{load_document, remove_metadata, save_document};
 use image::DynamicImage;
 use image::codecs::jpeg::JpegEncoder;
 use lopdf::{Document, Object, Stream};
@@ -74,11 +74,7 @@ pub fn compress_file<P: AsRef<Path>>(
 ) -> Result<(), PdfError> {
     let (input_path, _) = file;
 
-    let mut doc = if let Some(pass) = &options.password {
-        Document::load_with_password(input_path.as_ref(), pass.as_str())?
-    } else {
-        Document::load(input_path.as_ref())?
-    };
+    let mut doc = load_document(input_path, options.password.as_deref())?;
 
     if options.remove_metadata {
         remove_metadata(&mut doc);
@@ -98,12 +94,7 @@ pub fn compress_file<P: AsRef<Path>>(
 
     doc.compress();
 
-    if options.modern_pdf_format {
-        let mut file = std::fs::File::create(output_path.as_ref())?;
-        doc.save_modern(&mut file)?;
-    } else {
-        doc.save(output_path.as_ref())?;
-    }
+    save_document(&mut doc, output_path, options.modern_pdf_format)?;
 
     Ok(())
 }

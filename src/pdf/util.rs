@@ -5,7 +5,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+use std::fs::File;
+use std::path::Path;
+
 use lopdf::{Document, Object, ObjectId};
+
+use crate::pdf::error::PdfError;
 
 pub fn get_inherited_rotation(doc: &Document, page_id: ObjectId) -> i64 {
     let mut current_id = page_id;
@@ -82,4 +87,29 @@ pub fn get_inherited_mediabox(doc: &Document, page_id: ObjectId) -> Option<Vec<f
         break;
     }
     None
+}
+
+pub fn load_document<P: AsRef<Path>>(
+    path: P,
+    password: Option<&str>,
+) -> Result<Document, PdfError> {
+    if let Some(pass) = password {
+        Ok(Document::load_with_password(path.as_ref(), pass)?)
+    } else {
+        Ok(Document::load(path.as_ref())?)
+    }
+}
+
+pub fn save_document<P: AsRef<Path>>(
+    doc: &mut Document,
+    output_path: P,
+    modern_format: bool,
+) -> Result<(), PdfError> {
+    if modern_format {
+        let mut out_file = File::create(output_path.as_ref())?;
+        doc.save_modern(&mut out_file)?;
+    } else {
+        doc.save(output_path.as_ref())?;
+    }
+    Ok(())
 }

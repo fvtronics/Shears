@@ -70,9 +70,7 @@ impl SimpleComponent for WatermarkTool {
                     PageOutput::FileActive(file_stem) => {
                         WatermarkToolMsg::UpdateFileActive(file_stem)
                     }
-                    PageOutput::Loading(is_loading) => {
-                        WatermarkToolMsg::Loading(is_loading)
-                    }
+                    PageOutput::Loading(is_loading) => WatermarkToolMsg::Loading(is_loading),
                 });
 
         let model = Self {

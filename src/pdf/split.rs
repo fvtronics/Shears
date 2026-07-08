@@ -6,7 +6,7 @@
  */
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::{remove_metadata, remove_outlines};
+use crate::pdf::util::{load_document, remove_metadata, remove_outlines, save_document};
 use lopdf::Document;
 use std::path::Path;
 
@@ -36,11 +36,7 @@ pub fn split_file<P: AsRef<Path>>(
 ) -> Result<(), PdfError> {
     let (input_path, _) = file;
 
-    let doc = if let Some(pass) = &options.password {
-        Document::load_with_password(input_path.as_ref(), pass.as_str())?
-    } else {
-        Document::load(input_path.as_ref())?
-    };
+    let doc = load_document(input_path, options.password.as_deref())?;
 
     let total_pages = doc.get_pages().len() as u32;
     let segments = calculate_segments(&options.divide_after, total_pages);
@@ -107,12 +103,7 @@ fn extract_document(
     let out_filename = format!("{}_{:03}.pdf", options.prefix, idx + 1);
     let out_file_path = base_out_dir.join(out_filename);
 
-    if options.modern_format {
-        let mut out_file = std::fs::File::create(&out_file_path)?;
-        split_doc.save_modern(&mut out_file)?;
-    } else {
-        split_doc.save(&out_file_path)?;
-    }
+    save_document(&mut split_doc, &out_file_path, options.modern_format)?;
 
     Ok(())
 }

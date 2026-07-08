@@ -6,8 +6,10 @@
  */
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::{get_inherited_rotation, remove_metadata, remove_outlines};
-use lopdf::{Dictionary, Document, Object, ObjectId};
+use crate::pdf::util::{
+    get_inherited_rotation, load_document, remove_metadata, remove_outlines, save_document,
+};
+use lopdf::{Dictionary, Object, ObjectId};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -32,11 +34,7 @@ pub fn organize_file<P: AsRef<Path>>(
 ) -> Result<(), PdfError> {
     let (input_path, _) = file;
 
-    let mut doc = if let Some(pass) = &options.password {
-        Document::load_with_password(input_path.as_ref(), pass.as_str())?
-    } else {
-        Document::load(input_path.as_ref())?
-    };
+    let mut doc = load_document(input_path, options.password.as_deref())?;
 
     let original_pages: Vec<ObjectId> = doc.get_pages().values().copied().collect();
     let original_rotations: Vec<i64> = original_pages
@@ -134,12 +132,7 @@ pub fn organize_file<P: AsRef<Path>>(
         remove_metadata(&mut doc);
     }
 
-    if options.modern_pdf_format {
-        let mut out_file = std::fs::File::create(output_path.as_ref())?;
-        doc.save_modern(&mut out_file)?;
-    } else {
-        doc.save(output_path.as_ref())?;
-    }
+    save_document(&mut doc, output_path, options.modern_pdf_format)?;
 
     Ok(())
 }

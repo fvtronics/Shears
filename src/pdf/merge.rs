@@ -5,14 +5,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 
 use lopdf::{Bookmark, Document, Object};
 
 use crate::pdf::error::PdfError;
-use crate::pdf::util::{apply_file_rotation, get_inherited_mediabox, remove_metadata};
+use crate::pdf::util::{
+    apply_file_rotation, get_inherited_mediabox, load_document, remove_metadata, save_document,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct MergeOptions {
@@ -41,11 +42,7 @@ pub fn merge_files<P: AsRef<Path>>(
     for (input, rotation) in files {
         let (filename, mut doc) = match input {
             MergeInput::File(path, password) => {
-                let d = if let Some(pass) = password {
-                    Document::load_with_password(path.as_path(), pass.as_str())?
-                } else {
-                    Document::load(path.as_path())?
-                };
+                let d = load_document(path.as_path(), password.as_deref())?;
                 let fname = path
                     .file_stem()
                     .unwrap_or_default()
@@ -80,12 +77,7 @@ pub fn merge_files<P: AsRef<Path>>(
         normalize_page_sizes(&mut merged_doc);
     }
 
-    if options.modern_format {
-        let mut file = File::create(output_path.as_ref())?;
-        merged_doc.save_modern(&mut file)?;
-    } else {
-        merged_doc.save(output_path.as_ref())?;
-    }
+    save_document(&mut merged_doc, output_path, options.modern_format)?;
 
     Ok(())
 }
