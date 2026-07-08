@@ -11,7 +11,9 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{
+    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+};
 
 pub struct MetadataTool {
     state: ToolState,
@@ -26,17 +28,11 @@ pub enum MetadataToolMsg {
     Loading(bool),
 }
 
-#[derive(Debug)]
-pub enum MetadataToolOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for MetadataTool {
     type Init = ();
     type Input = MetadataToolMsg;
-    type Output = MetadataToolOutput;
+    type Output = ToolOutput;
 
     view! {
         gtk::Stack {
@@ -90,24 +86,12 @@ impl SimpleComponent for MetadataTool {
                 if file_stem.is_none() {
                     self.state = ToolState::Empty;
                 }
-                let _ = sender.output(MetadataToolOutput::FileActive(file_stem));
+                let _ = sender.output(ToolOutput::Subtitle(file_stem));
             }
             MetadataToolMsg::Loading(is_loading) => {
-                if is_loading {
-                    if self.state == ToolState::Empty {
-                        self.state = ToolState::LoadingNewFile;
-                    } else if self.state == ToolState::Ready {
-                        self.state = ToolState::Processing;
-                    }
-                } else {
-                    if self.state == ToolState::LoadingNewFile
-                        || self.state == ToolState::Processing
-                    {
-                        self.state = ToolState::Ready;
-                    }
-                }
+                self.state.update_loading(is_loading);
                 self._empty_page.emit(is_loading);
-                let _ = sender.output(MetadataToolOutput::Loading(is_loading));
+                let _ = sender.output(ToolOutput::Loading(is_loading));
             }
         }
     }

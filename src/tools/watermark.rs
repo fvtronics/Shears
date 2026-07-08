@@ -18,7 +18,9 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{
+    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+};
 
 pub struct WatermarkTool {
     state: ToolState,
@@ -33,17 +35,11 @@ pub enum WatermarkToolMsg {
     Loading(bool),
 }
 
-#[derive(Debug)]
-pub enum WatermarkToolOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for WatermarkTool {
     type Init = ();
     type Input = WatermarkToolMsg;
-    type Output = WatermarkToolOutput;
+    type Output = ToolOutput;
 
     view! {
         gtk::Stack {
@@ -99,24 +95,12 @@ impl SimpleComponent for WatermarkTool {
                 if file_stem.is_none() {
                     self.state = ToolState::Empty;
                 }
-                let _ = sender.output(WatermarkToolOutput::FileActive(file_stem));
+                let _ = sender.output(ToolOutput::Subtitle(file_stem));
             }
             WatermarkToolMsg::Loading(is_loading) => {
-                if is_loading {
-                    if self.state == ToolState::Empty {
-                        self.state = ToolState::LoadingNewFile;
-                    } else if self.state == ToolState::Ready {
-                        self.state = ToolState::Processing;
-                    }
-                } else {
-                    if self.state == ToolState::LoadingNewFile
-                        || self.state == ToolState::Processing
-                    {
-                        self.state = ToolState::Ready;
-                    }
-                }
+                self.state.update_loading(is_loading);
                 self._empty_page.emit(is_loading);
-                let _ = sender.output(WatermarkToolOutput::Loading(is_loading));
+                let _ = sender.output(ToolOutput::Loading(is_loading));
             }
         }
     }

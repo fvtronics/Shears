@@ -1,4 +1,4 @@
-use gettextrs::gettext;
+use gettextrs::{gettext, ngettext};
 use relm4::adw::prelude::*;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender, FactoryVecDeque};
 use relm4::{
@@ -12,7 +12,7 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{PreviewStatus, Tool, ToolOutput, open_pdf_dialog, save_pdf_dialog};
 
 pub struct MergeTool {
     has_files: bool,
@@ -30,17 +30,11 @@ pub enum MergeToolMsg {
     Loading(bool),
 }
 
-#[derive(Debug)]
-pub enum MergeToolOutput {
-    FileCountChanged(usize),
-    Loading(bool),
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for MergeTool {
     type Init = ();
     type Input = MergeToolMsg;
-    type Output = MergeToolOutput;
+    type Output = ToolOutput;
 
     view! {
         gtk::Stack {
@@ -90,17 +84,23 @@ impl SimpleComponent for MergeTool {
             MergeToolMsg::ClearFiles => {
                 self.has_files = false;
                 self.file_count = 0;
+                let _ = sender.output(ToolOutput::Subtitle(None));
             }
             MergeToolMsg::UpdateFileCount(len) => {
                 self.file_count = len;
                 if len == 0 {
                     self.has_files = false;
+                    let _ = sender.output(ToolOutput::Subtitle(None));
+                } else {
+                    if !self.is_loading {
+                        self.has_files = true;
+                    }
+                    let count = len as u32;
+                    let subtitle =
+                        ngettext("{count} file selected", "{count} files selected", count)
+                            .replace("{count}", &count.to_string());
+                    let _ = sender.output(ToolOutput::Subtitle(Some(subtitle)));
                 }
-
-                if len > 0 && !self.is_loading {
-                    self.has_files = true;
-                }
-                let _ = sender.output(MergeToolOutput::FileCountChanged(len));
             }
             MergeToolMsg::Loading(is_loading) => {
                 self.is_loading = is_loading;
@@ -108,7 +108,7 @@ impl SimpleComponent for MergeTool {
                 if !is_loading && self.file_count > 0 {
                     self.has_files = true;
                 }
-                let _ = sender.output(MergeToolOutput::Loading(is_loading));
+                let _ = sender.output(ToolOutput::Loading(is_loading));
             }
         }
     }

@@ -12,7 +12,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PreviewStatus, Tool, ToolState, file_name, file_stem, open_pdf_dialog, select_folder_dialog,
+    PreviewStatus, Tool, ToolOutput, ToolState, file_name, file_stem, open_pdf_dialog,
+    select_folder_dialog,
 };
 
 pub struct SplitTool {
@@ -28,17 +29,11 @@ pub enum SplitToolMsg {
     Loading(bool),
 }
 
-#[derive(Debug)]
-pub enum SplitToolOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for SplitTool {
     type Init = ();
     type Input = SplitToolMsg;
-    type Output = SplitToolOutput;
+    type Output = ToolOutput;
 
     view! {
         gtk::Stack {
@@ -89,24 +84,12 @@ impl SimpleComponent for SplitTool {
                 if file_stem.is_none() {
                     self.state = ToolState::Empty;
                 }
-                let _ = sender.output(SplitToolOutput::FileActive(file_stem));
+                let _ = sender.output(ToolOutput::Subtitle(file_stem));
             }
             SplitToolMsg::Loading(is_loading) => {
-                if is_loading {
-                    if self.state == ToolState::Empty {
-                        self.state = ToolState::LoadingNewFile;
-                    } else if self.state == ToolState::Ready {
-                        self.state = ToolState::Processing;
-                    }
-                } else {
-                    if self.state == ToolState::LoadingNewFile
-                        || self.state == ToolState::Processing
-                    {
-                        self.state = ToolState::Ready;
-                    }
-                }
+                self.state.update_loading(is_loading);
                 self._empty_page.emit(is_loading);
-                let _ = sender.output(SplitToolOutput::Loading(is_loading));
+                let _ = sender.output(ToolOutput::Loading(is_loading));
             }
         }
     }

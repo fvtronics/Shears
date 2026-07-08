@@ -20,12 +20,32 @@ use relm4::gtk;
 use gtk::gio;
 use gtk::prelude::{Cast, CastNone, FileExt, ListModelExt, WidgetExt};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ToolState {
     Empty,
     LoadingNewFile,
     Ready,
     Processing,
+}
+
+impl ToolState {
+    pub fn update_loading(&mut self, is_loading: bool) {
+        if is_loading {
+            if *self == ToolState::Empty {
+                *self = ToolState::LoadingNewFile;
+            } else if *self == ToolState::Ready {
+                *self = ToolState::Processing;
+            }
+        } else if *self == ToolState::LoadingNewFile || *self == ToolState::Processing {
+            *self = ToolState::Ready;
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ToolOutput {
+    Loading(bool),
+    Subtitle(Option<String>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -36,7 +56,7 @@ pub enum PreviewStatus {
     Reloading,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tool {
     Merge,
     Organize,

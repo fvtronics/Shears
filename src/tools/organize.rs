@@ -19,7 +19,9 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolState, file_name, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{
+    PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog, save_pdf_dialog,
+};
 
 pub struct OrganizeTool {
     state: ToolState,
@@ -34,17 +36,11 @@ pub enum OrganizeToolMsg {
     Loading(bool),
 }
 
-#[derive(Debug)]
-pub enum OrganizeToolOutput {
-    FileActive(Option<String>),
-    Loading(bool),
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for OrganizeTool {
     type Init = ();
     type Input = OrganizeToolMsg;
-    type Output = OrganizeToolOutput;
+    type Output = ToolOutput;
 
     view! {
         gtk::Stack {
@@ -98,22 +94,12 @@ impl SimpleComponent for OrganizeTool {
                 if file_stem.is_none() {
                     self.state = ToolState::Empty;
                 }
-                let _ = sender.output(OrganizeToolOutput::FileActive(file_stem));
+                let _ = sender.output(ToolOutput::Subtitle(file_stem));
             }
             OrganizeToolMsg::Loading(is_loading) => {
-                if is_loading {
-                    if self.state == ToolState::Empty {
-                        self.state = ToolState::LoadingNewFile;
-                    } else if self.state == ToolState::Ready {
-                        self.state = ToolState::Processing;
-                    }
-                } else if self.state == ToolState::LoadingNewFile
-                    || self.state == ToolState::Processing
-                {
-                    self.state = ToolState::Ready;
-                }
+                self.state.update_loading(is_loading);
                 self._empty_page.emit(is_loading);
-                let _ = sender.output(OrganizeToolOutput::Loading(is_loading));
+                let _ = sender.output(ToolOutput::Loading(is_loading));
             }
         }
     }

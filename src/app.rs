@@ -1,4 +1,6 @@
-use gettextrs::{gettext, ngettext};
+use std::collections::HashMap;
+
+use gettextrs::gettext;
 use relm4::adw::prelude::{AdwApplicationWindowExt, IsA, NavigationPageExt, SidebarItemExt};
 use relm4::{
     Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
@@ -12,13 +14,19 @@ use gtk::{gio, glib};
 use crate::config::{APP_ID, PROFILE};
 use crate::modals::{about::AboutDialog, shortcuts::ShortcutsDialog};
 use crate::tools::{
-    Tool, compress::CompressTool, extract::ExtractTool, merge::MergeTool, metadata::MetadataTool,
-    organize::OrganizeTool, split::SplitTool, watermark::WatermarkTool,
+    Tool, ToolOutput, compress::CompressTool, extract::ExtractTool, merge::MergeTool,
+    metadata::MetadataTool, organize::OrganizeTool, split::SplitTool, watermark::WatermarkTool,
 };
+
+#[derive(Debug, Default, Clone)]
+struct ToolStatus {
+    is_loading: bool,
+    subtitle: Option<String>,
+}
 
 pub(super) struct App {
     selected_tool: Tool,
-    merge_file_count: usize,
+    tool_status: HashMap<Tool, ToolStatus>,
     _merge: Controller<MergeTool>,
     _organize: Controller<OrganizeTool>,
     _extract: Controller<ExtractTool>,
@@ -26,38 +34,13 @@ pub(super) struct App {
     _compress: Controller<CompressTool>,
     _watermark: Controller<WatermarkTool>,
     _metadata: Controller<MetadataTool>,
-    merge_is_loading: bool,
-    split_is_loading: bool,
-    split_file_stem: Option<String>,
-    metadata_is_loading: bool,
-    metadata_file_active: Option<String>,
-    compress_is_loading: bool,
-    compress_file_active: Option<String>,
-    organize_is_loading: bool,
-    organize_file_active: Option<String>,
-    extract_is_loading: bool,
-    extract_file_active: Option<String>,
-    watermark_is_loading: bool,
-    watermark_file_active: Option<String>,
 }
 
 #[derive(Debug)]
 pub(super) enum AppMsg {
     SelectTool(Tool),
-    UpdateMergeFileCount(usize),
-    UpdateMergeLoading(bool),
-    UpdateSplitLoading(bool),
-    UpdateSplitFileStem(Option<String>),
-    UpdateMetadataLoading(bool),
-    UpdateMetadataFileActive(Option<String>),
-    UpdateCompressLoading(bool),
-    UpdateCompressFileActive(Option<String>),
-    UpdateOrganizeLoading(bool),
-    UpdateOrganizeFileActive(Option<String>),
-    UpdateExtractLoading(bool),
-    UpdateExtractFileActive(Option<String>),
-    UpdateWatermarkLoading(bool),
-    UpdateWatermarkFileActive(Option<String>),
+    UpdateToolLoading(Tool, bool),
+    UpdateToolSubtitle(Tool, Option<String>),
     Quit,
 }
 
@@ -220,82 +203,37 @@ impl SimpleComponent for App {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let merge =
-            MergeTool::builder()
-                .launch(())
-                .forward(sender.input_sender(), |msg| match msg {
-                    crate::tools::merge::MergeToolOutput::FileCountChanged(len) => {
-                        AppMsg::UpdateMergeFileCount(len)
-                    }
-                    crate::tools::merge::MergeToolOutput::Loading(is_loading) => {
-                        AppMsg::UpdateMergeLoading(is_loading)
-                    }
-                });
+        let forward_tool = |tool: Tool| {
+            move |msg| match msg {
+                ToolOutput::Loading(is_loading) => AppMsg::UpdateToolLoading(tool, is_loading),
+                ToolOutput::Subtitle(subtitle) => AppMsg::UpdateToolSubtitle(tool, subtitle),
+            }
+        };
+        let merge = MergeTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), forward_tool(Tool::Merge));
         let organize = OrganizeTool::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::organize::OrganizeToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateOrganizeLoading(is_loading)
-                }
-                crate::tools::organize::OrganizeToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateOrganizeFileActive(stem)
-                }
-            });
+            .forward(sender.input_sender(), forward_tool(Tool::Organize));
         let extract = ExtractTool::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::extract::ExtractToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateExtractLoading(is_loading)
-                }
-                crate::tools::extract::ExtractToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateExtractFileActive(stem)
-                }
-            });
-        let split =
-            SplitTool::builder()
-                .launch(())
-                .forward(sender.input_sender(), |msg| match msg {
-                    crate::tools::split::SplitToolOutput::Loading(is_loading) => {
-                        AppMsg::UpdateSplitLoading(is_loading)
-                    }
-                    crate::tools::split::SplitToolOutput::FileActive(stem) => {
-                        AppMsg::UpdateSplitFileStem(stem)
-                    }
-                });
+            .forward(sender.input_sender(), forward_tool(Tool::Extract));
+        let split = SplitTool::builder()
+            .launch(())
+            .forward(sender.input_sender(), forward_tool(Tool::Split));
         let compress = CompressTool::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::compress::CompressToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateCompressLoading(is_loading)
-                }
-                crate::tools::compress::CompressToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateCompressFileActive(stem)
-                }
-            });
+            .forward(sender.input_sender(), forward_tool(Tool::Compress));
         let watermark = WatermarkTool::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::watermark::WatermarkToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateWatermarkLoading(is_loading)
-                }
-                crate::tools::watermark::WatermarkToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateWatermarkFileActive(stem)
-                }
-            });
+            .forward(sender.input_sender(), forward_tool(Tool::Watermark));
         let metadata = MetadataTool::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                crate::tools::metadata::MetadataToolOutput::Loading(is_loading) => {
-                    AppMsg::UpdateMetadataLoading(is_loading)
-                }
-                crate::tools::metadata::MetadataToolOutput::FileActive(stem) => {
-                    AppMsg::UpdateMetadataFileActive(stem)
-                }
-            });
+            .forward(sender.input_sender(), forward_tool(Tool::Metadata));
 
         let model = Self {
             selected_tool: Tool::Merge,
-            merge_file_count: 0,
+            tool_status: HashMap::new(),
             _merge: merge,
             _organize: organize,
             _extract: extract,
@@ -303,19 +241,6 @@ impl SimpleComponent for App {
             _compress: compress,
             _watermark: watermark,
             _metadata: metadata,
-            merge_is_loading: false,
-            split_is_loading: false,
-            split_file_stem: None,
-            metadata_is_loading: false,
-            metadata_file_active: None,
-            compress_is_loading: false,
-            compress_file_active: None,
-            organize_is_loading: false,
-            organize_file_active: None,
-            extract_is_loading: false,
-            extract_file_active: None,
-            watermark_is_loading: false,
-            watermark_file_active: None,
         };
         let widgets = view_output!();
         widgets
@@ -361,47 +286,11 @@ impl SimpleComponent for App {
             AppMsg::SelectTool(tool) => {
                 self.selected_tool = tool;
             }
-            AppMsg::UpdateMergeFileCount(len) => {
-                self.merge_file_count = len;
+            AppMsg::UpdateToolLoading(tool, is_loading) => {
+                self.tool_status.entry(tool).or_default().is_loading = is_loading;
             }
-            AppMsg::UpdateMergeLoading(is_loading) => {
-                self.merge_is_loading = is_loading;
-            }
-            AppMsg::UpdateSplitLoading(is_loading) => {
-                self.split_is_loading = is_loading;
-            }
-            AppMsg::UpdateSplitFileStem(stem) => {
-                self.split_file_stem = stem;
-            }
-            AppMsg::UpdateMetadataLoading(is_loading) => {
-                self.metadata_is_loading = is_loading;
-            }
-            AppMsg::UpdateMetadataFileActive(title) => {
-                self.metadata_file_active = title;
-            }
-            AppMsg::UpdateCompressLoading(is_loading) => {
-                self.compress_is_loading = is_loading;
-            }
-            AppMsg::UpdateCompressFileActive(title) => {
-                self.compress_file_active = title;
-            }
-            AppMsg::UpdateOrganizeLoading(is_loading) => {
-                self.organize_is_loading = is_loading;
-            }
-            AppMsg::UpdateOrganizeFileActive(title) => {
-                self.organize_file_active = title;
-            }
-            AppMsg::UpdateExtractLoading(is_loading) => {
-                self.extract_is_loading = is_loading;
-            }
-            AppMsg::UpdateExtractFileActive(title) => {
-                self.extract_file_active = title;
-            }
-            AppMsg::UpdateWatermarkLoading(is_loading) => {
-                self.watermark_is_loading = is_loading;
-            }
-            AppMsg::UpdateWatermarkFileActive(title) => {
-                self.watermark_file_active = title;
+            AppMsg::UpdateToolSubtitle(tool, subtitle) => {
+                self.tool_status.entry(tool).or_default().subtitle = subtitle;
             }
             AppMsg::Quit => main_application().quit(),
         }
@@ -453,72 +342,13 @@ impl AppWidgets {
 
 impl App {
     fn current_subtitle(&self) -> String {
-        match self.selected_tool {
-            Tool::Merge => {
-                if self.merge_is_loading {
-                    gettext("Processing…")
-                } else if self.merge_file_count == 0 {
-                    self.selected_tool.subtitle()
-                } else {
-                    let count = self.merge_file_count as u32;
-                    ngettext("{count} file selected", "{count} files selected", count)
-                        .replace("{count}", &count.to_string())
-                }
-            }
-            Tool::Split => {
-                if self.split_is_loading {
-                    gettext("Processing…")
-                } else if let Some(stem) = &self.split_file_stem {
-                    stem.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
-            Tool::Metadata => {
-                if self.metadata_is_loading {
-                    gettext("Processing…")
-                } else if let Some(title) = &self.metadata_file_active {
-                    title.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
-            Tool::Compress => {
-                if self.compress_is_loading {
-                    gettext("Processing…")
-                } else if let Some(title) = &self.compress_file_active {
-                    title.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
-            Tool::Organize => {
-                if self.organize_is_loading {
-                    gettext("Processing…")
-                } else if let Some(title) = &self.organize_file_active {
-                    title.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
-            Tool::Extract => {
-                if self.extract_is_loading {
-                    gettext("Processing…")
-                } else if let Some(title) = &self.extract_file_active {
-                    title.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
-            Tool::Watermark => {
-                if self.watermark_is_loading {
-                    gettext("Processing…")
-                } else if let Some(title) = &self.watermark_file_active {
-                    title.clone()
-                } else {
-                    self.selected_tool.subtitle()
-                }
-            }
+        let status = self.tool_status.get(&self.selected_tool);
+        if status.is_some_and(|s| s.is_loading) {
+            gettext("Processing…")
+        } else if let Some(subtitle) = status.and_then(|s| s.subtitle.as_ref()) {
+            subtitle.clone()
+        } else {
+            self.selected_tool.subtitle()
         }
     }
 }
