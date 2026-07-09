@@ -135,3 +135,129 @@ fn insert_info_dict(doc: &mut Document, info_dict: Dictionary) {
         doc.trailer.set("Info", Object::Reference(info_id));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+    use lopdf::{Dictionary, Object, StringFormat};
+    use std::fs;
+
+    #[test]
+    fn test_met_01_utf16be_bom_string_encoding() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input.pdf");
+        let output_path = temp_dir.path().join("output_utf16.pdf");
+
+        create_test_doc(1, 595.0, 842.0).save(&input_path).unwrap();
+
+        let options = MetadataOptions {
+            metadata: PdfMetadata {
+                title: "Reporte año 2026".to_string(),
+                author: "José".to_string(),
+                ..Default::default()
+            },
+            modern_pdf_format: true,
+            remove_metadata: false,
+            password: None,
+        };
+        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+
+        let loaded_meta = read_metadata(&output_path, None).unwrap();
+        assert_eq!(loaded_meta.title, "Reporte año 2026");
+        assert_eq!(loaded_meta.author, "José");
+
+        let doc = Document::load(&output_path).unwrap();
+        let info_id = doc
+            .trailer
+            .get(b"Info")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let info_dict = doc.get_object(info_id).and_then(Object::as_dict).unwrap();
+
+        let Object::String(title_bytes, title_fmt) = info_dict.get(b"Title").unwrap() else {
+            panic!("Title must be Object::String");
+        };
+        assert_eq!(*title_fmt, StringFormat::Literal);
+        assert_eq!(&title_bytes[0..2], &[0xFE, 0xFF]);
+        let expected_utf16: Vec<u8> = "Reporte año 2026"
+            .encode_utf16()
+            .flat_map(|c| c.to_be_bytes())
+            .collect();
+        assert_eq!(&title_bytes[2..], &expected_utf16);
+    }
+
+    #[test]
+    fn test_met_02_metadata_scrubbing() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_with_meta.pdf");
+        let output_path = temp_dir.path().join("output_scrubbed.pdf");
+
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let mut info_dict = Dictionary::new();
+        info_dict.set("Title", encode_pdf_string("Old Title"));
+        info_dict.set("Author", encode_pdf_string("Old Author"));
+        info_dict.set("Subject", encode_pdf_string("Old Subject"));
+        info_dict.set("Keywords", encode_pdf_string("Old Keywords"));
+        doc.objects.insert((10, 0), Object::Dictionary(info_dict));
+        doc.trailer.set("Info", (10, 0));
+        doc.save(&input_path).unwrap();
+
+        let options = MetadataOptions {
+            remove_metadata: true,
+            modern_pdf_format: true,
+            ..Default::default()
+        };
+        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+
+        let loaded_meta = read_metadata(&output_path, None).unwrap();
+        assert!(loaded_meta.title.is_empty());
+        assert!(loaded_meta.author.is_empty());
+        assert!(loaded_meta.subject.is_empty());
+        assert!(loaded_meta.keywords.is_empty());
+        assert!(loaded_meta.producer.starts_with("Quire"));
+
+        let out_doc = Document::load(&output_path).unwrap();
+        let info_id = out_doc
+            .trailer
+            .get(b"Info")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let out_info = out_doc
+            .get_object(info_id)
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert!(out_info.get(b"Title").is_err());
+        assert!(out_info.get(b"Author").is_err());
+        assert!(out_info.get(b"Subject").is_err());
+        assert!(out_info.get(b"Keywords").is_err());
+    }
+
+    #[test]
+    fn test_met_03_incremental_document_save_mode() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_path = temp_dir.path().join("input_base.pdf");
+        let output_path = temp_dir.path().join("output_inc.pdf");
+
+        create_test_doc(1, 595.0, 842.0).save(&input_path).unwrap();
+        let orig_bytes = fs::read(&input_path).unwrap();
+
+        let options = MetadataOptions {
+            metadata: PdfMetadata {
+                title: "Incremental Title".to_string(),
+                ..Default::default()
+            },
+            modern_pdf_format: false,
+            remove_metadata: false,
+            password: None,
+        };
+        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+
+        let inc_bytes = fs::read(&output_path).unwrap();
+        assert!(inc_bytes.len() > orig_bytes.len());
+        assert!(inc_bytes.starts_with(&orig_bytes));
+
+        let loaded_meta = read_metadata(&output_path, None).unwrap();
+        assert_eq!(loaded_meta.title, "Incremental Title");
+    }
+}

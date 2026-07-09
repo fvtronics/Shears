@@ -16,6 +16,9 @@ pub mod split;
 pub mod util;
 pub mod watermark;
 
+#[cfg(test)]
+pub mod test_utils;
+
 pub use compress::{CompressOptions, QualityLevel, compress_file};
 pub use error::PdfError;
 pub use extract::{ExtractOptions, extract_file};
