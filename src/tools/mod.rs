@@ -383,3 +383,82 @@ pub(super) fn file_name(file: &gio::File) -> String {
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_else(|| file.uri().to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tool_state_transitions() {
+        let mut state = ToolState::Empty;
+        state.update_loading(false);
+        assert_eq!(state, ToolState::Empty);
+
+        state.update_loading(true);
+        assert_eq!(state, ToolState::LoadingNewFile);
+
+        state.update_loading(false);
+        assert_eq!(state, ToolState::Ready);
+
+        state.update_loading(false);
+        assert_eq!(state, ToolState::Ready);
+
+        state.update_loading(true);
+        assert_eq!(state, ToolState::Processing);
+
+        state.update_loading(false);
+        assert_eq!(state, ToolState::Ready);
+    }
+
+    #[test]
+    fn validate_specific_pages_success_cases() {
+        assert_eq!(
+            validate_specific_pages("3, 1, 5", 10).unwrap(),
+            vec![1, 3, 5]
+        );
+        assert_eq!(validate_specific_pages("2, 2, 3", 5).unwrap(), vec![2, 3]);
+        assert_eq!(validate_specific_pages("1, 2,", 5).unwrap(), vec![1, 2]);
+    }
+
+    #[test]
+    fn validate_specific_pages_error_cases() {
+        assert!(validate_specific_pages("1-3", 5).is_err());
+        assert!(validate_specific_pages("10", 5).is_err());
+        assert!(validate_specific_pages("0", 5).is_err());
+        assert!(validate_specific_pages("abc", 5).is_err());
+        assert!(validate_specific_pages("", 5).is_err());
+        assert!(validate_specific_pages("   ", 5).is_err());
+    }
+
+    #[test]
+    fn validate_page_ranges_success_cases() {
+        assert_eq!(validate_page_ranges("3", 10).unwrap(), vec![3]);
+        assert_eq!(validate_page_ranges("2-5", 10).unwrap(), vec![2, 3, 4, 5]);
+        assert_eq!(
+            validate_page_ranges("1, 3-5, 8", 10).unwrap(),
+            vec![1, 3, 4, 5, 8]
+        );
+        assert_eq!(
+            validate_page_ranges("1-3, 2-4", 10).unwrap(),
+            vec![1, 2, 3, 4]
+        );
+        assert_eq!(validate_page_ranges("3-3", 10).unwrap(), vec![3]);
+        assert!(validate_page_ranges("", 10).unwrap().is_empty());
+    }
+
+    #[test]
+    fn validate_page_ranges_error_cases() {
+        assert!(validate_page_ranges("5-2", 10).is_err());
+        assert!(validate_page_ranges("1-20", 10).is_err());
+    }
+
+    #[test]
+    fn format_page_ranges_output() {
+        assert_eq!(format_page_ranges(&[]), "");
+        assert_eq!(format_page_ranges(&[4]), "4");
+        assert_eq!(format_page_ranges(&[5, 6]), "5-6");
+        assert_eq!(format_page_ranges(&[1, 2, 3, 4, 5]), "1-5");
+        assert_eq!(format_page_ranges(&[1, 3, 5]), "1,3,5");
+        assert_eq!(format_page_ranges(&[1, 2, 3, 7, 8, 12]), "1-3,7-8,12");
+    }
+}
