@@ -82,11 +82,7 @@ pub fn add_pages_node(
     id
 }
 
-pub fn add_page_node(
-    doc: &mut Document,
-    parent: ObjectId,
-    mediabox: Option<Vec<f32>>,
-) -> ObjectId {
+pub fn add_page_node(doc: &mut Document, parent: ObjectId, mediabox: Option<Vec<f32>>) -> ObjectId {
     let id = (doc.max_id + 1, 0);
     doc.max_id += 1;
 

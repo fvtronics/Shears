@@ -251,7 +251,11 @@ mod tests {
         };
 
         assert_eq!(
-            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            out_stream
+                .dict
+                .get(b"Filter")
+                .and_then(Object::as_name)
+                .ok(),
             Some(b"DCTDecode".as_slice())
         );
         assert_eq!(
@@ -297,7 +301,11 @@ mod tests {
         };
 
         assert_eq!(
-            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            out_stream
+                .dict
+                .get(b"Filter")
+                .and_then(Object::as_name)
+                .ok(),
             Some(b"FlateDecode".as_slice())
         );
     }
@@ -334,7 +342,11 @@ mod tests {
         };
 
         assert_eq!(
-            out_stream.dict.get(b"Filter").and_then(Object::as_name).ok(),
+            out_stream
+                .dict
+                .get(b"Filter")
+                .and_then(Object::as_name)
+                .ok(),
             Some(b"FlateDecode".as_slice())
         );
         assert_eq!(

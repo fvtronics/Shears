@@ -386,7 +386,8 @@ mod tests {
         let content_id = (doc.max_id + 1, 0);
         doc.max_id += 1;
         let content_stream = Stream::new(Dictionary::new(), b"q Q\n".to_vec());
-        doc.objects.insert(content_id, Object::Stream(content_stream));
+        doc.objects
+            .insert(content_id, Object::Stream(content_stream));
         if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
             page_dict.set("Contents", Object::Reference(content_id));
         }
@@ -429,8 +430,13 @@ mod tests {
             gs_id: (201, 0),
             gs_name: "WmGS_201",
         };
-        apply_watermark_to_page(&mut doc_front, page_id_front, &res_front, WatermarkLayer::Front)
-            .unwrap();
+        apply_watermark_to_page(
+            &mut doc_front,
+            page_id_front,
+            &res_front,
+            WatermarkLayer::Front,
+        )
+        .unwrap();
 
         let page_dict_front = doc_front
             .get_object(page_id_front)
@@ -666,4 +672,3 @@ mod tests {
         );
     }
 }
-

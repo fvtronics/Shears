@@ -303,7 +303,8 @@ mod tests {
         encrypt_dict.set("O", Object::String(vec![1_u8; 32], StringFormat::Literal));
         encrypt_dict.set("U", Object::String(vec![2_u8; 32], StringFormat::Literal));
         encrypt_dict.set("P", -4_i64);
-        doc.objects.insert(encrypt_id, Object::Dictionary(encrypt_dict));
+        doc.objects
+            .insert(encrypt_id, Object::Dictionary(encrypt_dict));
         doc.trailer.set("Encrypt", encrypt_id);
 
         doc.save(&file_path).unwrap();
@@ -331,4 +332,3 @@ mod tests {
         assert_eq!(texture.height(), 200);
     }
 }
-

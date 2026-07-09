@@ -223,7 +223,10 @@ mod tests {
             .get(b"Info")
             .and_then(Object::as_reference)
             .unwrap();
-        let out_info = out_doc.get_object(info_id).and_then(Object::as_dict).unwrap();
+        let out_info = out_doc
+            .get_object(info_id)
+            .and_then(Object::as_dict)
+            .unwrap();
         assert!(out_info.get(b"Title").is_err());
         assert!(out_info.get(b"Author").is_err());
         assert!(out_info.get(b"Subject").is_err());

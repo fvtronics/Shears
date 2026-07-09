@@ -149,13 +149,21 @@ mod tests {
         let input_path = temp_dir.path().join("input_10_pages.pdf");
 
         let mut doc = create_test_doc(10, 595.0, 842.0);
-        let root_id = doc.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
-        let cat = doc.get_object_mut(root_id).and_then(Object::as_dict_mut).unwrap();
+        let root_id = doc
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let cat = doc
+            .get_object_mut(root_id)
+            .and_then(Object::as_dict_mut)
+            .unwrap();
         cat.set("Outlines", (100, 0));
 
         let mut outline_dict = Dictionary::new();
         outline_dict.set("Type", "Outlines");
-        doc.objects.insert((100, 0), Object::Dictionary(outline_dict));
+        doc.objects
+            .insert((100, 0), Object::Dictionary(outline_dict));
 
         let mut dummy_dict = Dictionary::new();
         dummy_dict.set("Type", "DummyUnreferenced");

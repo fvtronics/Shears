@@ -117,7 +117,9 @@ pub fn save_document<P: AsRef<Path>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pdf::test_utils::{add_page_node, add_pages_node, create_test_doc, set_root_catalog};
+    use crate::pdf::test_utils::{
+        add_page_node, add_pages_node, create_test_doc, set_root_catalog,
+    };
     use lopdf::Object;
 
     #[test]

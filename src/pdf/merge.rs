@@ -280,7 +280,10 @@ mod tests {
             let box_coords = get_inherited_mediabox(&merged, *page_id).unwrap();
             assert_eq!(box_coords, vec![0.0, 0.0, 842.0, 1191.0]);
 
-            let dict = merged.get_object(*page_id).and_then(Object::as_dict).unwrap();
+            let dict = merged
+                .get_object(*page_id)
+                .and_then(Object::as_dict)
+                .unwrap();
             assert!(dict.get(b"CropBox").is_err());
             assert!(dict.get(b"TrimBox").is_err());
             assert!(dict.get(b"BleedBox").is_err());
@@ -349,7 +352,10 @@ mod tests {
         let box_coords = get_inherited_mediabox(&merged, third_page_id).unwrap();
         assert_eq!(box_coords, vec![0.0, 0.0, 500.0, 500.0]);
 
-        let dict = merged.get_object(third_page_id).and_then(Object::as_dict).unwrap();
+        let dict = merged
+            .get_object(third_page_id)
+            .and_then(Object::as_dict)
+            .unwrap();
         assert!(dict.get(b"Resources").is_ok());
     }
 
@@ -415,15 +421,29 @@ mod tests {
 
         let mut doc1 = create_test_doc(1, 595.0, 842.0);
         doc1.trailer.set("Info", (10, 0));
-        let root1 = doc1.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
-        let cat1 = doc1.get_object_mut(root1).and_then(Object::as_dict_mut).unwrap();
+        let root1 = doc1
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let cat1 = doc1
+            .get_object_mut(root1)
+            .and_then(Object::as_dict_mut)
+            .unwrap();
         cat1.set("Metadata", (11, 0));
         doc1.save(&doc1_path).unwrap();
 
         let mut doc2 = create_test_doc(1, 595.0, 842.0);
         doc2.trailer.set("Info", (12, 0));
-        let root2 = doc2.trailer.get(b"Root").and_then(Object::as_reference).unwrap();
-        let cat2 = doc2.get_object_mut(root2).and_then(Object::as_dict_mut).unwrap();
+        let root2 = doc2
+            .trailer
+            .get(b"Root")
+            .and_then(Object::as_reference)
+            .unwrap();
+        let cat2 = doc2
+            .get_object_mut(root2)
+            .and_then(Object::as_dict_mut)
+            .unwrap();
         cat2.set("Metadata", (13, 0));
         doc2.save(&doc2_path).unwrap();
 
@@ -448,7 +468,10 @@ mod tests {
             .get(b"Root")
             .and_then(Object::as_reference)
             .unwrap();
-        let cat = merged.get_object(root_id).and_then(Object::as_dict).unwrap();
+        let cat = merged
+            .get_object(root_id)
+            .and_then(Object::as_dict)
+            .unwrap();
         assert!(cat.get(b"Metadata").is_err());
     }
 }
