@@ -473,30 +473,26 @@ mod tests {
         let doc_trans = load_document(&output_trans, None).unwrap();
         let mut found_rgb_with_smask = false;
         for obj in doc_trans.objects.values() {
-            if let Object::Stream(stream) = obj {
-                if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name) {
-                    if subtype == b"Image" {
-                        if let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name) {
-                            if cs == b"DeviceRGB" {
-                                if let Ok(Object::Reference(smask_id)) = stream.dict.get(b"SMask") {
-                                    found_rgb_with_smask = true;
-                                    let smask_obj = doc_trans.get_object(*smask_id).unwrap();
-                                    if let Object::Stream(smask_stream) = smask_obj {
-                                        assert_eq!(
-                                            smask_stream
-                                                .dict
-                                                .get(b"ColorSpace")
-                                                .and_then(Object::as_name)
-                                                .unwrap(),
-                                            b"DeviceGray"
-                                        );
-                                    } else {
-                                        panic!("SMask object must be a Stream");
-                                    }
-                                }
-                            }
-                        }
-                    }
+            if let Object::Stream(stream) = obj
+                && let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name)
+                && subtype == b"Image"
+                && let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name)
+                && cs == b"DeviceRGB"
+                && let Ok(Object::Reference(smask_id)) = stream.dict.get(b"SMask")
+            {
+                found_rgb_with_smask = true;
+                let smask_obj = doc_trans.get_object(*smask_id).unwrap();
+                if let Object::Stream(smask_stream) = smask_obj {
+                    assert_eq!(
+                        smask_stream
+                            .dict
+                            .get(b"ColorSpace")
+                            .and_then(Object::as_name)
+                            .unwrap(),
+                        b"DeviceGray"
+                    );
+                } else {
+                    panic!("SMask object must be a Stream");
                 }
             }
         }
@@ -514,19 +510,16 @@ mod tests {
 
         let doc_opaque = load_document(&output_opaque, None).unwrap();
         for obj in doc_opaque.objects.values() {
-            if let Object::Stream(stream) = obj {
-                if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name) {
-                    if subtype == b"Image" {
-                        if let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name) {
-                            if cs == b"DeviceRGB" {
-                                assert!(
-                                    stream.dict.get(b"SMask").is_err(),
-                                    "Opaque image must not have SMask"
-                                );
-                            }
-                        }
-                    }
-                }
+            if let Object::Stream(stream) = obj
+                && let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name)
+                && subtype == b"Image"
+                && let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name)
+                && cs == b"DeviceRGB"
+            {
+                assert!(
+                    stream.dict.get(b"SMask").is_err(),
+                    "Opaque image must not have SMask"
+                );
             }
         }
     }
