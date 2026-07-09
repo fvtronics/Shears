@@ -253,3 +253,82 @@ fn add_border(cr: &cairo::Context, width: i32, height: i32) {
     cr.rectangle(0.0, 0.0, width as f64, height as f64);
     let _ = cr.stroke();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+    use lopdf::{Dictionary, Object, StringFormat};
+    use relm4::gtk::prelude::TextureExt;
+
+    fn init_gtk() {
+        let _ = relm4::gtk::init();
+    }
+
+    #[test]
+    fn test_prv_01_rotation_dimension_swapping() {
+        init_gtk();
+        let temp_dir = tempfile::tempdir().unwrap();
+        let file_path = temp_dir.path().join("landscape.pdf");
+
+        let mut doc = create_test_doc(1, 800.0, 600.0);
+        doc.save(&file_path).unwrap();
+
+        let gio_file = gio::File::for_path(&file_path);
+        let result = generate_thumbnail(&gio_file, 90, None, 400.0)
+            .expect("Expected thumbnail generation to succeed");
+
+        assert_eq!(result.page_count, 1);
+        assert_eq!(result.original_dimensions, Some((800.0, 600.0)));
+
+        let texture = result.texture.expect("Expected a valid texture");
+        assert_eq!(texture.width(), 300);
+        assert_eq!(texture.height(), 400);
+    }
+
+    #[test]
+    fn test_prv_02_encrypted_document_graceful_rejection() {
+        init_gtk();
+        let temp_dir = tempfile::tempdir().unwrap();
+        let file_path = temp_dir.path().join("encrypted.pdf");
+
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let encrypt_id = (doc.max_id + 1, 0);
+        doc.max_id += 1;
+
+        let mut encrypt_dict = Dictionary::new();
+        encrypt_dict.set("Filter", "Standard");
+        encrypt_dict.set("V", 2);
+        encrypt_dict.set("R", 3);
+        encrypt_dict.set("O", Object::String(vec![1_u8; 32], StringFormat::Literal));
+        encrypt_dict.set("U", Object::String(vec![2_u8; 32], StringFormat::Literal));
+        encrypt_dict.set("P", -4_i64);
+        doc.objects.insert(encrypt_id, Object::Dictionary(encrypt_dict));
+        doc.trailer.set("Encrypt", encrypt_id);
+
+        doc.save(&file_path).unwrap();
+
+        let gio_file = gio::File::for_path(&file_path);
+        let result = generate_thumbnail(&gio_file, 0, None, 200.0);
+
+        match result {
+            Err(PreviewError::Encrypted) => {}
+            other => panic!("Expected Err(PreviewError::Encrypted), got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_prv_03_blank_thumbnail_synthesis() {
+        init_gtk();
+        let result = generate_blank_thumbnail(595.0, 842.0, 0, 200.0)
+            .expect("Expected blank thumbnail generation to succeed");
+
+        assert_eq!(result.page_count, 1);
+        assert_eq!(result.original_dimensions, Some((595.0, 842.0)));
+
+        let texture = result.texture.expect("Expected a valid texture");
+        assert_eq!(texture.width(), 141);
+        assert_eq!(texture.height(), 200);
+    }
+}
+

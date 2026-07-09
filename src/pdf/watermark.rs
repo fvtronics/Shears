@@ -357,3 +357,313 @@ fn register_resource(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pdf::test_utils::create_test_doc;
+
+    fn create_test_image(
+        path: &Path,
+        width: u32,
+        height: u32,
+        transparent: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut img = image::RgbaImage::new(width, height);
+        let alpha = if transparent { 128 } else { 255 };
+        for pixel in img.pixels_mut() {
+            *pixel = image::Rgba([100, 150, 200, alpha]);
+        }
+        img.save(path)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_wtm_01_front_vs_back_layer_routing() {
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let page_id = *doc.get_pages().values().next().unwrap();
+
+        let content_id = (doc.max_id + 1, 0);
+        doc.max_id += 1;
+        let content_stream = Stream::new(Dictionary::new(), b"q Q\n".to_vec());
+        doc.objects.insert(content_id, Object::Stream(content_stream));
+        if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
+            page_dict.set("Contents", Object::Reference(content_id));
+        }
+
+        let res_back = WatermarkResource {
+            img_id: (100, 0),
+            img_name: "WmImg_100",
+            img_w: 10.0,
+            img_h: 10.0,
+            gs_id: (101, 0),
+            gs_name: "WmGS_101",
+        };
+        apply_watermark_to_page(&mut doc, page_id, &res_back, WatermarkLayer::Back).unwrap();
+
+        let page_dict = doc.get_object(page_id).and_then(Object::as_dict).unwrap();
+        if let Ok(Object::Array(arr)) = page_dict.get(b"Contents") {
+            assert_eq!(arr.len(), 2);
+            assert_eq!(arr[1], Object::Reference(content_id));
+        } else {
+            panic!("/Contents must be an Array after applying Back watermark to existing content");
+        }
+
+        let mut doc_front = create_test_doc(1, 595.0, 842.0);
+        let page_id_front = *doc_front.get_pages().values().next().unwrap();
+        let content_id_front = (doc_front.max_id + 1, 0);
+        doc_front.max_id += 1;
+        let content_stream_front = Stream::new(Dictionary::new(), b"q Q\n".to_vec());
+        doc_front
+            .objects
+            .insert(content_id_front, Object::Stream(content_stream_front));
+        if let Ok(Object::Dictionary(page_dict)) = doc_front.get_object_mut(page_id_front) {
+            page_dict.set("Contents", Object::Reference(content_id_front));
+        }
+
+        let res_front = WatermarkResource {
+            img_id: (200, 0),
+            img_name: "WmImg_200",
+            img_w: 10.0,
+            img_h: 10.0,
+            gs_id: (201, 0),
+            gs_name: "WmGS_201",
+        };
+        apply_watermark_to_page(&mut doc_front, page_id_front, &res_front, WatermarkLayer::Front)
+            .unwrap();
+
+        let page_dict_front = doc_front
+            .get_object(page_id_front)
+            .and_then(Object::as_dict)
+            .unwrap();
+        if let Ok(Object::Array(arr)) = page_dict_front.get(b"Contents") {
+            assert_eq!(arr.len(), 2);
+            assert_eq!(arr[0], Object::Reference(content_id_front));
+        } else {
+            panic!("/Contents must be an Array after applying Front watermark to existing content");
+        }
+    }
+
+    #[test]
+    fn test_wtm_02_alpha_channel_smask_generation() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_pdf = temp_dir.path().join("input.pdf");
+        let output_trans = temp_dir.path().join("out_trans.pdf");
+        let output_opaque = temp_dir.path().join("out_opaque.pdf");
+        let img_trans = temp_dir.path().join("trans.png");
+        let img_opaque = temp_dir.path().join("opaque.png");
+
+        create_test_doc(1, 595.0, 842.0).save(&input_pdf).unwrap();
+        create_test_image(&img_trans, 20, 20, true).unwrap();
+        create_test_image(&img_opaque, 20, 20, false).unwrap();
+
+        let opts_trans = WatermarkOptions {
+            image_path: img_trans,
+            opacity: 100,
+            ..Default::default()
+        };
+        watermark_file(&(input_pdf.clone(), 0), output_trans.clone(), &opts_trans).unwrap();
+
+        let doc_trans = load_document(&output_trans, None).unwrap();
+        let mut found_rgb_with_smask = false;
+        for obj in doc_trans.objects.values() {
+            if let Object::Stream(stream) = obj {
+                if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name) {
+                    if subtype == b"Image" {
+                        if let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name) {
+                            if cs == b"DeviceRGB" {
+                                if let Ok(Object::Reference(smask_id)) = stream.dict.get(b"SMask") {
+                                    found_rgb_with_smask = true;
+                                    let smask_obj = doc_trans.get_object(*smask_id).unwrap();
+                                    if let Object::Stream(smask_stream) = smask_obj {
+                                        assert_eq!(
+                                            smask_stream
+                                                .dict
+                                                .get(b"ColorSpace")
+                                                .and_then(Object::as_name)
+                                                .unwrap(),
+                                            b"DeviceGray"
+                                        );
+                                    } else {
+                                        panic!("SMask object must be a Stream");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert!(
+            found_rgb_with_smask,
+            "Must generate and reference an SMask for translucent images"
+        );
+
+        let opts_opaque = WatermarkOptions {
+            image_path: img_opaque,
+            opacity: 100,
+            ..Default::default()
+        };
+        watermark_file(&(input_pdf.clone(), 0), output_opaque.clone(), &opts_opaque).unwrap();
+
+        let doc_opaque = load_document(&output_opaque, None).unwrap();
+        for obj in doc_opaque.objects.values() {
+            if let Object::Stream(stream) = obj {
+                if let Ok(subtype) = stream.dict.get(b"Subtype").and_then(Object::as_name) {
+                    if subtype == b"Image" {
+                        if let Ok(cs) = stream.dict.get(b"ColorSpace").and_then(Object::as_name) {
+                            if cs == b"DeviceRGB" {
+                                assert!(
+                                    stream.dict.get(b"SMask").is_err(),
+                                    "Opaque image must not have SMask"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_wtm_03_page_targeting_routing() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let input_pdf = temp_dir.path().join("input_5p.pdf");
+        let output_first = temp_dir.path().join("out_first.pdf");
+        let output_specific = temp_dir.path().join("out_specific.pdf");
+        let img_path = temp_dir.path().join("test.png");
+
+        create_test_doc(5, 595.0, 842.0).save(&input_pdf).unwrap();
+        create_test_image(&img_path, 10, 10, false).unwrap();
+
+        let opts_first = WatermarkOptions {
+            image_path: img_path.clone(),
+            pages: WatermarkPages::FirstPage,
+            ..Default::default()
+        };
+        watermark_file(&(input_pdf.clone(), 0), output_first.clone(), &opts_first).unwrap();
+
+        let doc_first = load_document(&output_first, None).unwrap();
+        let page_ids_first: Vec<ObjectId> = doc_first.get_pages().values().copied().collect();
+        assert_eq!(page_ids_first.len(), 5);
+
+        let page1_dict = doc_first
+            .get_object(page_ids_first[0])
+            .and_then(Object::as_dict)
+            .unwrap();
+        assert!(
+            page1_dict.get(b"Contents").is_ok(),
+            "Page 1 must have /Contents modified"
+        );
+        for &pid in &page_ids_first[1..5] {
+            let p_dict = doc_first.get_object(pid).and_then(Object::as_dict).unwrap();
+            assert!(
+                p_dict.get(b"Contents").is_err(),
+                "Pages 2..=5 must not have /Contents"
+            );
+        }
+
+        let opts_specific = WatermarkOptions {
+            image_path: img_path,
+            pages: WatermarkPages::SpecificPages,
+            specific_pages: vec![2, 4],
+            ..Default::default()
+        };
+        watermark_file(
+            &(input_pdf.clone(), 0),
+            output_specific.clone(),
+            &opts_specific,
+        )
+        .unwrap();
+
+        let doc_specific = load_document(&output_specific, None).unwrap();
+        let page_ids_spec: Vec<ObjectId> = doc_specific.get_pages().values().copied().collect();
+        assert_eq!(page_ids_spec.len(), 5);
+
+        for (idx, &pid) in page_ids_spec.iter().enumerate() {
+            let page_num = idx + 1;
+            let p_dict = doc_specific
+                .get_object(pid)
+                .and_then(Object::as_dict)
+                .unwrap();
+            if page_num == 2 || page_num == 4 {
+                assert!(
+                    p_dict.get(b"Contents").is_ok(),
+                    "Page {} must be watermarked",
+                    page_num
+                );
+            } else {
+                assert!(
+                    p_dict.get(b"Contents").is_err(),
+                    "Page {} must not be watermarked",
+                    page_num
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_wtm_04_resource_registration_and_inheritance() {
+        let mut doc = create_test_doc(1, 595.0, 842.0);
+        let page_id = *doc.get_pages().values().next().unwrap();
+        let parent_id = match doc.get_object(page_id).and_then(Object::as_dict) {
+            Ok(dict) => dict.get(b"Parent").and_then(Object::as_reference).unwrap(),
+            _ => panic!("Page must have Parent"),
+        };
+
+        if let Ok(Object::Dictionary(parent_dict)) = doc.get_object_mut(parent_id) {
+            let mut inherited_res = Dictionary::new();
+            inherited_res.set("Font", Dictionary::new());
+            parent_dict.set("Resources", Object::Dictionary(inherited_res));
+        }
+        if let Ok(Object::Dictionary(page_dict)) = doc.get_object_mut(page_id) {
+            page_dict.remove(b"Resources");
+            assert!(page_dict.get(b"Resources").is_err());
+        }
+
+        let res = WatermarkResource {
+            img_id: (300, 0),
+            img_name: "WmImg_300",
+            img_w: 100.0,
+            img_h: 100.0,
+            gs_id: (301, 0),
+            gs_name: "WmGS_301",
+        };
+
+        apply_watermark_to_page(&mut doc, page_id, &res, WatermarkLayer::Front).unwrap();
+
+        let page_dict = doc.get_object(page_id).and_then(Object::as_dict).unwrap();
+        let local_res = match page_dict.get(b"Resources") {
+            Ok(Object::Dictionary(d)) => d,
+            Ok(Object::Reference(rid)) => doc.get_object(*rid).and_then(Object::as_dict).unwrap(),
+            _ => panic!("Page must have a local /Resources dictionary after watermarking"),
+        };
+
+        let xobj_dict = match local_res.get(b"XObject") {
+            Ok(Object::Dictionary(d)) => d,
+            Ok(Object::Reference(rid)) => doc.get_object(*rid).and_then(Object::as_dict).unwrap(),
+            _ => panic!("/Resources must contain /XObject dictionary"),
+        };
+        assert_eq!(
+            xobj_dict
+                .get(b"WmImg_300")
+                .and_then(Object::as_reference)
+                .unwrap(),
+            (300, 0)
+        );
+
+        let gs_dict = match local_res.get(b"ExtGState") {
+            Ok(Object::Dictionary(d)) => d,
+            Ok(Object::Reference(rid)) => doc.get_object(*rid).and_then(Object::as_dict).unwrap(),
+            _ => panic!("/Resources must contain /ExtGState dictionary"),
+        };
+        assert_eq!(
+            gs_dict
+                .get(b"WmGS_301")
+                .and_then(Object::as_reference)
+                .unwrap(),
+            (301, 0)
+        );
+    }
+}
+
