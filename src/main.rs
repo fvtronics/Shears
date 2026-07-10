@@ -40,6 +40,7 @@ fn main() {
         .add_resource_path("/com/fvtronics/shears/icons");
 
     let app = main_application();
+    app.set_application_id(Some(APP_ID));
     app.set_resource_base_path(Some("/com/fvtronics/shears/"));
 
     let app = RelmApp::from_app(app);
