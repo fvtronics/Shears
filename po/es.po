@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-10 10:13-0400\n"
-"PO-Revision-Date: 2026-07-10 10:15-0400\n"
-"Last-Translator: Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>\n"
-"Language-Team: es_DO\n"
+"PO-Revision-Date: 2026-07-11 11:40+0000\n"
+"Last-Translator: fvasquezc <fvasquezc@noreply.codeberg.org>\n"
+"Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
+"shears-ui/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Gtranslator 50.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2026.6.1\n"
 
 #: data/com.fvtronics.shears.desktop.in.in:2
 #: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:33
@@ -646,7 +647,7 @@ msgstr "No hay archivos seleccionados"
 
 #: src/tools/mod.rs:122
 msgid "No file selected"
-msgstr "No hay archivos seleccionados"
+msgstr "No hay un archivo seleccionado"
 
 #: src/tools/mod.rs:140
 msgid "No PDFs Added"
