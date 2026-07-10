@@ -1,4 +1,4 @@
-name: Quire checks
+name: Shears checks
 
 on:
   push:

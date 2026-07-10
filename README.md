@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="data/icons/com.fvtronics.quire.svg" width="128" alt="Quire Logo"/>
+  <img src="data/icons/com.fvtronics.shears.svg" width="128" alt="Shears Logo"/>
 </p>
 
-<h1 align="center">Quire</h1>
+<h1 align="center">Shears</h1>
 
 <p align="center">
   Simple GNOME utility for working with local PDF files
@@ -31,20 +31,20 @@ compress files, add watermarks, and edit metadata, all without relying on online
 
 ### Flatpak
 
-Quire can be built and installed locally with Flatpak Builder:
+Shears can be built and installed locally with Flatpak Builder:
 
 ```sh
-flatpak-builder --user --install --install-deps-from=flathub build-dir com.fvtronics.Quire.json --force-clean
+flatpak-builder --user --install --install-deps-from=flathub build-dir build-aux/com.fvtronics.shears.json --force-clean
 ```
 
 ### Build from source
 
-Quire uses the [meson build system](http://mesonbuild.com/). Run the following
-commands to clone Quire and initialize the build:
+Shears uses the [meson build system](http://mesonbuild.com/). Run the following
+commands to clone Shears and initialize the build:
 
 ```sh
-git clone https://codeberg.org/fvtronics/quire.git
-cd quire
+git clone https://codeberg.org/fvtronics/shears.git
+cd shears
 meson setup build
 ```
 

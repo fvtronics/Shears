@@ -1,38 +1,23 @@
 {
-    "id": "com.fvtronics.quire.Devel",
+    "id": "com.fvtronics.shears",
     "runtime": "org.gnome.Platform",
     "runtime-version": "50",
     "sdk": "org.gnome.Sdk",
     "sdk-extensions": [
-        "org.freedesktop.Sdk.Extension.rust-stable",
-        "org.freedesktop.Sdk.Extension.llvm21"
+        "org.freedesktop.Sdk.Extension.rust-stable"
     ],
-    "command": "quire",
+    "command": "shears",
     "finish-args": [
         "--share=ipc",
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--device=dri",
-        "--env=RUST_LOG=quire=debug",
-        "--env=G_MESSAGES_DEBUG=none",
-        "--env=RUST_BACKTRACE=1"
+        "--device=dri"
     ],
     "build-options": {
-        "append-path": "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin",
-        "build-args": [
-            "--share=network"
-        ],
+        "append-path": "/usr/lib/sdk/rust-stable/bin",
         "env": {
-            "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
-            "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER": "clang",
-            "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold",
-            "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER": "clang",
-            "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold"
-        },
-        "test-args": [
-            "--socket=x11",
-            "--share=network"
-        ]
+          "CARGO_NET_OFFLINE": "true"
+        }
     },
     "modules": [
         {
@@ -67,19 +52,16 @@
             ]
         },
         {
-            "name": "quire",
+            "name": "shears",
             "buildsystem": "meson",
-            "run-tests": true,
-            "config-opts": [
-                "-Dprofile=development"
-            ],
             "sources": [
                 {
-                    "type": "dir",
-                    "path": "../"
-                }
-            ]
+                  "type": "dir",
+                  "path": "../"
+                },
+                "../cargo-sources.json"
+            ],
+            "config-opts": ["-Dcargo-home=/run/build/shears/cargo"]
         }
     ]
 }
-

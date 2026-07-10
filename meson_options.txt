@@ -6,7 +6,7 @@ option(
     'development'
   ],
   value: 'default',
-  description: 'The build profile for Quire. One of "default" or "development".'
+  description: 'The build profile for Shears. One of "default" or "development".'
 )
 option(
   'cargo-home',

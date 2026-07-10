@@ -62,7 +62,7 @@ impl SimpleComponent for App {
             section! {
                 "_Preferences" => PreferencesAction,
                 "_Keyboard" => ShortcutsAction,
-                "_About Quire" => AboutAction,
+                "_About Shears" => AboutAction,
             }
         }
     }
@@ -98,7 +98,7 @@ impl SimpleComponent for App {
                                     #[wrap(Some)]
                                     set_title_widget = &adw::WindowTitle {
                                         #[watch]
-                                        set_title: &gettext("Quire"),
+                                        set_title: &gettext("Shears"),
                                     },
 
                                     pack_end = &gtk::MenuButton {

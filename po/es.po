@@ -1,11 +1,11 @@
-# Quire Spanish translation.
+# Shears Spanish translation.
 # Copyright (C) 2026 Francisco Vásquez Cuevas
-# This file is distributed under the same license as the quire package.
+# This file is distributed under the same license as the shears package.
 # Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: quire\n"
+"Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-07 18:24-0400\n"
 "PO-Revision-Date: 2026-07-07 18:25-0400\n"
@@ -18,42 +18,42 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Gtranslator 50.0\n"
 
-#: data/com.fvtronics.quire.desktop.in.in:2
-#: data/com.fvtronics.quire.metainfo.xml.in.in:7 src/app.rs:118 src/main.rs:33
-msgid "Quire"
-msgstr "Quire"
+#: data/com.fvtronics.shears.desktop.in.in:2
+#: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:118 src/main.rs:33
+msgid "Shears"
+msgstr "Shears"
 
-#: data/com.fvtronics.quire.desktop.in.in:3
-#: data/com.fvtronics.quire.metainfo.xml.in.in:8
+#: data/com.fvtronics.shears.desktop.in.in:3
+#: data/com.fvtronics.shears.metainfo.xml.in.in:8
 msgid "Combine and edit PDF files"
 msgstr "Combine y edite archivos PDF"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.fvtronics.quire.desktop.in.in:9
+#: data/com.fvtronics.shears.desktop.in.in:9
 msgid "PDF;Merge;"
 msgstr "PDF;Combinar;"
 
-#: data/com.fvtronics.quire.gschema.xml.in:6
+#: data/com.fvtronics.shears.gschema.xml.in:6
 msgid "Window width"
 msgstr "Anchura de ventana"
 
-#: data/com.fvtronics.quire.gschema.xml.in:10
+#: data/com.fvtronics.shears.gschema.xml.in:10
 msgid "Window height"
 msgstr "Altura de ventana"
 
-#: data/com.fvtronics.quire.gschema.xml.in:14
+#: data/com.fvtronics.shears.gschema.xml.in:14
 msgid "Window maximized state"
 msgstr "Estado de maximización de ventana"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:10
+#: data/com.fvtronics.shears.metainfo.xml.in.in:10
 msgid ""
-"Quire is a simple GNOME utility for working with local PDF files without a "
+"Shears is a simple GNOME utility for working with local PDF files without a "
 "complex document suite."
 msgstr ""
-"Quire es una utilidad sencilla de GNOME para trabajar con archivos PDF "
+"Shears es una utilidad sencilla de GNOME para trabajar con archivos PDF "
 "locales sin una suite ofimática compleja."
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:11
+#: data/com.fvtronics.shears.metainfo.xml.in.in:11
 msgid ""
 "Merge multiple PDFs, organize pages, extract page ranges, split documents, "
 "compress files, and edit metadata without relying on online services."
@@ -62,74 +62,74 @@ msgstr ""
 "divida documentos, comprima archivos y edite los metadatos sin enviarlos a "
 "un servicio en línea."
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:16
+#: data/com.fvtronics.shears.metainfo.xml.in.in:16
 msgid "Merge multiple PDF files into a single document"
 msgstr "Combine varios archivos PDF en un solo documento"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:20
+#: data/com.fvtronics.shears.metainfo.xml.in.in:20
 msgid "Organize and remove a document's pages"
 msgstr "Organice y remueva las páginas de un documento"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:24
+#: data/com.fvtronics.shears.metainfo.xml.in.in:24
 msgid "Extract selected pages into a new document"
 msgstr "Extraiga páginas seleccionadas en un nuevo documento"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:28
+#: data/com.fvtronics.shears.metainfo.xml.in.in:28
 msgid "Split a PDF into multiple documents"
 msgstr "Divida un archivo PDF en múltiples documentos"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:32
+#: data/com.fvtronics.shears.metainfo.xml.in.in:32
 msgid "Compress a PDF file"
 msgstr "Comprimir un archivo PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:36
+#: data/com.fvtronics.shears.metainfo.xml.in.in:36
 msgid "Add a watermark to specific PDF pages"
 msgstr "Añada una marca de agua a páginas específicas"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:40
+#: data/com.fvtronics.shears.metainfo.xml.in.in:40
 msgid "View and edit PDF metadata"
 msgstr "Visualice y edite los metadatos de un archivo PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:50
-#: data/com.fvtronics.quire.metainfo.xml.in.in:58
-#: data/com.fvtronics.quire.metainfo.xml.in.in:66
-#: data/com.fvtronics.quire.metainfo.xml.in.in:74
-#: data/com.fvtronics.quire.metainfo.xml.in.in:82
-#: data/com.fvtronics.quire.metainfo.xml.in.in:90
+#: data/com.fvtronics.shears.metainfo.xml.in.in:50
+#: data/com.fvtronics.shears.metainfo.xml.in.in:58
+#: data/com.fvtronics.shears.metainfo.xml.in.in:66
+#: data/com.fvtronics.shears.metainfo.xml.in.in:74
+#: data/com.fvtronics.shears.metainfo.xml.in.in:82
+#: data/com.fvtronics.shears.metainfo.xml.in.in:90
 msgid "New"
 msgstr "Nuevo"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:52
+#: data/com.fvtronics.shears.metainfo.xml.in.in:52
 msgid "Add tool to watermark PDF files"
 msgstr "Se añadió una sección para agregar marcas de agua a archivos PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:60
+#: data/com.fvtronics.shears.metainfo.xml.in.in:60
 msgid "Add option to extract specific pages from a PDF file"
 msgstr ""
 "Se añadió una sección para extraer páginas específicas de un archivo PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:68
+#: data/com.fvtronics.shears.metainfo.xml.in.in:68
 msgid "Add section to organize and remove a document's pages"
 msgstr "Se añadió una sección para organizar y remover páginas de un documento"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:76
+#: data/com.fvtronics.shears.metainfo.xml.in.in:76
 msgid "Add section to compress PDF files"
 msgstr "Se añadió una sección para comprimir archivos PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:84
+#: data/com.fvtronics.shears.metainfo.xml.in.in:84
 msgid "Add section to visualize and edit a document's metadata"
 msgstr ""
 "Se añadió una sección para visualizar y editar los metadatos de un documento"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:92
+#: data/com.fvtronics.shears.metainfo.xml.in.in:92
 msgid "Add the split PDF functionality"
 msgstr "Se añadió la funcionalidad de dividir un archivo PDF"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:94
+#: data/com.fvtronics.shears.metainfo.xml.in.in:94
 msgid "Changes"
 msgstr "Cambios"
 
-#: data/com.fvtronics.quire.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
 msgid "Make the open file action in the merge page more intuitive"
 msgstr ""
 "La acción de abrir archivo en la sección de combinar se archivos se hizo más "

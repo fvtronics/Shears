@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Quire
+Name=Shears
 Comment=Combine and edit PDF files
 Type=Application
-Exec=quire
+Exec=shears
 Terminal=false
 Categories=Office;
 # Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!

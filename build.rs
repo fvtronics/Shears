@@ -1,12 +1,12 @@
 use std::{env, fs, io, path::Path};
 
 const CONFIG_ENV_VARS: &[&str] = &[
-    "QUIRE_APP_ID",
-    "QUIRE_GETTEXT_PACKAGE",
-    "QUIRE_LOCALEDIR",
-    "QUIRE_PKGDATADIR",
-    "QUIRE_PROFILE",
-    "QUIRE_VERSION",
+    "SHEARS_APP_ID",
+    "SHEARS_GETTEXT_PACKAGE",
+    "SHEARS_LOCALEDIR",
+    "SHEARS_PKGDATADIR",
+    "SHEARS_PROFILE",
+    "SHEARS_VERSION",
 ];
 
 fn main() -> io::Result<()> {
@@ -14,13 +14,13 @@ fn main() -> io::Result<()> {
         println!("cargo:rerun-if-env-changed={name}");
     }
 
-    let app_id = env_or("QUIRE_APP_ID", "com.fvtronics.quire");
-    let gettext_package = env_or("QUIRE_GETTEXT_PACKAGE", "quire");
-    let localedir = env_or("QUIRE_LOCALEDIR", "/usr/local/share/locale");
-    let pkgdatadir = env_or("QUIRE_PKGDATADIR", "/usr/local/share/quire");
-    let profile = env_or("QUIRE_PROFILE", "");
+    let app_id = env_or("SHEARS_APP_ID", "com.fvtronics.shears");
+    let gettext_package = env_or("SHEARS_GETTEXT_PACKAGE", "shears");
+    let localedir = env_or("SHEARS_LOCALEDIR", "/usr/local/share/locale");
+    let pkgdatadir = env_or("SHEARS_PKGDATADIR", "/usr/local/share/shears");
+    let profile = env_or("SHEARS_PROFILE", "");
     let version =
-        env::var("QUIRE_VERSION").unwrap_or_else(|_| env!("CARGO_PKG_VERSION").to_owned());
+        env::var("SHEARS_VERSION").unwrap_or_else(|_| env!("CARGO_PKG_VERSION").to_owned());
 
     let config = format!(
         "pub const APP_ID: &str = {app_id:?};\n\

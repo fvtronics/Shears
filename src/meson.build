@@ -18,12 +18,12 @@ endif
 
 cargo_env = [
   'CARGO_HOME=' + cargo_home,
-  'QUIRE_APP_ID=' + application_id,
-  'QUIRE_GETTEXT_PACKAGE=' + gettext_package,
-  'QUIRE_LOCALEDIR=' + localedir,
-  'QUIRE_PKGDATADIR=' + pkgdatadir,
-  'QUIRE_PROFILE=' + profile,
-  'QUIRE_VERSION=' + version + version_suffix,
+  'SHEARS_APP_ID=' + application_id,
+  'SHEARS_GETTEXT_PACKAGE=' + gettext_package,
+  'SHEARS_LOCALEDIR=' + localedir,
+  'SHEARS_PKGDATADIR=' + pkgdatadir,
+  'SHEARS_PROFILE=' + profile,
+  'SHEARS_VERSION=' + version + version_suffix,
 ]
 
 cargo_build = custom_target(

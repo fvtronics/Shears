@@ -1516,21 +1516,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
 
 [[package]]
-name = "quire"
-version = "0.4.0"
-dependencies = [
- "cairo-rs",
- "gettext-rs",
- "image",
- "lopdf",
- "poppler-rs",
- "relm4",
- "tempfile",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1830,6 +1815,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "shears"
+version = "0.4.0"
+dependencies = [
+ "cairo-rs",
+ "gettext-rs",
+ "image",
+ "lopdf",
+ "poppler-rs",
+ "relm4",
+ "tempfile",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

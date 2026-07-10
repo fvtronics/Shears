@@ -30,23 +30,23 @@ fn main() {
     gettextrs::bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR).expect("Unable to bind the text domain");
     gettextrs::textdomain(GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
 
-    glib::set_application_name(&gettext("Quire"));
+    glib::set_application_name(&gettext("Shears"));
 
     let res = gio::Resource::load(RESOURCES_FILE).expect("Could not load gresource file");
     gio::resources_register(&res);
 
     gtk::Window::set_default_icon_name(APP_ID);
     gtk::IconTheme::for_display(&gtk::gdk::Display::default().unwrap())
-        .add_resource_path("/com/fvtronics/quire/icons");
+        .add_resource_path("/com/fvtronics/shears/icons");
 
     let app = main_application();
-    app.set_resource_base_path(Some("/com/fvtronics/quire/"));
+    app.set_resource_base_path(Some("/com/fvtronics/shears/"));
 
     let app = RelmApp::from_app(app);
 
     let data = res
         .lookup_data(
-            "/com/fvtronics/quire/style.css",
+            "/com/fvtronics/shears/style.css",
             gio::ResourceLookupFlags::NONE,
         )
         .unwrap();

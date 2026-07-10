@@ -1,4 +1,4 @@
-name: Quire release
+name: Shears release
 
 on:
   push:
@@ -24,27 +24,27 @@ jobs:
             --disable-updates \
             --force-clean \
             build-dir \
-            build-aux/com.fvtronics.quire.json
+            build-aux/com.fvtronics.shears.json
 
           flatpak build-bundle \
             repo \
-            "quire-${{ forgejo.ref_name }}.flatpak" \
+            "shears-${{ forgejo.ref_name }}.flatpak" \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-            com.fvtronics.quire \
+            com.fvtronics.shears \
             stable
 
           flatpak build-bundle \
             --runtime \
             repo \
-            "quire-locale-${{ forgejo.ref_name }}.flatpak" \
-            com.fvtronics.quire.Locale \
+            "shears-locale-${{ forgejo.ref_name }}.flatpak" \
+            com.fvtronics.shears.Locale \
             stable
 
       - name: Upload Flatpak Bundle
         uses: https://data.forgejo.org/actions/upload-artifact@v3
         with:
           name: flatpak-bundles
-          path: quire-*.flatpak
+          path: shears-*.flatpak
           if-no-files-found: error
 
   release:

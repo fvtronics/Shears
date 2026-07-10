@@ -42,7 +42,7 @@ pub fn update_metadata<P: AsRef<Path>>(
         Document::load_mem(&bytes)?
     };
 
-    let producer = format!("Quire {}", env!("CARGO_PKG_VERSION"));
+    let producer = format!("Shears {}", env!("CARGO_PKG_VERSION"));
 
     if options.modern_pdf_format || options.remove_metadata {
         if options.remove_metadata {
@@ -215,7 +215,7 @@ mod tests {
         assert!(loaded_meta.author.is_empty());
         assert!(loaded_meta.subject.is_empty());
         assert!(loaded_meta.keywords.is_empty());
-        assert!(loaded_meta.producer.starts_with("Quire"));
+        assert!(loaded_meta.producer.starts_with("Shears"));
 
         let out_doc = Document::load(&output_path).unwrap();
         let info_id = out_doc
