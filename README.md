@@ -29,6 +29,11 @@ compress files, add watermarks, and edit metadata, all without relying on online
 
 ## How to install
 
+### AUR&nbsp;&nbsp;[![AUR package](https://repology.org/badge/version-for-repo/aur/shears.svg?header=)](https://repology.org/project/shears/versions)
+
+Arch based distributions can install Shears from the [AUR](https://aur.archlinux.org/packages/shears), or using an aurhelper such as yay: `yay -S shears`
+
+
 ### Flatpak
 
 Shears can be built and installed locally with Flatpak Builder:
@@ -53,6 +58,14 @@ To install the built package on your system, run the following command:
 ```sh
 meson install -C build
 ```
+
+## Translation
+
+This project's translations are handled by **[Codeberg Translate](https://translate.codeberg.org/engage/shears/)**, a community-hosted instance of Weblate.
+
+New languages and translation improvements are appreciated.
+
+[![Translation status](https://translate.codeberg.org/widgets/shears/-/multi-auto.svg)](https://translate.codeberg.org/engage/shears/)
 
 ## License
 
