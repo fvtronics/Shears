@@ -160,6 +160,7 @@ impl Component for CompressPage {
                         gtk::Button {
                             set_label: &Tool::Compress.action_label(),
                             set_tooltip_text: Some(&gettext("Select PDF File")),
+                            set_can_shrink: true,
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
@@ -175,6 +176,7 @@ impl Component for CompressPage {
                             set_label: &gettext("Compress"),
                             set_tooltip_text: Some(&gettext("Compress PDF")),
                             add_css_class: "suggested-action",
+                            set_can_shrink: true,
                             #[watch]
                             set_sensitive: model.file.is_some(),
 

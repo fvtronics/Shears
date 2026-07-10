@@ -182,6 +182,7 @@ impl Component for SplitPage {
                         gtk::Button {
                             set_label: &Tool::Split.action_label(),
                             set_tooltip_text: Some(&gettext("Select PDF File")),
+                            set_can_shrink: true,
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
@@ -197,6 +198,7 @@ impl Component for SplitPage {
                             set_label: &gettext("Split"),
                             set_tooltip_text: Some(&gettext("Split")),
                             add_css_class: "suggested-action",
+                            set_can_shrink: true,
                             #[watch]
                             set_sensitive: model.file.is_some(),
 

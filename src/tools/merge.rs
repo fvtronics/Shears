@@ -216,6 +216,7 @@ impl Component for MergePage {
                 gtk::Button {
                     set_label: &Tool::Merge.action_label(),
                     set_tooltip_text: Some(&gettext("Add PDF Files")),
+                    set_can_shrink: true,
 
                     connect_clicked[sender] => move |button| {
                         let sender_clone = sender.clone();
@@ -228,6 +229,7 @@ impl Component for MergePage {
                 gtk::Button {
                     set_label: &gettext("Clear"),
                     set_tooltip_text: Some(&gettext("Clear File List")),
+                    set_can_shrink: true,
 
                     connect_clicked[sender] => move |_| {
                         sender.input(MergePageMsg::ClearFiles);
@@ -238,6 +240,7 @@ impl Component for MergePage {
                     set_label: &gettext("Merge"),
                     set_tooltip_text: Some(&gettext("Merge Selected PDFs")),
                     add_css_class: "suggested-action",
+                    set_can_shrink: true,
 
                     connect_clicked[sender] => move |button| {
                         let sender_clone = sender.clone();

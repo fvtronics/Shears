@@ -196,6 +196,7 @@ impl Component for WatermarkPage {
                         gtk::Button {
                             set_label: &Tool::Watermark.action_label(),
                             set_tooltip_text: Some(&gettext("Select PDF File")),
+                            set_can_shrink: true,
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
@@ -211,6 +212,7 @@ impl Component for WatermarkPage {
                             set_label: &gettext("Save"),
                             set_tooltip_text: Some(&gettext("Save watermarked PDF")),
                             add_css_class: "suggested-action",
+                            set_can_shrink: true,
                             #[watch]
                             set_sensitive: model.file.is_some() && model.image_file.is_some(),
 

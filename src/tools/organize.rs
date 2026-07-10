@@ -496,6 +496,7 @@ impl Component for OrganizePage {
                     gtk::Button {
                         set_label: &Tool::Organize.action_label(),
                         set_tooltip_text: Some(&gettext("Select PDF File")),
+                        set_can_shrink: true,
 
                         connect_clicked[sender] => move |button| {
                             let sender_clone = sender.clone();
@@ -510,6 +511,7 @@ impl Component for OrganizePage {
                     gtk::Button {
                         set_label: &gettext("Reset"),
                         set_tooltip_text: Some(&gettext("Reset Page Order and Rotations")),
+                        set_can_shrink: true,
                         #[watch]
                         set_sensitive: model.file.is_some(),
 
@@ -522,6 +524,7 @@ impl Component for OrganizePage {
                         set_label: &gettext("Save"),
                         set_tooltip_text: Some(&gettext("Save organized PDF")),
                         add_css_class: "suggested-action",
+                        set_can_shrink: true,
                         #[watch]
                         set_sensitive: model.file.is_some(),
 
