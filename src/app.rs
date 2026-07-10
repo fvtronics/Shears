@@ -45,7 +45,6 @@ pub(super) enum AppMsg {
 }
 
 relm4::new_action_group!(pub(super) WindowActionGroup, "win");
-relm4::new_stateless_action!(PreferencesAction, WindowActionGroup, "preferences");
 relm4::new_stateless_action!(pub(super) ShortcutsAction, WindowActionGroup, "show-help-overlay");
 relm4::new_stateless_action!(AboutAction, WindowActionGroup, "about");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit");
@@ -60,9 +59,8 @@ impl SimpleComponent for App {
     menu! {
         primary_menu: {
             section! {
-                "_Preferences" => PreferencesAction,
-                "_Keyboard" => ShortcutsAction,
-                "_About Shears" => AboutAction,
+                &gettext("_Keyboard") => ShortcutsAction,
+                &gettext("_About Shears") => AboutAction,
             }
         }
     }
