@@ -1,7 +1,7 @@
 project(
   'shears',
   'rust',
-  version: '0.4.0',
+  version: '0.4.1',
   meson_version: '>= 1.9.2',
   license: 'GPL-3.0-or-later',
 )
