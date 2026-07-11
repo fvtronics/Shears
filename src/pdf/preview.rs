@@ -261,8 +261,12 @@ mod tests {
     use lopdf::{Dictionary, Object, StringFormat};
     use relm4::gtk::prelude::TextureExt;
 
+    static INIT: std::sync::Once = std::sync::Once::new();
+
     fn init_gtk() {
-        let _ = relm4::gtk::init();
+        INIT.call_once(|| {
+            let _ = relm4::gtk::init();
+        });
     }
 
     #[test]
