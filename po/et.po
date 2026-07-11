@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-10 10:13-0400\n"
-"PO-Revision-Date: 2026-06-28 11:07+0000\n"
+"PO-Revision-Date: 2026-07-11 11:40+0000\n"
 "Last-Translator: Priit Jõerüüt <jrtcdbrg@noreply.codeberg.org>\n"
-"Language-Team: Estonian <https://translate.codeberg.org/projects/shears/shears-"
-"ui/et/>\n"
+"Language-Team: Estonian <https://translate.codeberg.org/projects/shears/"
+"shears-ui/et/>\n"
 "Language: et\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,7 +22,7 @@ msgstr ""
 #: data/com.fvtronics.shears.desktop.in.in:2
 #: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:33
 msgid "Shears"
-msgstr ""
+msgstr "Shears"
 
 #: data/com.fvtronics.shears.desktop.in.in:3
 #: data/com.fvtronics.shears.metainfo.xml.in.in:8
@@ -36,18 +36,17 @@ msgstr "PDF;Merge;Split;Extract;Organize;Watermark;liitmine;mestimine;tükeldami
 
 #: data/com.fvtronics.shears.gschema.xml.in:6
 msgid "Window width"
-msgstr ""
+msgstr "Akna laius"
 
 #: data/com.fvtronics.shears.gschema.xml.in:10
 msgid "Window height"
-msgstr ""
+msgstr "Akna kõrgus"
 
 #: data/com.fvtronics.shears.gschema.xml.in:14
 msgid "Window maximized state"
-msgstr ""
+msgstr "Akna täissuurus"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:10
-#, fuzzy
 msgid ""
 "Shears is a simple GNOME utility for working with local PDF files without a "
 "complex document suite."
@@ -56,7 +55,6 @@ msgstr ""
 "kohalike PDF-failidega ilma keeruka tarkvara kasutamiseta."
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:11
-#, fuzzy
 msgid ""
 "Merge multiple PDFs, organize pages, extract page ranges, split documents, "
 "compress files, and edit metadata without relying on online services."
@@ -70,7 +68,7 @@ msgstr "Mesti mitu PDF-faili üheks dokumendiks"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:20
 msgid "Organize and remove a document's pages"
-msgstr ""
+msgstr "Halda dokumendi lehti või eemalda neid"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:24
 msgid "Extract selected pages into a new document"
@@ -81,7 +79,6 @@ msgid "Split a PDF into multiple documents"
 msgstr "Jaga PDF-fail mitmeks dokumendiks"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:32
-#, fuzzy
 msgid "Compress a PDF file"
 msgstr "Paki PDF-fail kokku"
 
@@ -104,7 +101,7 @@ msgstr "Uus"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:60
 msgid "Add small screen and touchscreen compatibility"
-msgstr ""
+msgstr "Lisandus ühilduvus väikeste ekraanidega ja puuteekraanidega"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
 msgid "Changes"
@@ -112,38 +109,36 @@ msgstr "Muudatused"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:64
 msgid "Change app name to Shears"
-msgstr ""
+msgstr "Rakenduse uus nimi on nüüd Shears"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:65
-#, fuzzy
 msgid "Improve app responsiveness when resizing it's window"
 msgstr "Rakendus reageerib paremini selle suuruse muutmisel"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:73
-#, fuzzy
 msgid "Add tool to watermark PDF files"
-msgstr "Lisa vesimärk PDF-faili konkreetsetele lehtedele"
+msgstr "Lisa tarvik vesimärkide lisamiseks PDF-faili lehtedele"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:81
 msgid "Add option to extract specific pages from a PDF file"
-msgstr ""
+msgstr "Lisasime võimaluse eraldada PDF-failist valitud lehti"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:89
 msgid "Add section to organize and remove a document's pages"
-msgstr ""
+msgstr "Lisasime võimaluse dokumendi lehtede haldamiseks ja eemaldamiseks"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:97
 msgid "Add section to compress PDF files"
-msgstr ""
+msgstr "Lisasime valiku PDF-failide pakkimiseks"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:105
 msgid "Add section to visualize and edit a document's metadata"
-msgstr ""
+msgstr "Lisasime võimaluse dokumendi metateabe kuvamiseks ja muutmiseks"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
 msgid "General"
-msgstr ""
+msgstr "Üldised"
 
 #: data/resources/ui/shortcuts.ui:14
 msgctxt "shortcut window"
@@ -156,18 +151,16 @@ msgid "Quit"
 msgstr "Välju"
 
 #: src/app.rs:62
-#, fuzzy
 msgid "_Keyboard"
 msgstr "_Klaviatuuri kiirklahvid"
 
 #: src/app.rs:63
-#, fuzzy
 msgid "_About Shears"
 msgstr "R_akenduse teave: Shears"
 
 #: src/app.rs:91
 msgid "Sidebar"
-msgstr ""
+msgstr "Külgriba"
 
 #: src/app.rs:119 src/tools/mod.rs:104
 msgid "Merge PDFs"
@@ -226,16 +219,15 @@ msgid "Update document details"
 msgstr "Muuda dokumendi üksikasju"
 
 #: src/app.rs:346
-#, fuzzy
 msgid "Processing…"
-msgstr "Pakin PDF-faili kokku…"
+msgstr "Töötlen…"
 
 #: src/tools/merge.rs:100
-#, fuzzy, rust-format
+#, rust-format
 msgid "{count} file selected"
 msgid_plural "{count} files selected"
-msgstr[0] "Mitte ükski fail pole valitud"
-msgstr[1] "Mitte ükski fail pole valitud"
+msgstr[0] "Oled valinud {count} faili"
+msgstr[1] "Oled valinud {count} faili"
 
 #: src/tools/merge.rs:218
 msgid "Add PDF Files"
@@ -268,16 +260,14 @@ msgid "Advanced Options"
 msgstr "Täpsemad valikud"
 
 #: src/tools/merge.rs:263 src/tools/organize.rs:549 src/tools/extract.rs:367
-#, fuzzy
 msgid "Rotate _all"
-msgstr "Pööra kõik lehed"
+msgstr "Pöör_a kõik lehed"
 
 #: src/tools/merge.rs:273 src/tools/organize.rs:559 src/tools/extract.rs:377
 #: src/tools/split.rs:223 src/tools/metadata.rs:207 src/tools/watermark.rs:237
 #: src/tools/compress.rs:201
-#, fuzzy
 msgid "_Modern PDF format"
-msgstr "Moodne PDF-vorming"
+msgstr "_Moodne PDF-vorming"
 
 #: src/tools/merge.rs:275 src/tools/organize.rs:561 src/tools/extract.rs:379
 #: src/tools/split.rs:225 src/tools/metadata.rs:209 src/tools/watermark.rs:239
@@ -286,9 +276,8 @@ msgid "Save with PDF 1.5 object streams"
 msgstr "Salvestamisel kasuta PDF 1.5 versiooni objektivoogude loogikat"
 
 #: src/tools/merge.rs:284
-#, fuzzy
 msgid "_Normalize page size"
-msgstr "Normaliseeri lehe mõõt"
+msgstr "_Normaliseeri lehe mõõt"
 
 #: src/tools/merge.rs:286
 msgid "Resize output pages to the largest page size"
@@ -297,9 +286,8 @@ msgstr "Muuda kõikide lehtede suurust suurime lehe mõõdu alusel"
 #: src/tools/merge.rs:295 src/tools/organize.rs:570 src/tools/extract.rs:388
 #: src/tools/split.rs:234 src/tools/metadata.rs:218 src/tools/watermark.rs:248
 #: src/tools/compress.rs:212
-#, fuzzy
 msgid "_Remove metadata"
-msgstr "Eemalda metaandmed"
+msgstr "_Eemalda metaandmed"
 
 #: src/tools/merge.rs:297 src/tools/organize.rs:572 src/tools/extract.rs:390
 #: src/tools/split.rs:236 src/tools/metadata.rs:220 src/tools/watermark.rs:250
@@ -309,14 +297,13 @@ msgstr "Enne salvestamist eemalda olemasolevad metaandmed"
 
 #: src/tools/merge.rs:433
 msgid "PDFs merged successfully"
-msgstr ""
+msgstr "PDF-failid on kenasti mestitud"
 
 #: src/tools/merge.rs:434 src/tools/organize.rs:845 src/tools/extract.rs:627
 #: src/tools/metadata.rs:454 src/tools/watermark.rs:536
 #: src/tools/compress.rs:413
-#, fuzzy
 msgid "Open File"
-msgstr "Ava kaust"
+msgstr "Ava fail"
 
 #: src/tools/merge.rs:442
 msgid "Could not save PDF"
@@ -325,9 +312,8 @@ msgstr "PDF-faili salvestamine ei õnnestunud"
 #: src/tools/merge.rs:454 src/tools/organize.rs:864 src/tools/extract.rs:646
 #: src/tools/metadata.rs:473 src/tools/watermark.rs:555
 #: src/tools/compress.rs:432
-#, fuzzy
 msgid "Failed to open output file"
-msgstr "Väljundi avamine ei õnnestunud"
+msgstr "Väljundfaili avamine ei õnnestunud"
 
 #: src/tools/merge.rs:490 src/tools/organize.rs:244
 msgid "Blank Page"
@@ -338,68 +324,58 @@ msgid "Rotate Clockwise"
 msgstr "Pööra päripäeva"
 
 #: src/tools/merge.rs:880
-#, fuzzy
 msgid "Remove File"
-msgstr "Eemalda"
+msgstr "Eemalda fail"
 
 #: src/tools/merge.rs:894 src/tools/organize.rs:290
-#, fuzzy
 msgid "More Options"
-msgstr "Täpsemad valikud"
+msgstr "Lisavalikud"
 
 #: src/tools/merge.rs:902
 msgid "Move _Up"
 msgstr "Nihuta _ülespoole"
 
 #: src/tools/merge.rs:903
-#, fuzzy
 msgid "_Move Down"
-msgstr "Nihuta allapoole"
+msgstr "_Nihuta allapoole"
 
 #: src/tools/merge.rs:904 src/tools/organize.rs:300
-#, fuzzy
 msgid "_Duplicate"
 msgstr "Tee to_peltfail"
 
 #: src/tools/merge.rs:905 src/tools/organize.rs:301
-#, fuzzy
 msgid "_Insert Blank Page After"
-msgstr "Lisa _tühi leht enne"
+msgstr "Lisa _tühi leht peale"
 
 #: src/tools/organize.rs:243 src/tools/extract.rs:187
 msgid "Page"
 msgstr "Leht"
 
 #: src/tools/organize.rs:277
-#, fuzzy
 msgid "Remove Page"
-msgstr "Eemalda"
+msgstr "Eemalda leht"
 
 #: src/tools/organize.rs:298
-#, fuzzy
 msgid "Move _Left"
-msgstr "Nihuta _ülespoole"
+msgstr "Nihuta _vasakule"
 
 #: src/tools/organize.rs:299
-#, fuzzy
 msgid "Move _Right"
-msgstr "Nihuta _ülespoole"
+msgstr "Nihuta _paremale"
 
 #: src/tools/organize.rs:498 src/tools/extract.rs:328 src/tools/split.rs:184
 #: src/tools/metadata.rs:168 src/tools/watermark.rs:198
 #: src/tools/compress.rs:162
-#, fuzzy
 msgid "Select PDF File"
-msgstr "Vali leht"
+msgstr "Vali PDF-fail"
 
 #: src/tools/organize.rs:512
 msgid "Reset"
 msgstr "Lähtesta"
 
 #: src/tools/organize.rs:513
-#, fuzzy
 msgid "Reset Page Order and Rotations"
-msgstr "Lähtesta lehtede järjestus"
+msgstr "Lähtesta lehtede järjestus ja pööramine"
 
 #: src/tools/organize.rs:524 src/tools/extract.rs:342 src/tools/metadata.rs:182
 #: src/tools/watermark.rs:212 src/tools/mod.rs:231
@@ -407,33 +383,29 @@ msgid "Save"
 msgstr "Salvesta"
 
 #: src/tools/organize.rs:525
-#, fuzzy
 msgid "Save organized PDF"
 msgstr "Salvesta ümberkorraldatud PDF-fail"
 
 #: src/tools/organize.rs:533 src/tools/extract.rs:351 src/tools/metadata.rs:191
 #: src/tools/watermark.rs:221 src/tools/compress.rs:185
-#, fuzzy
 msgid "Save PDF"
-msgstr "Salvesta mestitud PDF-fail"
+msgstr "Salvesta PDF-fail"
 
 #: src/tools/organize.rs:844
 msgid "PDF organized successfully"
-msgstr ""
+msgstr "PDF-failid on kenasti ümberkorraldatud"
 
 #: src/tools/organize.rs:854
-#, fuzzy
 msgid "Failed to organize PDF"
-msgstr "Salvesta ümberkorraldatud PDF-fail"
+msgstr "PDF-faili ümberkorraldamine ei õnnestunud"
 
 #: src/tools/extract.rs:205
 msgid "Select page for extraction"
-msgstr ""
+msgstr "Vali leht, mida tahad eraldada"
 
 #: src/tools/extract.rs:343
-#, fuzzy
 msgid "Save extracted PDF"
-msgstr "Salvesta eraldatud lehed"
+msgstr "Salvesta eraldatud lehed PDF-failina"
 
 #: src/tools/extract.rs:409 src/tools/split.rs:296 src/tools/split.rs:315
 #: src/tools/watermark.rs:351 src/tools/watermark.rs:370
@@ -442,57 +414,51 @@ msgstr "Leheküljed"
 
 #: src/tools/extract.rs:626
 msgid "PDF extracted successfully"
-msgstr ""
+msgstr "PDF-faili sisu on kenasti eraldatud"
 
 #: src/tools/extract.rs:636
 msgid "Failed to extract PDF"
-msgstr ""
+msgstr "PDF-failist lehe eraldamine ei õnnestunud"
 
 #: src/tools/split.rs:198 src/tools/split.rs:199
 msgid "Split"
 msgstr "Jaga kaheks"
 
 #: src/tools/split.rs:207
-#, fuzzy
 msgid "Select Output Folder"
-msgstr "Ava väljundkaust"
+msgstr "Vali väljundkaust"
 
 #: src/tools/split.rs:282
 msgid "Divide after"
-msgstr ""
+msgstr "Eralda peale"
 
 #: src/tools/split.rs:284
 msgid "Each page"
-msgstr ""
+msgstr "Iga lehte"
 
 #: src/tools/split.rs:285
-#, fuzzy
 msgid "Even pages"
 msgstr "Paaris lehed"
 
 #: src/tools/split.rs:286
-#, fuzzy
 msgid "Odd pages"
 msgstr "Paaritud lehed"
 
 #: src/tools/split.rs:287
-#, fuzzy
 msgid "Every N pages"
 msgstr "Iga N lehe järel"
 
 #: src/tools/split.rs:288 src/tools/watermark.rs:356
-#, fuzzy
 msgid "Specific pages"
 msgstr "Konkreetsed lehed"
 
 #: src/tools/split.rs:336
-#, fuzzy
 msgid "Output prefix"
 msgstr "Väljundnime prefiks"
 
 #: src/tools/split.rs:365
 msgid "output_file"
-msgstr ""
+msgstr "väljundfail"
 
 #: src/tools/split.rs:482
 msgid "Split PDFs saved"
@@ -504,17 +470,15 @@ msgstr "Ava kaust"
 
 #: src/tools/split.rs:492
 msgid "Failed to split PDF"
-msgstr ""
+msgstr "PDF-faili jagamine ei õnnestunud"
 
 #: src/tools/split.rs:502
-#, fuzzy
 msgid "Failed to open output folder"
-msgstr "Väljundi avamine ei õnnestunud"
+msgstr "Väljundkausta avamine ei õnnestunud"
 
 #: src/tools/metadata.rs:183
-#, fuzzy
 msgid "Save modified PDF"
-msgstr "Salvesta mestitud PDF-fail"
+msgstr "Salvesta muudetud PDF-fail"
 
 #: src/tools/metadata.rs:266
 msgid "Title"
@@ -552,33 +516,29 @@ msgstr "pole teade"
 
 #: src/tools/metadata.rs:453
 msgid "Metadata saved successfully"
-msgstr ""
+msgstr "Metateave on kenasti salvestatud"
 
 #: src/tools/metadata.rs:463
-#, fuzzy
 msgid "Failed to save metadata"
-msgstr "Eemalda metaandmed"
+msgstr "Metaandmete salvestamine ei õnnestunud"
 
 #: src/tools/metadata.rs:536
 msgid "Failed to load document's metadata"
-msgstr ""
+msgstr "Dokumendi metaandmete laadimine ei õnnestunud"
 
 #: src/tools/watermark.rs:148
 msgid "Images"
 msgstr "Pildid"
 
 #: src/tools/watermark.rs:155
-#, fuzzy
 msgid "Select Watermark Image"
-msgstr "Vesimärgi pilt"
+msgstr "Vali vesimärgi pilt"
 
 #: src/tools/watermark.rs:156
-#, fuzzy
 msgid "Select"
-msgstr "_Vali"
+msgstr "Vali"
 
 #: src/tools/watermark.rs:213
-#, fuzzy
 msgid "Save watermarked PDF"
 msgstr "Salvesta vesimärgiga PDF-fail"
 
@@ -591,9 +551,8 @@ msgid "No image selected"
 msgstr "Ühtegi pilti pole valitud"
 
 #: src/tools/watermark.rs:308
-#, fuzzy
 msgid "Select File"
-msgstr "Vali leht"
+msgstr "Vali fail"
 
 #: src/tools/watermark.rs:320
 msgid "Layer"
@@ -601,40 +560,35 @@ msgstr "Ülekattekiht"
 
 #: src/tools/watermark.rs:322
 msgid "Front"
-msgstr ""
+msgstr "Ees"
 
 #: src/tools/watermark.rs:323
 msgid "Back"
-msgstr ""
+msgstr "Taga"
 
 #: src/tools/watermark.rs:335
-#, fuzzy
 msgid "Opacity (%)"
-msgstr "Läbipaistmatus"
+msgstr "Läbipaistmatus (%)"
 
 #: src/tools/watermark.rs:353
-#, fuzzy
 msgid "All pages"
 msgstr "Kõik lehed"
 
 #: src/tools/watermark.rs:354
-#, fuzzy
 msgid "First page"
 msgstr "Esimene leht"
 
 #: src/tools/watermark.rs:355
-#, fuzzy
 msgid "Last page"
 msgstr "Viimane leht"
 
 #: src/tools/watermark.rs:535
 msgid "Watermark added successfully"
-msgstr ""
+msgstr "Metateave on kenasti lisatud"
 
 #: src/tools/watermark.rs:545
-#, fuzzy
 msgid "Failed to add watermark to PDF"
-msgstr "Salvesta vesimärgiga PDF-fail"
+msgstr "Vesimärgi lisamine PDF-faili ei õnnestunud"
 
 #: src/tools/compress.rs:176
 msgid "Compress"
@@ -642,23 +596,23 @@ msgstr "Paki kokku"
 
 #: src/tools/compress.rs:260
 msgid "Image Quality Level"
-msgstr ""
+msgstr "Pildikvaliteet"
 
 #: src/tools/compress.rs:262
 msgid "Original"
-msgstr ""
+msgstr "Algne"
 
 #: src/tools/compress.rs:263
 msgid "Print"
-msgstr ""
+msgstr "Prindi"
 
 #: src/tools/compress.rs:264
 msgid "Display"
-msgstr ""
+msgstr "Kuva"
 
 #: src/tools/compress.rs:265
 msgid "Draft"
-msgstr ""
+msgstr "Kavand"
 
 #: src/tools/compress.rs:279
 msgid "Remove Unused Data"
@@ -678,19 +632,17 @@ msgstr "Eemalda PDF-failid leiduvad andmeteta sisuvood"
 
 #: src/tools/compress.rs:412
 msgid "PDF compressed successfully"
-msgstr ""
+msgstr "PDF-fail on kenasti kokkupakitud"
 
 #: src/tools/compress.rs:422
-#, fuzzy
 msgid "Failed to compress PDF"
-msgstr "Salvesta pakitud PDF-fail"
+msgstr "Pakitud PDF-faili salvestamine ei õnnestunud"
 
 #: src/tools/mod.rs:116
 msgid "No files selected"
-msgstr "Mitte ükski fail pole valitud"
+msgstr "Mitte ühtegi faili pole valitud"
 
 #: src/tools/mod.rs:122
-#, fuzzy
 msgid "No file selected"
 msgstr "Mitte ükski fail pole valitud"
 
@@ -744,30 +696,29 @@ msgstr "PDF-dokumendid"
 
 #: src/tools/mod.rs:187
 msgid "output.pdf"
-msgstr ""
+msgstr "väljundfail.pdf"
 
 #: src/tools/mod.rs:261 src/tools/mod.rs:263
-#, fuzzy
 msgid "Invalid input"
-msgstr "Vigane või vale salasõna"
+msgstr "Vigane sisend"
 
 #: src/tools/mod.rs:266
 #, rust-format
 msgid "Contains out of range pages (Max: {max})"
-msgstr ""
+msgstr "Sisaldab vahemikuväliseid lehti (maksimaalne: {max})"
 
 #: src/tools/mod.rs:275 src/tools/mod.rs:294
 msgid "Please specify pages"
-msgstr ""
+msgstr "Palun määratle lehed"
 
 #: src/tools/mod.rs:287
 msgid "Ranges are not supported for splitting"
-msgstr ""
+msgstr "Vahemikud pole jagamisel toetatud"
 
 #: src/tools/mod.rs:321
 #, rust-format
 msgid "Invalid page range: {start}-{end}"
-msgstr ""
+msgstr "Vigane lehevahemik: {start}-{end}"
 
 #~ msgid "Francisco Vásquez Cuevas"
 #~ msgstr "Francisco Vásquez Cuevas"
