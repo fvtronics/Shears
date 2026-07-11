@@ -90,50 +90,57 @@ msgstr "Lisa vesimärk PDF-faili konkreetsetele lehtedele"
 msgid "View and edit PDF metadata"
 msgstr "Vaata ja muuda PDF-faili metateavet"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:58
-#: data/com.fvtronics.shears.metainfo.xml.in.in:71
-#: data/com.fvtronics.shears.metainfo.xml.in.in:79
-#: data/com.fvtronics.shears.metainfo.xml.in.in:87
-#: data/com.fvtronics.shears.metainfo.xml.in.in:95
-#: data/com.fvtronics.shears.metainfo.xml.in.in:103
+#: data/com.fvtronics.shears.metainfo.xml.in.in:59
+msgid "Add Estonian translation"
+msgstr "Lisa eestikeelne tõlge"
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:60
+msgid "Improve Spanish translation"
+msgstr "Parandage hispaaniakeelset tõlget"
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
+msgstr "Aitäh Priit Jõerüüdile ja gallegonovatole panuse eest."
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:67
+#: data/com.fvtronics.shears.metainfo.xml.in.in:80
+#: data/com.fvtronics.shears.metainfo.xml.in.in:88
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:104
 msgid "New"
 msgstr "Uus"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:60
+#: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add small screen and touchscreen compatibility"
 msgstr "Lisandus ühilduvus väikeste ekraanidega ja puuteekraanidega"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+#: data/com.fvtronics.shears.metainfo.xml.in.in:71
 msgid "Changes"
 msgstr "Muudatused"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:64
+#: data/com.fvtronics.shears.metainfo.xml.in.in:73
 msgid "Change app name to Shears"
 msgstr "Rakenduse uus nimi on nüüd Shears"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:65
+#: data/com.fvtronics.shears.metainfo.xml.in.in:74
 msgid "Improve app responsiveness when resizing it's window"
 msgstr "Rakendus reageerib paremini selle suuruse muutmisel"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:73
+#: data/com.fvtronics.shears.metainfo.xml.in.in:82
 msgid "Add tool to watermark PDF files"
 msgstr "Lisa tarvik vesimärkide lisamiseks PDF-faili lehtedele"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:81
+#: data/com.fvtronics.shears.metainfo.xml.in.in:90
 msgid "Add option to extract specific pages from a PDF file"
 msgstr "Lisasime võimaluse eraldada PDF-failist valitud lehti"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:89
+#: data/com.fvtronics.shears.metainfo.xml.in.in:98
 msgid "Add section to organize and remove a document's pages"
 msgstr "Lisasime võimaluse dokumendi lehtede haldamiseks ja eemaldamiseks"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:97
+#: data/com.fvtronics.shears.metainfo.xml.in.in:106
 msgid "Add section to compress PDF files"
 msgstr "Lisasime valiku PDF-failide pakkimiseks"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:105
-msgid "Add section to visualize and edit a document's metadata"
-msgstr "Lisasime võimaluse dokumendi metateabe kuvamiseks ja muutmiseks"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
@@ -719,6 +726,9 @@ msgstr "Vahemikud pole jagamisel toetatud"
 #, rust-format
 msgid "Invalid page range: {start}-{end}"
 msgstr "Vigane lehevahemik: {start}-{end}"
+
+#~ msgid "Add section to visualize and edit a document's metadata"
+#~ msgstr "Lisasime võimaluse dokumendi metateabe kuvamiseks ja muutmiseks"
 
 #~ msgid "Francisco Vásquez Cuevas"
 #~ msgstr "Francisco Vásquez Cuevas"

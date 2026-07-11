@@ -12,5 +12,5 @@
 .flatpak-builder/
 result
 .direnv
-po/es.po~
+po/*.po~
 .scannerwork/
