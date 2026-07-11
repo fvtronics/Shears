@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Francisco Vásquez Cuevas 2019 <fvasquez.public@fvtronics.com> -->
+<!-- Francisco Vásquez Cuevas 2026 <fvasquez.public@fvtronics.com> -->
 <component type="desktop-application">
   <id>@app-id@</id>
   <metadata_license>CC0</metadata_license>
@@ -12,31 +12,31 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/merge.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/merge.png</image>
       <caption>Merge multiple PDF files into a single document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/organize.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/organize.png</image>
       <caption>Organize and remove a document's pages</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/extract.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/extract.png</image>
       <caption>Extract selected pages into a new document</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/split.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/split.png</image>
       <caption>Split a PDF into multiple documents</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/compress.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/compress.png</image>
       <caption>Compress a PDF file</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/watermark.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/watermark.png</image>
       <caption>Add a watermark to specific PDF pages</caption>
     </screenshot>
     <screenshot>
-      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.1/data/resources/screenshots/metadata.png</image>
+      <image>https://codeberg.org/fvtronics/shears/raw/tag/v0.4.2/data/resources/screenshots/metadata.png</image>
       <caption>View and edit PDF metadata</caption>
     </screenshot>
   </screenshots>
@@ -53,6 +53,15 @@
   </recommends>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.2" date="2026-07-11" >
+      <description>
+        <ul>
+          <li>Add Estonian translation</li>
+          <li>Improve Spanish translation</li>
+        </ul>
+        <p>Thanks to Priit Jõerüüt and gallegonovato for their contributions.</p>
+      </description>
+    </release>
     <release version="0.4.1" date="2026-07-10" >
       <description>
         <p>New</p>
@@ -95,14 +104,6 @@
         <p>New</p>
         <ul>
           <li>Add section to compress PDF files</li>
-        </ul>
-      </description>
-    </release>
-    <release version="0.2.1" date="2026-06-24" >
-      <description>
-        <p>New</p>
-        <ul>
-          <li>Add section to visualize and edit a document's metadata</li>
         </ul>
       </description>
     </release>

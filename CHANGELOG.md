@@ -1,11 +1,7 @@
-# v0.4.1
+# v0.4.2
 
-<p>New</p>
 <ul>
-    <li>Add small screen and touchscreen compatibility</li>
+  <li>Add Estonian translation</li>
+  <li>Improve Spanish translation</li>
 </ul>
-<p>Changes</p>
-<ul>
-    <li>Change app name to Shears</li>
-    <li>Improve app responsiveness when resizing it's window</li>
-</ul>
+<p>Thanks to Priit Jõerüüt and gallegonovato for their contributions.</p>
