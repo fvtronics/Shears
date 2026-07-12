@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 07:40-0400\n"
+"POT-Creation-Date: 2026-07-12 17:14-0400\n"
 "PO-Revision-Date: 2026-07-12 13:25+0000\n"
 "Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
@@ -92,58 +92,62 @@ msgid "View and edit PDF metadata"
 msgstr "Visualice y edite los metadatos de un PDF"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:59
-msgid "Add Estonian translation"
-msgstr "Se añadió una traducción al estonio"
+msgid "Add missing translations for the password dialog"
+msgstr "Se añadieron las traducciones faltantes para el diálogo de contraseña"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:60
-msgid "Improve Spanish translation"
-msgstr "Se mejoró la traducción al español"
+msgid "Update app's brand colors"
+msgstr "Se actualizaron los colores de marca de la aplicación"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
+#: data/com.fvtronics.shears.metainfo.xml.in.in:71
 msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr "Gracias a Priit Jõerüüt y gallegonovato por sus contribuciones."
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:67
-#: data/com.fvtronics.shears.metainfo.xml.in.in:80
-#: data/com.fvtronics.shears.metainfo.xml.in.in:88
-#: data/com.fvtronics.shears.metainfo.xml.in.in:96
-#: data/com.fvtronics.shears.metainfo.xml.in.in:104
+#: data/com.fvtronics.shears.metainfo.xml.in.in:68
+msgid "Add Estonian translation"
+msgstr "Se añadió una traducción al estonio"
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:69
+msgid "Improve Spanish translation"
+msgstr "Se mejoró la traducción al español"
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:76
+#: data/com.fvtronics.shears.metainfo.xml.in.in:89
+#: data/com.fvtronics.shears.metainfo.xml.in.in:97
+#: data/com.fvtronics.shears.metainfo.xml.in.in:105
 msgid "New"
 msgstr "Nuevo"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:69
+#: data/com.fvtronics.shears.metainfo.xml.in.in:78
 msgid "Add small screen and touchscreen compatibility"
 msgstr "Añadido compatibilidad con pantallas pequeñas y táctiles"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:71
+#: data/com.fvtronics.shears.metainfo.xml.in.in:80
 msgid "Changes"
 msgstr "Cambios"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:73
+#: data/com.fvtronics.shears.metainfo.xml.in.in:82
 msgid "Change app name to Shears"
 msgstr "Renombrada la aplicación como Shears"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:74
+#: data/com.fvtronics.shears.metainfo.xml.in.in:83
 msgid "Improve app responsiveness when resizing it's window"
 msgstr ""
 "Mejorada la capacidad de respuesta de la aplicación al redimensionar su "
 "ventana"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:82
+#: data/com.fvtronics.shears.metainfo.xml.in.in:91
 msgid "Add tool to watermark PDF files"
 msgstr "Añadida una herramienta para añadir una marca de agua a los PDF"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:90
+#: data/com.fvtronics.shears.metainfo.xml.in.in:99
 msgid "Add option to extract specific pages from a PDF file"
 msgstr "Añadida una opción para extraer páginas específicas de un PDF"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:98
+#: data/com.fvtronics.shears.metainfo.xml.in.in:107
 msgid "Add section to organize and remove a document's pages"
 msgstr "Añadida sección para organizar y eliminar páginas de un documento"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:106
-msgid "Add section to compress PDF files"
-msgstr "Añadida una opción para comprimir los PDF"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
@@ -754,6 +758,9 @@ msgstr "Contraseña"
 #: src/modals/password.rs:86
 msgid "Invalid password"
 msgstr "Contraseña inválida"
+
+#~ msgid "Add section to compress PDF files"
+#~ msgstr "Añadida una opción para comprimir los PDF"
 
 #~ msgid "Add section to visualize and edit a document's metadata"
 #~ msgstr ""
