@@ -1,0 +1,39 @@
+name: Pull Request
+about: Pull request template for Shears
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the change the Pull Request involves and why it's needed.
+    validations:
+      required: true
+
+  - type: input
+    id: linked_issue
+    attributes:
+      label: Linked issue
+      description: Link the issue this Pull Request fixes or addresses.
+      placeholder: "fixes #123"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: ai_disclosure
+    attributes:
+      label: AI disclosure
+      description: Disclose if you used AI to help generate the code.
+      options:
+        - label: I used AI to generate or write parts of this code.
+          required: false
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Developer checks
+      description: Make sure you check the following before submitting.
+      options:
+        - label: I checked and reviewed the code myself, and I understand what it does and its implications.
+          required: true
+        - label: The code follows GNOME's HIG guidelines.
+          required: true
