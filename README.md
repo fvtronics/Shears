@@ -36,7 +36,16 @@ Arch based distributions can install Shears from the [AUR](https://aur.archlinux
 
 ### Flatpak
 
-Shears can be built and installed locally with Flatpak Builder:
+You can install Shears from the official FVtronics Flatpak repository:
+
+```sh
+flatpak remote-add --user --if-not-exists fvtronics https://www.fvtronics.com/flatpak/repo/fvtronics.flatpakrepo
+```
+```sh
+flatpak install --user fvtronics com.fvtronics.shears
+```
+
+Alternatively, Shears can be built and installed locally with Flatpak Builder:
 
 ```sh
 flatpak-builder --user --install --install-deps-from=flathub build-dir build-aux/com.fvtronics.shears.json --force-clean
