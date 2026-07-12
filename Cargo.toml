@@ -1,6 +1,6 @@
 [package]
 name = "shears"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Francisco Vásquez Cuevas <fvasquez.public@fvtronics.com>"]
 edition = "2024"
 publish = false
