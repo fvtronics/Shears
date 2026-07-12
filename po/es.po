@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 10:13-0400\n"
+"POT-Creation-Date: 2026-07-12 07:40-0400\n"
 "PO-Revision-Date: 2026-07-11 13:08+0000\n"
 "Last-Translator: fvasquezc <fvasquezc@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
@@ -729,6 +729,31 @@ msgstr "No se puede dividir usando rangos"
 #, rust-format
 msgid "Invalid page range: {start}-{end}"
 msgstr "Rango de páginas no válido: {start}-{end}"
+
+#: src/modals/password.rs:47
+msgid "Password Required"
+msgstr "Se necesita una contraseña"
+
+#: src/modals/password.rs:49
+#, rust-format
+msgid "Enter the password for {filename}."
+msgstr "Ingresa la contraseña para {filename}."
+
+#: src/modals/password.rs:53
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/modals/password.rs:54
+msgid "Unlock"
+msgstr "Desbloquear"
+
+#: src/modals/password.rs:68
+msgid "Password"
+msgstr "Contraseña"
+
+#: src/modals/password.rs:86
+msgid "Invalid password"
+msgstr "Contraseña inválida"
 
 #~ msgid "Add section to visualize and edit a document's metadata"
 #~ msgstr ""
