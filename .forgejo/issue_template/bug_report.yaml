@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a bug or issue with Shears
+body:
+  - type: dropdown
+    id: affected_area
+    attributes:
+      label: Affected area
+      description: Is this issue related to the UI or PDF handling?
+      options:
+        - User Interface (UI)
+        - PDF handling
+        - Both / Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What is going wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Steps to reproduce the bug.
+      placeholder: |
+        1. Open '...'
+        2. Click '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What was supposed to happen?
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or sample files
+      description: Add any screenshots or sample PDF files if they help explain the problem.
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Package and setup
+      description: |
+        - How did you install Shears? (for example: Flatpak 0.1.0, source build)
+        - What OS or desktop environment are you using? (for example: Fedora 40 GNOME)
+        - Any extra details about your setup
+    validations:
+      required: true

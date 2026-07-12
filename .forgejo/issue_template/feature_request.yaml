@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest an enhancement or new feature for Shears
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: Explain what problem or frustration you're trying to solve.
+    validations:
+      required: false
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: Explain what you want to happen and how it should work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Any other ways to solve this that you thought about.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any extra details, mockups, or screenshots.
+    validations:
+      required: false
