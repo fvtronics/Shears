@@ -113,8 +113,8 @@
     <name translate="no">Francisco Vásquez Cuevas</name>
   </developer>
   <branding>
-    <color type="primary" scheme_preference="light">#ff00ff</color>
-    <color type="primary" scheme_preference="dark">#993d3d</color>
+    <color type="primary" scheme_preference="light">#f3797f</color>
+    <color type="primary" scheme_preference="dark">#a51d2d</color>
   </branding>  
   <update_contact>fvasquez.public@fvtronics.com</update_contact>
   <translation type="gettext">@gettext-package@</translation>
