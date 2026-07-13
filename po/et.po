@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 17:14-0400\n"
+"POT-Creation-Date: 2026-07-12 21:45-0400\n"
 "PO-Revision-Date: 2026-07-12 13:25+0000\n"
 "Last-Translator: Priit Jõerüüt <jrtcdbrg@noreply.codeberg.org>\n"
 "Language-Team: Estonian <https://translate.codeberg.org/projects/shears/"
@@ -756,6 +756,11 @@ msgstr "Salasõna"
 msgid "Invalid password"
 msgstr "Vigane või vale salasõna"
 
+#. Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
+#: src/modals/about.rs:26
+msgid "translator-credits"
+msgstr "Priit Jõerüüt 2026"
+
 #~ msgid "Add section to compress PDF files"
 #~ msgstr "Lisasime valiku PDF-failide pakkimiseks"
 
@@ -805,9 +810,6 @@ msgstr "Vigane või vale salasõna"
 
 #~ msgid "Improved app usability in small windows"
 #~ msgstr "Parandasime rakenduse kasutust väikestest akendest"
-
-#~ msgid "translator-credits"
-#~ msgstr "Priit Jõerüüt 2026"
 
 #~ msgid "Open Output File"
 #~ msgstr "Ava väljundfail"

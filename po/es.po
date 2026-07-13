@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 17:14-0400\n"
+"POT-Creation-Date: 2026-07-12 21:45-0400\n"
 "PO-Revision-Date: 2026-07-12 13:25+0000\n"
 "Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
@@ -758,6 +758,11 @@ msgstr "Contraseña"
 #: src/modals/password.rs:86
 msgid "Invalid password"
 msgstr "Contraseña inválida"
+
+#. Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
+#: src/modals/about.rs:26
+msgid "translator-credits"
+msgstr "gallegonovato <gallegonovato@noreply.codeberg.org>"
 
 #~ msgid "Add section to compress PDF files"
 #~ msgstr "Añadida una opción para comprimir los PDF"

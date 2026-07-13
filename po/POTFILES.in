@@ -13,3 +13,4 @@ src/tools/watermark.rs
 src/tools/compress.rs
 src/tools/mod.rs
 src/modals/password.rs
+src/modals/about.rs

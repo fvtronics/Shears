@@ -1,4 +1,5 @@
 use adw::prelude::AdwDialogExt;
+use gettextrs::gettext;
 use gtk::prelude::GtkApplicationExt;
 use relm4::{ComponentParts, ComponentSender, SimpleComponent, adw, gtk};
 
@@ -21,7 +22,8 @@ impl SimpleComponent for AboutDialog {
             .issue_url("https://codeberg.org/FVtronics/shears/issues")
             .application_name("Shears")
             .version(VERSION)
-            .translator_credits("translator-credits")
+            // Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
+            .translator_credits(gettext("translator-credits"))
             .copyright("© 2026 Francisco Vásquez Cuevas")
             .developers(vec!["Francisco Vásquez Cuevas"])
             .designers(vec!["Francisco Vásquez Cuevas"])
