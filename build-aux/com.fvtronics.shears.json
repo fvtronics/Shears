@@ -16,17 +16,13 @@
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin",
         "env": {
-          "CARGO_NET_OFFLINE": "true"
+            "CARGO_NET_OFFLINE": "true"
         }
     },
     "modules": [
         {
             "name": "poppler",
             "buildsystem": "cmake-ninja",
-            "cleanup": [
-                "/include",
-                "/lib/pkgconfig"
-            ],
             "config-opts": [
                 "-DBUILD_GTK_TESTS=OFF",
                 "-DRUN_GPERF_IF_PRESENT=OFF",
@@ -43,6 +39,10 @@
                 "-DENABLE_QT5=OFF",
                 "-DENABLE_QT6=OFF"
             ],
+            "cleanup": [
+                "/include",
+                "/lib/pkgconfig"
+            ],
             "sources": [
                 {
                     "type": "archive",
@@ -54,14 +54,16 @@
         {
             "name": "shears",
             "buildsystem": "meson",
+            "config-opts": [
+                "-Dcargo-home=/run/build/shears/cargo"
+            ],
             "sources": [
                 {
-                  "type": "dir",
-                  "path": "../"
+                    "type": "dir",
+                    "path": "../"
                 },
                 "../cargo-sources.json"
-            ],
-            "config-opts": ["-Dcargo-home=/run/build/shears/cargo"]
+            ]
         }
     ]
 }

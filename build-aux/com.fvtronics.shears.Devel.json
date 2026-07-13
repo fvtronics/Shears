@@ -38,10 +38,6 @@
         {
             "name": "poppler",
             "buildsystem": "cmake-ninja",
-            "cleanup": [
-                "/include",
-                "/lib/pkgconfig"
-            ],
             "config-opts": [
                 "-DBUILD_GTK_TESTS=OFF",
                 "-DRUN_GPERF_IF_PRESENT=OFF",
@@ -57,6 +53,10 @@
                 "-DENABLE_GPGME=OFF",
                 "-DENABLE_QT5=OFF",
                 "-DENABLE_QT6=OFF"
+            ],
+            "cleanup": [
+                "/include",
+                "/lib/pkgconfig"
             ],
             "sources": [
                 {
@@ -82,4 +82,3 @@
         }
     ]
 }
-
