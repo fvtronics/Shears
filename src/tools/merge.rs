@@ -12,7 +12,9 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolOutput, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{
+    PreviewStatus, Tool, ToolOutput, confirm_dialog, open_pdf_dialog, save_pdf_dialog,
+};
 
 pub struct MergeTool {
     has_files: bool,
@@ -241,8 +243,18 @@ impl Component for MergePage {
                     set_tooltip_text: Some(&gettext("Clear File List")),
                     set_can_shrink: true,
 
-                    connect_clicked[sender] => move |_| {
-                        sender.input(MergePageMsg::ClearFiles);
+                    connect_clicked[sender] => move |button| {
+                        let sender_clone = sender.clone();
+                        confirm_dialog(
+                            button,
+                            &gettext("Clear File List?"),
+                            &gettext("All selected PDF files will be removed from the list."),
+                            &gettext("Clear"),
+                            adw::ResponseAppearance::Destructive,
+                            move || {
+                                sender_clone.input(MergePageMsg::ClearFiles);
+                            },
+                        );
                     },
                 },
 

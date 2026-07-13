@@ -20,8 +20,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
-    save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, confirm_dialog, file_name,
+    open_pdf_dialog, save_pdf_dialog,
 };
 
 pub struct OrganizeTool {
@@ -541,8 +541,18 @@ impl Component for OrganizePage {
                         #[watch]
                         set_sensitive: model.file.is_some(),
 
-                        connect_clicked[sender] => move |_| {
-                            sender.input(OrganizePageMsg::ResetFile);
+                        connect_clicked[sender] => move |button| {
+                            let sender_clone = sender.clone();
+                            confirm_dialog(
+                                button,
+                                &gettext("Reset PDF Pages?"),
+                                &gettext("All page reordering, deletions, and rotations will be reset to their initial state."),
+                                &gettext("Reset"),
+                                adw::ResponseAppearance::Destructive,
+                                move || {
+                                    sender_clone.input(OrganizePageMsg::ResetFile);
+                                },
+                            );
                         },
                     },
 
