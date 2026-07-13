@@ -197,7 +197,11 @@ impl FactoryComponent for OrganizePageRow {
             add_controller = gtk::DragSource {
                 set_actions: gdk::DragAction::MOVE,
 
-                connect_prepare[index] => move |_drag_source, _x, _y| {
+                connect_prepare[index] => move |drag_source, _x, _y| {
+                    if let Some(device) = drag_source.current_event_device()
+                        && device.source() == gdk::InputSource::Touchscreen {
+                            return None;
+                        }
                     let current = index.current_index() as u32;
                     let value = current.to_value();
                     Some(gdk::ContentProvider::for_value(&value))
