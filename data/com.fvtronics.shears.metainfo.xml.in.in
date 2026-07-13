@@ -43,6 +43,8 @@
   <url type="homepage">https://www.fvtronics.com/en/project/shears</url>
   <url type="bugtracker">https://codeberg.org/fvtronics/shears/issues</url>
   <url type="vcs-browser">https://codeberg.org/fvtronics/shears</url>
+  <url type="translate">https://translate.codeberg.org/engage/shears/</url>
+  <url type="donation">https://ko-fi.com/fvtronics</url>
   <requires>
     <display_length compare="ge">360</display_length>
   </requires>
