@@ -20,8 +20,8 @@ use crate::pdf::preview::PreviewError;
 use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
-    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
-    save_pdf_dialog,
+    PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, confirm_dialog, file_name,
+    open_pdf_dialog, save_pdf_dialog,
 };
 
 pub struct OrganizeTool {
@@ -404,6 +404,18 @@ impl FactoryComponent for OrganizePageRow {
 }
 
 impl OrganizePageRow {
+    fn to_init(&self, total_pages: usize) -> OrganizePageRowInit {
+        OrganizePageRowInit {
+            file: self.file.clone(),
+            item_type: self.item_type.clone(),
+            total_pages,
+            rotation: self.rotation,
+            thumbnail: self.thumbnail.clone(),
+            original_dimensions: self.original_dimensions,
+            password: self.password.clone(),
+        }
+    }
+
     fn update_actions(&self) {
         let pos = self.index.current_index();
         self.move_left_action.set_enabled(pos > 0);
@@ -463,9 +475,19 @@ enum OrganizePageMsg {
     MovePageLeft(DynamicIndex),
     MovePageRight(DynamicIndex),
     DuplicatePage(DynamicIndex),
-    DeletePage(DynamicIndex),
+    DeletePage {
+        index: DynamicIndex,
+        show_toast: bool,
+    },
+    UndoDeletePage {
+        index: usize,
+        init: OrganizePageRowInit,
+    },
     InsertBlankPageAfter(DynamicIndex),
-    MovePage { from: usize, to: DynamicIndex },
+    MovePage {
+        from: usize,
+        to: DynamicIndex,
+    },
     ResetFile,
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
@@ -519,8 +541,18 @@ impl Component for OrganizePage {
                         #[watch]
                         set_sensitive: model.file.is_some(),
 
-                        connect_clicked[sender] => move |_| {
-                            sender.input(OrganizePageMsg::ResetFile);
+                        connect_clicked[sender] => move |button| {
+                            let sender_clone = sender.clone();
+                            confirm_dialog(
+                                button,
+                                &gettext("Reset PDF Pages?"),
+                                &gettext("All page reordering, deletions, and rotations will be reset to their initial state."),
+                                &gettext("Reset"),
+                                adw::ResponseAppearance::Destructive,
+                                move || {
+                                    sender_clone.input(OrganizePageMsg::ResetFile);
+                                },
+                            );
                         },
                     },
 
@@ -610,7 +642,10 @@ impl Component for OrganizePage {
                 OrganizePageRowOutput::MoveLeft(idx) => OrganizePageMsg::MovePageLeft(idx),
                 OrganizePageRowOutput::MoveRight(idx) => OrganizePageMsg::MovePageRight(idx),
                 OrganizePageRowOutput::Duplicate(idx) => OrganizePageMsg::DuplicatePage(idx),
-                OrganizePageRowOutput::Delete(idx) => OrganizePageMsg::DeletePage(idx),
+                OrganizePageRowOutput::Delete(idx) => OrganizePageMsg::DeletePage {
+                    index: idx,
+                    show_toast: true,
+                },
                 OrganizePageRowOutput::InsertBlankPageAfter(idx) => {
                     OrganizePageMsg::InsertBlankPageAfter(idx)
                 }
@@ -701,8 +736,15 @@ impl Component for OrganizePage {
                     self.password = Some(password.clone());
                     self.request_thumbnail(Some(password), &sender);
                 }
-                PasswordDialogOutput::Cancelled(_) => {
-                    self.clear_file(&sender);
+                PasswordDialogOutput::Cancelled(index) => {
+                    if let Some(idx) = index {
+                        sender.input(OrganizePageMsg::DeletePage {
+                            index: idx,
+                            show_toast: false,
+                        });
+                    } else {
+                        self.clear_file(&sender);
+                    }
                 }
             },
             OrganizePageMsg::MovePageLeft(index) => {
@@ -727,15 +769,7 @@ impl Component for OrganizePage {
                     .pages
                     .guard()
                     .get(current)
-                    .map(|row| OrganizePageRowInit {
-                        file: row.file.clone(),
-                        item_type: row.item_type.clone(),
-                        total_pages: total,
-                        rotation: row.rotation,
-                        thumbnail: row.thumbnail.clone(),
-                        original_dimensions: row.original_dimensions,
-                        password: row.password.clone(),
-                    });
+                    .map(|row| row.to_init(total));
                 if let Some(prepared) = prepared {
                     self.pages.guard().insert(current + 1, prepared);
                     self.refresh_all_bounds();
@@ -766,12 +800,54 @@ impl Component for OrganizePage {
                     self.refresh_all_bounds();
                 }
             }
-            OrganizePageMsg::DeletePage(index) => {
+            OrganizePageMsg::DeletePage { index, show_toast } => {
                 let current = index.current_index();
                 if self.pages.len() > 1 {
+                    let total_pages = self.pages.len();
+                    let removed_page = self
+                        .pages
+                        .guard()
+                        .get(current)
+                        .map(|row| row.to_init(total_pages));
+
                     self.pages.guard().remove(current);
                     self.refresh_all_bounds();
+
+                    if show_toast && let Some(init) = removed_page {
+                        let label_str = match &init.item_type {
+                            OrganizeItemType::Page(idx) => {
+                                format!("{} {}", gettext("Page"), idx + 1)
+                            }
+                            OrganizeItemType::BlankPage { .. } => gettext("Blank Page"),
+                        };
+                        let toast_msg =
+                            gettext("Removed \"{filename}\"").replace("{filename}", &label_str);
+                        let toast = adw::Toast::new(&toast_msg);
+                        toast.set_button_label(Some(&gettext("Undo")));
+                        toast.set_priority(adw::ToastPriority::High);
+
+                        let sender_clone = sender.clone();
+                        toast.connect_button_clicked(move |_| {
+                            sender_clone.input(OrganizePageMsg::UndoDeletePage {
+                                index: current,
+                                init: init.clone(),
+                            });
+                        });
+
+                        root.add_toast(toast);
+                    }
                 }
+            }
+            OrganizePageMsg::UndoDeletePage { index, init } => {
+                let mut guard = self.pages.guard();
+                let insert_index = index.min(guard.len());
+                if insert_index == guard.len() {
+                    guard.push_back(init);
+                } else {
+                    guard.insert(insert_index, init);
+                }
+                drop(guard);
+                self.refresh_all_bounds();
             }
             OrganizePageMsg::MovePage { from, to } => {
                 let to_idx = to.current_index();

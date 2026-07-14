@@ -12,7 +12,9 @@ use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogO
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
-use crate::tools::{PreviewStatus, Tool, ToolOutput, open_pdf_dialog, save_pdf_dialog};
+use crate::tools::{
+    PreviewStatus, Tool, ToolOutput, confirm_dialog, open_pdf_dialog, save_pdf_dialog,
+};
 
 pub struct MergeTool {
     has_files: bool,
@@ -144,6 +146,9 @@ pub struct PreparedFile {
     pub title: String,
     pub size_str: String,
     pub rotation: u16,
+    pub password: Option<String>,
+    pub thumbnail: Option<gdk::MemoryTexture>,
+    pub original_dimensions: Option<(f64, f64)>,
 }
 
 #[derive(Debug)]
@@ -158,7 +163,14 @@ enum MergePageMsg {
         from: usize,
         to: DynamicIndex,
     },
-    DeleteFile(DynamicIndex),
+    DeleteFile {
+        index: DynamicIndex,
+        show_toast: bool,
+    },
+    UndoDeleteFile {
+        index: usize,
+        prepared: PreparedFile,
+    },
     DuplicateFile(DynamicIndex),
     SetModernPdfFormat(bool),
     SetNormalizePageSize(bool),
@@ -231,8 +243,18 @@ impl Component for MergePage {
                     set_tooltip_text: Some(&gettext("Clear File List")),
                     set_can_shrink: true,
 
-                    connect_clicked[sender] => move |_| {
-                        sender.input(MergePageMsg::ClearFiles);
+                    connect_clicked[sender] => move |button| {
+                        let sender_clone = sender.clone();
+                        confirm_dialog(
+                            button,
+                            &gettext("Clear File List?"),
+                            &gettext("All selected PDF files will be removed from the list."),
+                            &gettext("Clear"),
+                            adw::ResponseAppearance::Destructive,
+                            move || {
+                                sender_clone.input(MergePageMsg::ClearFiles);
+                            },
+                        );
                     },
                 },
 
@@ -332,7 +354,10 @@ impl Component for MergePage {
                 .forward(sender.input_sender(), |output| match output {
                     MergeFileRowOutput::MoveUp(index) => MergePageMsg::MoveFileUp(index),
                     MergeFileRowOutput::MoveDown(index) => MergePageMsg::MoveFileDown(index),
-                    MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile(index),
+                    MergeFileRowOutput::Delete(index) => MergePageMsg::DeleteFile {
+                        index,
+                        show_toast: true,
+                    },
                     MergeFileRowOutput::Duplicate(index) => MergePageMsg::DuplicateFile(index),
                     MergeFileRowOutput::Move { from, to } => MergePageMsg::MoveFile { from, to },
                     MergeFileRowOutput::PasswordRequired {
@@ -472,6 +497,9 @@ impl Component for MergePage {
                                 title,
                                 size_str,
                                 rotation: 0,
+                                password: None,
+                                thumbnail: None,
+                                original_dimensions: None,
                             }
                         })
                         .collect();
@@ -490,6 +518,9 @@ impl Component for MergePage {
                     title: gettext("Blank Page"),
                     size_str: "-".to_string(),
                     rotation,
+                    password: None,
+                    thumbnail: None,
+                    original_dimensions: Some((width, height)),
                 };
                 self.files.guard().insert(current_index + 1, prepared);
                 self.update_bounds();
@@ -562,12 +593,7 @@ impl Component for MergePage {
                     .files
                     .guard()
                     .get(current_index)
-                    .map(|row| PreparedFile {
-                        item_type: row.item_type.clone(),
-                        title: row.title.clone(),
-                        size_str: row.size_str.clone(),
-                        rotation: row.rotation,
-                    });
+                    .map(|row| row.to_prepared_file());
 
                 if let Some(prepared) = prepared {
                     self.files.guard().insert(current_index + 1, prepared);
@@ -576,8 +602,14 @@ impl Component for MergePage {
                     self.check_loading_state(&sender);
                 }
             }
-            MergePageMsg::DeleteFile(index) => {
+            MergePageMsg::DeleteFile { index, show_toast } => {
                 let current_index = index.current_index();
+
+                let removed_file = self
+                    .files
+                    .guard()
+                    .get(current_index)
+                    .map(|row| row.to_prepared_file());
 
                 if let Some(pos) = self
                     .password_queue
@@ -592,6 +624,39 @@ impl Component for MergePage {
 
                 self.files.guard().remove(current_index);
                 let len = self.files.len();
+                let _ = sender.output(MergePageOutput::FileCountChanged(len));
+                self.update_bounds();
+                self.check_loading_state(&sender);
+
+                if show_toast && let Some(prepared) = removed_file {
+                    let toast_msg =
+                        gettext("Removed \"{filename}\"").replace("{filename}", &prepared.title);
+                    let toast = adw::Toast::new(&toast_msg);
+                    toast.set_button_label(Some(&gettext("Undo")));
+                    toast.set_priority(adw::ToastPriority::High);
+
+                    let sender_clone = sender.clone();
+                    toast.connect_button_clicked(move |_| {
+                        sender_clone.input(MergePageMsg::UndoDeleteFile {
+                            index: current_index,
+                            prepared: prepared.clone(),
+                        });
+                    });
+
+                    root.add_toast(toast);
+                }
+            }
+            MergePageMsg::UndoDeleteFile { index, prepared } => {
+                let mut files_guard = self.files.guard();
+                let insert_index = index.min(files_guard.len());
+                if insert_index == files_guard.len() {
+                    files_guard.push_back(prepared);
+                } else {
+                    files_guard.insert(insert_index, prepared);
+                }
+                let len = files_guard.len();
+                drop(files_guard);
+
                 let _ = sender.output(MergePageOutput::FileCountChanged(len));
                 self.update_bounds();
                 self.check_loading_state(&sender);
@@ -662,7 +727,10 @@ impl Component for MergePage {
                 }
                 PasswordDialogOutput::Cancelled(index) => {
                     if let Some(idx) = index {
-                        sender.input(MergePageMsg::DeleteFile(idx));
+                        sender.input(MergePageMsg::DeleteFile {
+                            index: idx,
+                            show_toast: false,
+                        });
                     }
                 }
             },
@@ -771,6 +839,20 @@ enum MergeFileRowOutput {
         height: f64,
         rotation: u16,
     },
+}
+
+impl MergeFileRow {
+    fn to_prepared_file(&self) -> PreparedFile {
+        PreparedFile {
+            item_type: self.item_type.clone(),
+            title: self.title.clone(),
+            size_str: self.size_str.clone(),
+            rotation: self.rotation,
+            password: self.password.clone(),
+            thumbnail: self.thumbnail.clone(),
+            original_dimensions: self.original_dimensions,
+        }
+    }
 }
 
 #[relm4::factory]
@@ -922,8 +1004,13 @@ impl FactoryComponent for MergeFileRow {
         let sender_clone = sender.clone();
 
         let rotation = prepared.rotation;
+        let password = prepared.password.clone();
+        let thumbnail = prepared.thumbnail;
+        let original_dimensions = prepared.original_dimensions;
 
-        request_thumbnail(item_type.clone(), rotation, None, sender_clone);
+        if thumbnail.is_none() {
+            request_thumbnail(item_type.clone(), rotation, password.clone(), sender_clone);
+        }
 
         let action_group = gio::SimpleActionGroup::new();
         let move_up_action = gio::SimpleAction::new("move-up", None);
@@ -959,12 +1046,18 @@ impl FactoryComponent for MergeFileRow {
 
         move_up_action.set_enabled(!is_first);
         move_down_action.set_enabled(!is_last);
-        insert_blank_action.set_enabled(false);
+        insert_blank_action.set_enabled(original_dimensions.is_some());
 
         action_group.add_action(&move_up_action);
         action_group.add_action(&move_down_action);
         action_group.add_action(&duplicate_action);
         action_group.add_action(&insert_blank_action);
+
+        let preview_status = if thumbnail.is_some() {
+            PreviewStatus::Ready
+        } else {
+            PreviewStatus::InitialPending
+        };
 
         Self {
             item_type: prepared.item_type,
@@ -973,11 +1066,11 @@ impl FactoryComponent for MergeFileRow {
             rotation: prepared.rotation,
             is_first,
             is_last,
-            thumbnail: None,
-            original_dimensions: None,
-            password: None,
+            thumbnail,
+            original_dimensions,
+            password,
             index: index.clone(),
-            preview_status: PreviewStatus::InitialPending,
+            preview_status,
             action_group,
             move_up_action,
             move_down_action,

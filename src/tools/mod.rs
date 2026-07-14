@@ -15,8 +15,9 @@ pub mod split;
 pub mod watermark;
 
 use gettextrs::gettext;
-use relm4::gtk;
+use relm4::{adw, gtk};
 
+use adw::prelude::{AlertDialogExt, AlertDialogExtManual};
 use gtk::gio;
 use gtk::prelude::{Cast, CastNone, FileExt, ListModelExt, WidgetExt};
 
@@ -252,6 +253,37 @@ pub(super) fn select_folder_dialog(
             callback(file);
         }
     });
+}
+
+pub(super) fn confirm_dialog(
+    button: &gtk::Button,
+    heading: &str,
+    body: &str,
+    confirm_label: &str,
+    confirm_appearance: adw::ResponseAppearance,
+    callback: impl FnOnce() + 'static,
+) {
+    let dialog = adw::AlertDialog::builder()
+        .heading(heading)
+        .body(body)
+        .build();
+
+    dialog.add_response("cancel", &gettext("Cancel"));
+    dialog.add_response("confirm", confirm_label);
+    dialog.set_response_appearance("confirm", confirm_appearance);
+    dialog.set_default_response(Some("cancel"));
+    dialog.set_close_response("cancel");
+
+    let parent = button.root().and_downcast::<gtk::Window>();
+    dialog.choose(
+        parent.as_ref(),
+        None::<&gio::Cancellable>,
+        move |response| {
+            if response == "confirm" {
+                callback();
+            }
+        },
+    );
 }
 
 fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, String> {
