@@ -1,7 +1,4 @@
-# v0.4.3
-
 <ul>
-  <li>Add missing translations for the password dialog</li>
-  <li>Update app's brand colors</li>
+  <li>Add undo actions when performing delete operations</li>
+  <li>Add confirmation dialog for destructive operations</li>
 </ul>
-<p>Thanks to Priit Jõerüüt and gallegonovato for their contributions.</p>
