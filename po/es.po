@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-13 20:44-0400\n"
-"PO-Revision-Date: 2026-07-12 13:25+0000\n"
-"Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
+"PO-Revision-Date: 2026-07-14 11:27+0000\n"
+"Last-Translator: fvasquezc <fvasquezc@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
 "shears-ui/es/>\n"
 "Language: es\n"
@@ -93,11 +93,13 @@ msgstr "Visualice y edite los metadatos de un PDF"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
 msgid "Add undo actions when performing delete operations"
-msgstr ""
+msgstr "Añadir acciones de deshacer al realizar operaciones de eliminación"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
 msgid "Add confirmation dialog for destructive operations"
 msgstr ""
+"Añadir un cuadro de diálogo de confirmación para las operaciones de "
+"eliminación"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add missing translations for the password dialog"
@@ -259,13 +261,12 @@ msgid "Clear File List"
 msgstr "Limpiar lista de archivos"
 
 #: src/tools/merge.rs:250
-#, fuzzy
 msgid "Clear File List?"
-msgstr "Limpiar lista de archivos"
+msgstr "¿Borrar la lista de archivos?"
 
 #: src/tools/merge.rs:251
 msgid "All selected PDF files will be removed from the list."
-msgstr ""
+msgstr "Todos los archivos PDF seleccionados se eliminarán de la lista."
 
 #: src/tools/merge.rs:262
 msgid "Merge"
@@ -346,13 +347,13 @@ msgid "Blank Page"
 msgstr "Página en blanco"
 
 #: src/tools/merge.rs:633 src/tools/organize.rs:824
-#, fuzzy, rust-format
+#, rust-format
 msgid "Removed \"{filename}\""
-msgstr "Eliminar archivo"
+msgstr "\"{filename}\" eliminado"
 
 #: src/tools/merge.rs:635 src/tools/organize.rs:826
 msgid "Undo"
-msgstr ""
+msgstr "Deshacer"
 
 #: src/tools/merge.rs:956 src/tools/organize.rs:274 src/tools/extract.rs:196
 msgid "Rotate Clockwise"
@@ -414,13 +415,15 @@ msgstr "Restablecer el orden y rotación de las páginas"
 
 #: src/tools/organize.rs:548
 msgid "Reset PDF Pages?"
-msgstr ""
+msgstr "¿Restablecer las páginas del PDF?"
 
 #: src/tools/organize.rs:549
 msgid ""
 "All page reordering, deletions, and rotations will be reset to their initial "
 "state."
 msgstr ""
+"Todos los cambios en el orden de las páginas, las eliminaciones y las "
+"rotaciones se restablecerán a su estado inicial."
 
 #: src/tools/organize.rs:560 src/tools/extract.rs:342 src/tools/metadata.rs:182
 #: src/tools/watermark.rs:212 src/tools/mod.rs:232
