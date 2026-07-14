@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-13 20:44-0400\n"
-"PO-Revision-Date: 2026-07-12 13:25+0000\n"
 "Last-Translator: Priit Jõerüüt <jrtcdbrg@noreply.codeberg.org>\n"
 "Language-Team: Estonian <https://translate.codeberg.org/projects/shears/"
 "shears-ui/et/>\n"
 "Language: et\n"
+"PO-Revision-Date: 2026-07-14 12:38-0400\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -90,13 +90,15 @@ msgstr "Lisa vesimärk PDF-faili konkreetsetele lehtedele"
 msgid "View and edit PDF metadata"
 msgstr "Vaata ja muuda PDF-faili metateavet"
 
+# Translated using Gnome's Dialect, might need a review
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
 msgid "Add undo actions when performing delete operations"
-msgstr ""
+msgstr "Kustutustoimingute tegemisel lisage tagasivõtmistoimingud"
 
+# Translated using Gnome's Dialect, might need a review
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
 msgid "Add confirmation dialog for destructive operations"
-msgstr ""
+msgstr "Lisage hävitavate toimingute kinnitusdialoog"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add missing translations for the password dialog"
@@ -255,14 +257,15 @@ msgstr "Kustuta"
 msgid "Clear File List"
 msgstr "Kustuta faililoend"
 
+# Translated using Gnome's Dialect, might need a review
 #: src/tools/merge.rs:250
-#, fuzzy
 msgid "Clear File List?"
-msgstr "Kustuta faililoend"
+msgstr "Kas kustutada faililoend?"
 
+# Translated using Gnome's Dialect, might need a review
 #: src/tools/merge.rs:251
 msgid "All selected PDF files will be removed from the list."
-msgstr ""
+msgstr "Kõik valitud PDF-failid eemaldatakse loendist."
 
 #: src/tools/merge.rs:262
 msgid "Merge"
@@ -342,15 +345,16 @@ msgstr "Väljundfaili avamine ei õnnestunud"
 msgid "Blank Page"
 msgstr "Tühi leht"
 
+# Translated using Gnome's Dialect, might need a review
 #: src/tools/merge.rs:633 src/tools/organize.rs:824
-#, fuzzy, rust-format
+#, rust-format
 msgid "Removed \"{filename}\""
-msgstr "Eemalda fail"
+msgstr "\"{filename}\" eemaldati"
 
+# Translated using Gnome's Dialect, might need a review
 #: src/tools/merge.rs:635 src/tools/organize.rs:826
-#, fuzzy
 msgid "Undo"
-msgstr "Pööra tegev_us tagasi"
+msgstr "Võta tagasi"
 
 #: src/tools/merge.rs:956 src/tools/organize.rs:274 src/tools/extract.rs:196
 msgid "Rotate Clockwise"
@@ -410,15 +414,18 @@ msgstr "Lähtesta"
 msgid "Reset Page Order and Rotations"
 msgstr "Lähtesta lehtede järjestus ja pööramine"
 
+# Translated using Gnome's Dialect. Might need a review
 #: src/tools/organize.rs:548
 msgid "Reset PDF Pages?"
-msgstr ""
+msgstr "Kas lähtestada PDF-lehed?"
 
 #: src/tools/organize.rs:549
 msgid ""
 "All page reordering, deletions, and rotations will be reset to their initial "
 "state."
 msgstr ""
+"Kõik lehtede ümberjärjestused, kustutamised ja pööramised lähtestatakse "
+"algolekusse."
 
 #: src/tools/organize.rs:560 src/tools/extract.rs:342 src/tools/metadata.rs:182
 #: src/tools/watermark.rs:212 src/tools/mod.rs:232
