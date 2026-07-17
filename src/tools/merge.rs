@@ -8,7 +8,9 @@ use relm4::{
 
 use gtk::{gdk, gio, glib};
 
-use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
+use crate::modals::password::{
+    PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
+};
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
@@ -146,7 +148,7 @@ pub struct PreparedFile {
     pub title: String,
     pub size_str: String,
     pub rotation: u16,
-    pub password: Option<String>,
+    pub password: Option<SecretString>,
     pub thumbnail: Option<gdk::MemoryTexture>,
     pub original_dimensions: Option<(f64, f64)>,
 }
@@ -418,7 +420,10 @@ impl Component for MergePage {
                     .filter_map(|row| match &row.item_type {
                         MergeItemType::File(file) => file.path().map(|p| {
                             (
-                                crate::pdf::merge::MergeInput::File(p, row.password.clone()),
+                                crate::pdf::merge::MergeInput::File(
+                                    p,
+                                    row.password.as_ref().map(|s| s.0.clone()),
+                                ),
                                 row.rotation,
                             )
                         }),
@@ -798,7 +803,7 @@ struct MergeFileRow {
     is_last: bool,
     thumbnail: Option<gdk::MemoryTexture>,
     original_dimensions: Option<(f64, f64)>,
-    password: Option<String>,
+    password: Option<SecretString>,
     index: DynamicIndex,
     preview_status: PreviewStatus,
     action_group: gio::SimpleActionGroup,
@@ -812,7 +817,7 @@ enum MergeFileRowMsg {
     RotateClockwise,
     UpdateBounds { is_first: bool, is_last: bool },
     ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
-    RetryWithPassword(String),
+    RetryWithPassword(SecretString),
     RequestInsertBlank,
 }
 
@@ -1152,7 +1157,7 @@ impl FactoryComponent for MergeFileRow {
 fn request_thumbnail(
     item_type: MergeItemType,
     rotation: u16,
-    password: Option<String>,
+    password: Option<SecretString>,
     sender: FactorySender<MergeFileRow>,
 ) {
     if let Err(e) = crate::pdf::preview::thread_pool().push(move || {

@@ -15,7 +15,9 @@ use relm4::{
 
 use gtk::{gdk, gio};
 
-use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
+use crate::modals::password::{
+    PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
+};
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
@@ -126,14 +128,14 @@ struct OrganizePageRowInit {
     rotation: u16,
     thumbnail: Option<gdk::MemoryTexture>,
     original_dimensions: Option<(f64, f64)>,
-    password: Option<String>,
+    password: Option<SecretString>,
 }
 
 struct OrganizePageRow {
     file: gio::File,
     item_type: OrganizeItemType,
     rotation: u16,
-    password: Option<String>,
+    password: Option<SecretString>,
     thumbnail: Option<gdk::MemoryTexture>,
     original_dimensions: Option<(f64, f64)>,
     index: DynamicIndex,
@@ -457,7 +459,7 @@ impl OrganizePageRow {
 
 struct OrganizePage {
     file: Option<gio::File>,
-    password: Option<String>,
+    password: Option<SecretString>,
     is_loading: bool,
     is_saving: bool,
     modern_pdf_format: bool,
@@ -902,7 +904,7 @@ impl Component for OrganizePage {
                         pages,
                         modern_pdf_format: self.modern_pdf_format,
                         remove_metadata: self.remove_metadata,
-                        password: self.password.clone(),
+                        password: self.password.as_ref().map(|s| s.0.clone()),
                     };
 
                     let sender = sender.clone();
@@ -957,7 +959,7 @@ impl Component for OrganizePage {
 }
 
 impl OrganizePage {
-    fn request_thumbnail(&self, password: Option<String>, sender: &ComponentSender<Self>) {
+    fn request_thumbnail(&self, password: Option<SecretString>, sender: &ComponentSender<Self>) {
         if let Some(file) = &self.file {
             let sender_clone = sender.clone();
             let file_clone = file.clone();

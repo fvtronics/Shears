@@ -15,7 +15,9 @@ use relm4::{
 
 use gtk::{gdk, gio};
 
-use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
+use crate::modals::password::{
+    PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
+};
 use crate::pdf::preview::PreviewError;
 use crate::pdf::{ExtractOptions, PdfError, extract_file};
 use crate::tools::page::ToolPage;
@@ -112,7 +114,7 @@ struct ExtractPageRowInit {
     page_index: usize,
     rotation: u16,
     thumbnail: Option<gdk::MemoryTexture>,
-    password: Option<String>,
+    password: Option<SecretString>,
 }
 
 struct ExtractPageRow {
@@ -120,7 +122,7 @@ struct ExtractPageRow {
     page_index: usize,
     selected: bool,
     rotation: u16,
-    password: Option<String>,
+    password: Option<SecretString>,
     thumbnail: Option<gdk::MemoryTexture>,
 }
 
@@ -273,7 +275,7 @@ impl ExtractPageRow {
 
 struct ExtractPage {
     file: Option<gio::File>,
-    password: Option<String>,
+    password: Option<SecretString>,
     page_ranges: String,
     page_ranges_changed: bool,
     page_ranges_error: Option<String>,
@@ -604,7 +606,7 @@ impl Component for ExtractPage {
                         pages,
                         modern_pdf_format: self.modern_pdf_format,
                         remove_metadata: self.remove_metadata,
-                        password: self.password.clone(),
+                        password: self.password.as_ref().map(|s| s.0.clone()),
                     };
 
                     let sender = sender.clone();
@@ -654,7 +656,7 @@ impl Component for ExtractPage {
 }
 
 impl ExtractPage {
-    fn request_thumbnail(&self, password: Option<String>, sender: &ComponentSender<Self>) {
+    fn request_thumbnail(&self, password: Option<SecretString>, sender: &ComponentSender<Self>) {
         if let Some(file) = &self.file {
             let sender_clone = sender.clone();
             let file_clone = file.clone();

@@ -534,8 +534,8 @@ impl Component for SplitPage {
             }
             SplitPageMsg::PasswordDialogOutput(output) => match output {
                 PasswordDialogOutput::Unlock { password, .. } => {
-                    self.password = Some(password.clone());
-                    self.request_thumbnail(Some(password), &sender);
+                    self.password = Some(password.to_string());
+                    self.request_thumbnail(Some(password.to_string()), &sender);
                 }
                 PasswordDialogOutput::Cancelled(_) => {
                     self.clear_file(&sender);

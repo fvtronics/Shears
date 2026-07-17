@@ -12,6 +12,34 @@ pub struct PasswordDialog {
     password_entry: Option<gtk::PasswordEntry>,
 }
 
+#[derive(Clone, PartialEq, Eq, Default)]
+pub struct SecretString(pub String);
+
+impl std::fmt::Debug for SecretString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[REDACTED]")
+    }
+}
+
+impl std::ops::Deref for SecretString {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        self.0.as_str()
+    }
+}
+
+impl From<String> for SecretString {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
+impl From<&str> for SecretString {
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}
+
 #[derive(Debug)]
 pub enum PasswordDialogMsg {
     Show {
@@ -20,8 +48,8 @@ pub enum PasswordDialogMsg {
         is_error: bool,
         parent_window: gtk::Window,
     },
-    PasswordChanged(String),
-    Unlock(String),
+    PasswordChanged(SecretString),
+    Unlock(SecretString),
     Cancel,
 }
 
@@ -29,7 +57,7 @@ pub enum PasswordDialogMsg {
 pub enum PasswordDialogOutput {
     Unlock {
         index: Option<DynamicIndex>,
-        password: String,
+        password: SecretString,
     },
     Cancelled(Option<DynamicIndex>),
 }
@@ -72,7 +100,7 @@ impl Component for PasswordDialog {
                     set_margin_bottom: 10,
 
                     connect_changed[sender] => move |entry| {
-                        sender.input(PasswordDialogMsg::PasswordChanged(entry.text().to_string()));
+                        sender.input(PasswordDialogMsg::PasswordChanged(entry.text().to_string().into()));
                     },
 
                     connect_map => move |entry| {
@@ -108,7 +136,9 @@ impl Component for PasswordDialog {
         let password_entry = widgets.password_entry.clone();
         widgets.dialog.connect_response(None, move |_, response| {
             if response == "unlock" {
-                sender_clone.input(PasswordDialogMsg::Unlock(password_entry.text().to_string()));
+                sender_clone.input(PasswordDialogMsg::Unlock(
+                    password_entry.text().to_string().into(),
+                ));
             } else if response == "cancelled" {
                 sender_clone.input(PasswordDialogMsg::Cancel);
             }
