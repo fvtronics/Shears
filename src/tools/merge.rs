@@ -11,12 +11,12 @@ use gtk::{gdk, gio, glib};
 use crate::modals::password::{
     PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
 };
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{MergeOptions, PdfError, merge_files};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PreviewStatus, Tool, ToolOutput, confirm_dialog, open_pdf_dialog, save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{MergeOptions, PdfError, merge_files};
 
 pub struct MergeTool {
     has_files: bool,
@@ -413,14 +413,14 @@ impl Component for MergePage {
                 self.is_merging = true;
                 self.check_loading_state(&sender);
 
-                let files: Vec<(crate::pdf::merge::MergeInput, u16)> = self
+                let files: Vec<(shears::pdf::merge::MergeInput, u16)> = self
                     .files
                     .guard()
                     .iter()
                     .filter_map(|row| match &row.item_type {
                         MergeItemType::File(file) => file.path().map(|p| {
                             (
-                                crate::pdf::merge::MergeInput::File(
+                                shears::pdf::merge::MergeInput::File(
                                     p,
                                     row.password.as_ref().map(|s| s.0.clone()),
                                 ),
@@ -428,7 +428,7 @@ impl Component for MergePage {
                             )
                         }),
                         MergeItemType::BlankPage { width, height } => Some((
-                            crate::pdf::merge::MergeInput::BlankPage {
+                            shears::pdf::merge::MergeInput::BlankPage {
                                 title: row.title.clone(),
                                 width: *width,
                                 height: *height,
@@ -816,7 +816,7 @@ struct MergeFileRow {
 enum MergeFileRowMsg {
     RotateClockwise,
     UpdateBounds { is_first: bool, is_last: bool },
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     RetryWithPassword(SecretString),
     RequestInsertBlank,
 }
@@ -1160,16 +1160,21 @@ fn request_thumbnail(
     password: Option<SecretString>,
     sender: FactorySender<MergeFileRow>,
 ) {
-    if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
+    if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
         let result = match item_type {
-            MergeItemType::File(file) => crate::pdf::preview::generate_thumbnail(
+            MergeItemType::File(file) => shears::pdf::preview::generate_thumbnail(
                 &file,
                 rotation as i32,
                 password.as_deref(),
                 150.0,
             ),
             MergeItemType::BlankPage { width, height } => {
-                crate::pdf::preview::generate_blank_thumbnail(width, height, rotation as i32, 150.0)
+                shears::pdf::preview::generate_blank_thumbnail(
+                    width,
+                    height,
+                    rotation as i32,
+                    150.0,
+                )
             }
         };
         sender.input(MergeFileRowMsg::ThumbnailReady(result));

@@ -15,13 +15,13 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
     save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 
 pub struct WatermarkTool {
     state: ToolState,
@@ -138,7 +138,7 @@ enum WatermarkPageMsg {
     SetRemoveMetadata(bool),
     SaveTo(gio::File),
     SaveComplete(Result<std::path::PathBuf, PdfError>),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     OpenOutput(std::path::PathBuf),
 }
@@ -609,8 +609,8 @@ impl WatermarkPage {
             let image_file_clone = self.image_file.clone();
             let opacity = self.opacity as f64 / 100.0;
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_watermark_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_watermark_thumbnail(
                     &file_clone,
                     0,
                     0,

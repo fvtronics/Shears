@@ -8,13 +8,13 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, file_stem, open_pdf_dialog,
     select_folder_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{DivideAfter, PdfError, SplitOptions, split_file};
 
 pub struct SplitTool {
     state: ToolState,
@@ -148,7 +148,7 @@ enum SplitPageMsg {
     SetRemoveMetadata(bool),
     SplitComplete(Result<std::path::PathBuf, PdfError>),
     OpenOutput(std::path::PathBuf),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
 }
 
@@ -551,8 +551,8 @@ impl SplitPage {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_thumbnail(
                     &file_clone,
                     0,
                     password.as_deref(),

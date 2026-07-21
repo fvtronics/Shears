@@ -18,13 +18,13 @@ use gtk::{gdk, gio};
 use crate::modals::password::{
     PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
 };
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{ExtractOptions, PdfError, extract_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
     save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{ExtractOptions, PdfError, extract_file};
 
 pub struct ExtractTool {
     state: ToolState,
@@ -128,7 +128,7 @@ struct ExtractPageRow {
 
 #[derive(Debug)]
 enum ExtractPageRowMsg {
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     ToggleSelected,
     SetSelected(bool),
     RotateClockwise,
@@ -255,8 +255,8 @@ impl ExtractPageRow {
         let password = self.password.clone();
         let sender = sender.clone();
 
-        if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-            let result = crate::pdf::preview::generate_page_thumbnail(
+        if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+            let result = shears::pdf::preview::generate_page_thumbnail(
                 &file,
                 page_index,
                 rotation,
@@ -291,7 +291,7 @@ struct ExtractPage {
 #[derive(Debug)]
 enum ExtractPageMsg {
     AddFile(gio::File),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
@@ -661,8 +661,8 @@ impl ExtractPage {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_thumbnail(
                     &file_clone,
                     0,
                     password.as_deref(),
