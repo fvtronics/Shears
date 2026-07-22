@@ -22,6 +22,18 @@ enum Commands {
         /// Output PDF file path
         #[arg(short, long, required = true)]
         output: PathBuf,
+
+        /// Save with PDF 1.5 object streams
+        #[arg(long)]
+        modern_format: bool,
+
+        /// Remove existing metadata before saving
+        #[arg(long)]
+        remove_metadata: bool,
+
+        /// Normalize page sizes to match the largest page
+        #[arg(long)]
+        normalize_page_size: bool,
     },
 }
 
@@ -29,13 +41,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Merge { inputs, output } => {
+        Commands::Merge {
+            inputs,
+            output,
+            modern_format,
+            remove_metadata,
+            normalize_page_size,
+        } => {
             let mut merge_inputs = Vec::new();
             for input in inputs {
                 merge_inputs.push((MergeInput::File(input, None), 0));
             }
 
-            let options = MergeOptions::default();
+            let options = MergeOptions {
+                modern_format,
+                remove_metadata,
+                normalize_page_size,
+            };
 
             if let Err(e) = merge_files(&merge_inputs, &output, &options) {
                 eprintln!("Error merging files: {:?}", e);
