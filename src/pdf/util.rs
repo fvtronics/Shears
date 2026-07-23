@@ -10,7 +10,121 @@ use std::path::Path;
 
 use lopdf::{Document, Object, ObjectId};
 
-use crate::pdf::error::PdfError;
+use crate::pdf::error::{PageRangeError, PdfError};
+
+pub fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, PageRangeError> {
+    let p = s
+        .trim()
+        .parse::<u32>()
+        .map_err(|_| PageRangeError::InvalidInput)?;
+    if p == 0 {
+        return Err(PageRangeError::InvalidInput);
+    }
+    if p > max_pages {
+        return Err(PageRangeError::OutOfBounds {
+            max: max_pages,
+            given: p,
+        });
+    }
+    Ok(p)
+}
+
+pub fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec<u32>, PageRangeError> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Err(PageRangeError::Empty);
+    }
+
+    let mut pages = Vec::new();
+
+    for part in input.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+
+        if part.contains('-') {
+            return Err(PageRangeError::RangesNotSupported);
+        }
+
+        pages.push(parse_page_number(part, max_pages)?);
+    }
+
+    if pages.is_empty() {
+        return Err(PageRangeError::Empty);
+    }
+
+    pages.sort_unstable();
+    pages.dedup();
+
+    Ok(pages)
+}
+
+pub fn validate_page_ranges(input: &str, max_pages: u32) -> Result<Vec<u32>, PageRangeError> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut pages = Vec::new();
+
+    for part in input.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            let start = parse_page_number(start_str, max_pages)?;
+            let end = parse_page_number(end_str, max_pages)?;
+            if start > end {
+                return Err(PageRangeError::InvalidRange { start, end });
+            }
+            for p in start..=end {
+                pages.push(p);
+            }
+        } else {
+            pages.push(parse_page_number(part, max_pages)?);
+        }
+    }
+
+    pages.sort_unstable();
+    pages.dedup();
+
+    Ok(pages)
+}
+
+pub fn format_page_ranges(pages: &[u32]) -> String {
+    if pages.is_empty() {
+        return String::new();
+    }
+
+    let mut result = Vec::new();
+    let mut start = pages[0];
+    let mut prev = pages[0];
+
+    for &page in &pages[1..] {
+        if page == prev + 1 {
+            prev = page;
+        } else {
+            if start == prev {
+                result.push(start.to_string());
+            } else {
+                result.push(format!("{}-{}", start, prev));
+            }
+            start = page;
+            prev = page;
+        }
+    }
+
+    if start == prev {
+        result.push(start.to_string());
+    } else {
+        result.push(format!("{}-{}", start, prev));
+    }
+
+    result.join(",")
+}
 
 pub fn get_inherited_rotation(doc: &Document, page_id: ObjectId) -> i64 {
     let mut current_id = page_id;
@@ -261,5 +375,81 @@ mod tests {
 
         let non_existent = temp_dir.path().join("does_not_exist.pdf");
         assert!(load_document(&non_existent, None).is_err());
+    }
+
+    #[test]
+    fn test_validate_specific_pages_success_cases() {
+        assert_eq!(
+            validate_specific_pages("3, 1, 5", 10).unwrap(),
+            vec![1, 3, 5]
+        );
+        assert_eq!(validate_specific_pages("2, 2, 3", 5).unwrap(), vec![2, 3]);
+        assert_eq!(validate_specific_pages("1, 2,", 5).unwrap(), vec![1, 2]);
+    }
+
+    #[test]
+    fn test_validate_specific_pages_error_cases() {
+        assert_eq!(
+            validate_specific_pages("1-3", 5).unwrap_err(),
+            PageRangeError::RangesNotSupported
+        );
+        assert_eq!(
+            validate_specific_pages("10", 5).unwrap_err(),
+            PageRangeError::OutOfBounds { max: 5, given: 10 }
+        );
+        assert_eq!(
+            validate_specific_pages("0", 5).unwrap_err(),
+            PageRangeError::InvalidInput
+        );
+        assert_eq!(
+            validate_specific_pages("abc", 5).unwrap_err(),
+            PageRangeError::InvalidInput
+        );
+        assert_eq!(
+            validate_specific_pages("", 5).unwrap_err(),
+            PageRangeError::Empty
+        );
+        assert_eq!(
+            validate_specific_pages("   ", 5).unwrap_err(),
+            PageRangeError::Empty
+        );
+    }
+
+    #[test]
+    fn test_validate_page_ranges_success_cases() {
+        assert_eq!(validate_page_ranges("3", 10).unwrap(), vec![3]);
+        assert_eq!(validate_page_ranges("2-5", 10).unwrap(), vec![2, 3, 4, 5]);
+        assert_eq!(
+            validate_page_ranges("1, 3-5, 8", 10).unwrap(),
+            vec![1, 3, 4, 5, 8]
+        );
+        assert_eq!(
+            validate_page_ranges("1-3, 2-4", 10).unwrap(),
+            vec![1, 2, 3, 4]
+        );
+        assert_eq!(validate_page_ranges("3-3", 10).unwrap(), vec![3]);
+        assert!(validate_page_ranges("", 10).unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_validate_page_ranges_error_cases() {
+        assert_eq!(
+            validate_page_ranges("5-2", 10).unwrap_err(),
+            PageRangeError::InvalidRange { start: 5, end: 2 }
+        );
+        assert_eq!(
+            validate_page_ranges("1-20", 10).unwrap_err(),
+            PageRangeError::OutOfBounds { max: 10, given: 20 }
+        );
+    }
+
+    #[test]
+    fn test_format_page_ranges_output() {
+        assert_eq!(format_page_ranges(&[]), "");
+        assert_eq!(format_page_ranges(&[4]), "4");
+        assert_eq!(format_page_ranges(&[5, 6]), "5-6");
+        assert_eq!(format_page_ranges(&[1, 2, 3, 4, 5]), "1-5");
+        assert_eq!(format_page_ranges(&[1, 3, 5]), "1,3,5");
+        assert_eq!(format_page_ranges(&[1, 2, 3, 7, 8, 12]), "1-3,7-8,12");
     }
 }

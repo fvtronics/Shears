@@ -488,13 +488,13 @@ impl Component for WatermarkPage {
                 ) {
                     let specific_pages_list = if matches!(self.pages, WatermarkPages::SpecificPages)
                     {
-                        match crate::tools::validate_page_ranges(
+                        match shears::pdf::util::validate_page_ranges(
                             &self.specific_pages,
                             self.page_count,
                         ) {
                             Ok(pages) => pages,
                             Err(err) => {
-                                self.specific_pages_error = Some(err);
+                                self.specific_pages_error = Some(super::translate_page_error(err));
                                 return;
                             }
                         }

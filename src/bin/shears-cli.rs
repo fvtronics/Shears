@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
+use shears::pdf::extract::{ExtractOptions, extract_document};
 use shears::pdf::merge::{MergeInput, MergeOptions, merge_files};
+use shears::pdf::util::{load_document, validate_page_ranges};
 use shears::pdf::{DivideAfter, SplitOptions, split_file};
 use std::path::PathBuf;
 
@@ -78,6 +80,33 @@ enum Commands {
         #[arg(long)]
         remove_metadata: bool,
     },
+
+    /// Extract pages from a PDF file
+    Extract {
+        /// Input PDF file to extract from
+        #[arg(required = true)]
+        input: PathBuf,
+
+        /// Output PDF file path
+        #[arg(short, long, required = true)]
+        output: PathBuf,
+
+        /// Pages to extract (e.g. "1-5,8,11-13")
+        #[arg(long, required = true)]
+        pages: String,
+
+        /// Password if the PDF is encrypted
+        #[arg(long)]
+        password: Option<String>,
+
+        /// Save with PDF 1.5 object streams
+        #[arg(long)]
+        modern_format: bool,
+
+        /// Remove existing metadata before saving
+        #[arg(long)]
+        remove_metadata: bool,
+    },
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -102,10 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 normalize_page_size,
             };
 
-            if let Err(e) = merge_files(&merge_inputs, &output, &options) {
-                eprintln!("Error merging files: {:?}", e);
-                std::process::exit(1);
-            }
+            merge_files(&merge_inputs, &output, &options)?;
         }
         Commands::Split {
             input,
@@ -145,10 +171,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 remove_metadata,
             };
 
-            if let Err(e) = split_file(&(input, 0), output, &options) {
-                eprintln!("Error splitting file: {:?}", e);
-                std::process::exit(1);
-            }
+            split_file(&(input, 0), output, &options)?;
+        }
+        Commands::Extract {
+            input,
+            output,
+            pages,
+            password,
+            modern_format,
+            remove_metadata,
+        } => {
+            let doc = load_document(&input, password.as_deref())?;
+
+            let max_pages = doc.get_pages().len() as u32;
+            let parsed_pages = validate_page_ranges(&pages, max_pages)?;
+
+            let extract_pages = parsed_pages
+                .into_iter()
+                .map(|p| ((p - 1) as usize, 0))
+                .collect();
+
+            let options = ExtractOptions {
+                pages: extract_pages,
+                modern_pdf_format: modern_format,
+                remove_metadata,
+                password,
+            };
+
+            extract_document(doc, output, &options)?;
         }
     }
 

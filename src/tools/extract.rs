@@ -560,7 +560,10 @@ impl Component for ExtractPage {
             ExtractPageMsg::SetPageRanges(text) => {
                 self.page_ranges = text;
                 self.page_ranges_error = None;
-                match super::validate_page_ranges(&self.page_ranges, self.pages.len() as u32) {
+                match shears::pdf::util::validate_page_ranges(
+                    &self.page_ranges,
+                    self.pages.len() as u32,
+                ) {
                     Ok(selected_pages) => {
                         let selected_set: std::collections::HashSet<u32> =
                             selected_pages.into_iter().collect();
@@ -571,7 +574,7 @@ impl Component for ExtractPage {
                         }
                     }
                     Err(err) => {
-                        self.page_ranges_error = Some(err);
+                        self.page_ranges_error = Some(super::translate_page_error(err));
                     }
                 }
             }
@@ -582,7 +585,7 @@ impl Component for ExtractPage {
                         selected_pages.push((row.page_index + 1) as u32);
                     }
                 }
-                self.page_ranges = super::format_page_ranges(&selected_pages);
+                self.page_ranges = shears::pdf::util::format_page_ranges(&selected_pages);
                 self.page_ranges_changed = true;
                 self.page_ranges_error = None;
             }
