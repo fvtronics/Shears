@@ -1,4 +1,4 @@
 <ul>
-  <li>Add undo actions when performing delete operations</li>
-  <li>Add confirmation dialog for destructive operations</li>
+  <li>Add command line interface that use the PDF backend</li>
+  <li>Address security concern with PDF passwords in logs</li>
 </ul>

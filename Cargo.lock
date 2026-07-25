@@ -1980,7 +1980,7 @@ dependencies = [
 
 [[package]]
 name = "shears"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "cairo-rs",
  "clap",
