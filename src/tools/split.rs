@@ -462,7 +462,7 @@ impl Component for SplitPage {
                     };
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = split_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = split_file(&file_path, &output_path, &options);
                         let msg_result = result.map(|_| output_path);
                         sender.input(SplitPageMsg::SplitComplete(msg_result));
                     });

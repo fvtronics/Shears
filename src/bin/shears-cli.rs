@@ -177,7 +177,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ..Default::default()
             };
 
-            compress_file(&(input, 0), output, &options)?;
+            compress_file(&input, &output, &options)?;
         }
         Commands::Merge {
             inputs,
@@ -237,7 +237,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 remove_metadata,
             };
 
-            split_file(&(input, 0), output, &options)?;
+            split_file(&input, &output, &options)?;
         }
         Commands::Extract {
             input,
@@ -264,7 +264,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 password,
             };
 
-            extract_document(doc, output, &options)?;
+            extract_document(doc, &output, &options)?;
         }
     }
 

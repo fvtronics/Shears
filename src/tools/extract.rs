@@ -614,7 +614,7 @@ impl Component for ExtractPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = extract_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = extract_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(ExtractPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(ExtractPageMsg::SaveComplete(Err(e))),

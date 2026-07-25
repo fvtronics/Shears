@@ -395,7 +395,7 @@ impl Component for CompressPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = compress_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = compress_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(CompressPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(CompressPageMsg::SaveComplete(Err(e))),

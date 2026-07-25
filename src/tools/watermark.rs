@@ -518,7 +518,7 @@ impl Component for WatermarkPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = watermark_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = watermark_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(WatermarkPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(WatermarkPageMsg::SaveComplete(Err(e))),

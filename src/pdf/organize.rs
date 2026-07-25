@@ -28,12 +28,10 @@ pub struct OrganizeOptions {
 }
 
 pub fn organize_file<P: AsRef<Path>>(
-    file: &(P, u16),
+    input_path: P,
     output_path: P,
     options: &OrganizeOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
-
     let mut doc = load_document(input_path, options.password.as_deref())?;
 
     let original_pages: Vec<ObjectId> = doc.get_pages().values().copied().collect();
@@ -178,7 +176,7 @@ mod tests {
             ..Default::default()
         };
 
-        organize_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        organize_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
@@ -249,7 +247,7 @@ mod tests {
             ..Default::default()
         };
 
-        organize_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        organize_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();

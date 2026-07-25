@@ -911,7 +911,7 @@ impl Component for OrganizePage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = organize_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = organize_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(OrganizePageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(OrganizePageMsg::SaveComplete(Err(e))),
