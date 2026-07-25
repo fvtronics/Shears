@@ -1,9 +1,30 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use shears::pdf::extract::{ExtractOptions, extract_document};
 use shears::pdf::merge::{MergeInput, MergeOptions, merge_files};
 use shears::pdf::util::{load_document, validate_page_ranges};
+use shears::pdf::{CompressOptions, QualityLevel, compress_file};
 use shears::pdf::{DivideAfter, SplitOptions, split_file};
 use std::path::PathBuf;
+
+#[derive(ValueEnum, Clone, Debug, Default)]
+enum CliQualityLevel {
+    Original,
+    Print,
+    #[default]
+    Display,
+    Draft,
+}
+
+impl From<CliQualityLevel> for QualityLevel {
+    fn from(lvl: CliQualityLevel) -> Self {
+        match lvl {
+            CliQualityLevel::Original => QualityLevel::Original,
+            CliQualityLevel::Print => QualityLevel::Print,
+            CliQualityLevel::Display => QualityLevel::Display,
+            CliQualityLevel::Draft => QualityLevel::Draft,
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "shears-cli")]
@@ -15,6 +36,33 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
+    /// Compress a PDF file
+    Compress {
+        /// Input PDF file to compress
+        #[arg(required = true)]
+        input: PathBuf,
+
+        /// Output PDF file path
+        #[arg(short, long, required = true)]
+        output: PathBuf,
+
+        /// Image quality level
+        #[arg(long, default_value = "display")]
+        quality: CliQualityLevel,
+
+        /// Password if the PDF is encrypted
+        #[arg(long)]
+        password: Option<String>,
+
+        /// Save with PDF 1.5 object streams
+        #[arg(long)]
+        modern_format: bool,
+
+        /// Remove existing metadata before saving
+        #[arg(long)]
+        remove_metadata: bool,
+    },
+
     /// Merge multiple PDFs into a single file
     Merge {
         /// Input PDF files to merge
@@ -113,6 +161,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Compress {
+            input,
+            output,
+            quality,
+            password,
+            modern_format,
+            remove_metadata,
+        } => {
+            let options = CompressOptions {
+                image_quality: quality.into(),
+                modern_pdf_format: modern_format,
+                remove_metadata,
+                password,
+                ..Default::default()
+            };
+
+            compress_file(&(input, 0), output, &options)?;
+        }
         Commands::Merge {
             inputs,
             output,
