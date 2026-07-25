@@ -2,7 +2,6 @@
 mod config;
 mod app;
 mod modals;
-mod pdf;
 mod tools;
 
 use config::{APP_ID, GETTEXT_PACKAGE, LOCALEDIR, RESOURCES_FILE};

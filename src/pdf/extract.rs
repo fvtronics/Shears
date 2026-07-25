@@ -21,15 +21,11 @@ pub struct ExtractOptions {
     pub password: Option<String>,
 }
 
-pub fn extract_file<P: AsRef<Path>>(
-    file: &(P, u16),
+pub fn extract_document<P: AsRef<Path>>(
+    mut doc: lopdf::Document,
     output_path: P,
     options: &ExtractOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
-
-    let mut doc = load_document(input_path, options.password.as_deref())?;
-
     let original_pages: Vec<ObjectId> = doc.get_pages().values().copied().collect();
     let original_rotations: Vec<i64> = original_pages
         .iter()
@@ -105,6 +101,15 @@ pub fn extract_file<P: AsRef<Path>>(
     Ok(())
 }
 
+pub fn extract_file<P: AsRef<Path>>(
+    input_path: P,
+    output_path: P,
+    options: &ExtractOptions,
+) -> Result<(), PdfError> {
+    let doc = load_document(input_path, options.password.as_deref())?;
+    extract_document(doc, output_path, options)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,7 +141,7 @@ mod tests {
             ..Default::default()
         };
 
-        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        extract_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
@@ -189,7 +194,7 @@ mod tests {
             ..Default::default()
         };
 
-        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        extract_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();
@@ -238,7 +243,7 @@ mod tests {
             ..Default::default()
         };
 
-        extract_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        extract_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_pages: Vec<ObjectId> = out_doc.get_pages().values().copied().collect();

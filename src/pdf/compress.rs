@@ -68,12 +68,10 @@ impl Default for CompressOptions {
 }
 
 pub fn compress_file<P: AsRef<Path>>(
-    file: &(P, u16),
+    input_path: P,
     output_path: P,
     options: &CompressOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
-
     let mut doc = load_document(input_path, options.password.as_deref())?;
 
     if options.remove_metadata {
@@ -242,7 +240,7 @@ mod tests {
             image_quality: QualityLevel::Display,
             ..Default::default()
         };
-        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        compress_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_stream = match out_doc.objects.get(&img_id).unwrap() {
@@ -292,7 +290,7 @@ mod tests {
             image_quality: QualityLevel::Display,
             ..Default::default()
         };
-        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        compress_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_stream = match out_doc.objects.get(&img_id).unwrap() {
@@ -333,7 +331,7 @@ mod tests {
             image_quality: QualityLevel::Display,
             ..Default::default()
         };
-        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        compress_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         let out_stream = match out_doc.objects.get(&img_id).unwrap() {
@@ -393,7 +391,7 @@ mod tests {
             remove_empty_streams: true,
             ..Default::default()
         };
-        compress_file(&(input_path.clone(), 0), output_path.clone(), &options).unwrap();
+        compress_file(&input_path, &output_path, &options).unwrap();
 
         let out_doc = load_document(&output_path, None).unwrap();
         assert!(!out_doc.objects.contains_key(&unref_id));

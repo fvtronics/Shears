@@ -18,13 +18,13 @@ use gtk::{gdk, gio};
 use crate::modals::password::{
     PasswordDialog, PasswordDialogMsg, PasswordDialogOutput, SecretString,
 };
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, confirm_dialog, file_name,
     open_pdf_dialog, save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{OrganizeOptions, OrganizePageInput, PdfError, organize_file};
 
 pub struct OrganizeTool {
     state: ToolState,
@@ -148,7 +148,7 @@ struct OrganizePageRow {
 
 #[derive(Debug)]
 enum OrganizePageRowMsg {
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     RotateClockwise,
     RefreshBounds(usize),
 }
@@ -434,17 +434,19 @@ impl OrganizePageRow {
         let password = self.password.clone();
         let sender = sender.clone();
 
-        if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
+        if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
             let result = match item_type {
-                OrganizeItemType::Page(page_index) => crate::pdf::preview::generate_page_thumbnail(
-                    &file,
-                    page_index as i32,
-                    rotation,
-                    password.as_deref(),
-                    200.0,
-                ),
+                OrganizeItemType::Page(page_index) => {
+                    shears::pdf::preview::generate_page_thumbnail(
+                        &file,
+                        page_index as i32,
+                        rotation,
+                        password.as_deref(),
+                        200.0,
+                    )
+                }
                 OrganizeItemType::BlankPage { width, height } => {
-                    crate::pdf::preview::generate_blank_thumbnail(width, height, rotation, 200.0)
+                    shears::pdf::preview::generate_blank_thumbnail(width, height, rotation, 200.0)
                 }
             };
             sender.input(OrganizePageRowMsg::ThumbnailReady(result));
@@ -472,7 +474,7 @@ struct OrganizePage {
 #[derive(Debug)]
 enum OrganizePageMsg {
     AddFile(gio::File),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     MovePageLeft(DynamicIndex),
     MovePageRight(DynamicIndex),
@@ -909,7 +911,7 @@ impl Component for OrganizePage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = organize_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = organize_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(OrganizePageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(OrganizePageMsg::SaveComplete(Err(e))),
@@ -964,8 +966,8 @@ impl OrganizePage {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_thumbnail(
                     &file_clone,
                     0,
                     password.as_deref(),

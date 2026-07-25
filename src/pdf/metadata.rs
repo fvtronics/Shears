@@ -30,11 +30,10 @@ pub struct PdfMetadata {
 }
 
 pub fn update_metadata<P: AsRef<Path>>(
-    file: &(P, u16),
+    input_path: P,
     output_path: P,
     options: &MetadataOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
     let bytes = fs::read(input_path.as_ref())?;
     let mut doc = if let Some(pass) = &options.password {
         Document::load_mem_with_options(&bytes, lopdf::LoadOptions::with_password(pass.as_str()))?
@@ -161,7 +160,7 @@ mod tests {
             remove_metadata: false,
             password: None,
         };
-        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+        update_metadata(&input_path, &output_path, &options).unwrap();
 
         let loaded_meta = read_metadata(&output_path, None).unwrap();
         assert_eq!(loaded_meta.title, "Reporte año 2026");
@@ -208,7 +207,7 @@ mod tests {
             modern_pdf_format: true,
             ..Default::default()
         };
-        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+        update_metadata(&input_path, &output_path, &options).unwrap();
 
         let loaded_meta = read_metadata(&output_path, None).unwrap();
         assert!(loaded_meta.title.is_empty());
@@ -251,7 +250,7 @@ mod tests {
             remove_metadata: false,
             password: None,
         };
-        update_metadata(&(input_path, 0), output_path.clone(), &options).unwrap();
+        update_metadata(&input_path, &output_path, &options).unwrap();
 
         let inc_bytes = fs::read(&output_path).unwrap();
         assert!(inc_bytes.len() > orig_bytes.len());

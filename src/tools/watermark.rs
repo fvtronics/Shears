@@ -15,13 +15,13 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
     save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{PdfError, WatermarkLayer, WatermarkOptions, WatermarkPages, watermark_file};
 
 pub struct WatermarkTool {
     state: ToolState,
@@ -138,7 +138,7 @@ enum WatermarkPageMsg {
     SetRemoveMetadata(bool),
     SaveTo(gio::File),
     SaveComplete(Result<std::path::PathBuf, PdfError>),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     OpenOutput(std::path::PathBuf),
 }
@@ -488,13 +488,13 @@ impl Component for WatermarkPage {
                 ) {
                     let specific_pages_list = if matches!(self.pages, WatermarkPages::SpecificPages)
                     {
-                        match crate::tools::validate_page_ranges(
+                        match shears::pdf::util::validate_page_ranges(
                             &self.specific_pages,
                             self.page_count,
                         ) {
                             Ok(pages) => pages,
                             Err(err) => {
-                                self.specific_pages_error = Some(err);
+                                self.specific_pages_error = Some(super::translate_page_error(err));
                                 return;
                             }
                         }
@@ -518,7 +518,7 @@ impl Component for WatermarkPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result = watermark_file(&(file_path, 0), output_path.clone(), &options);
+                        let result = watermark_file(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(WatermarkPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(WatermarkPageMsg::SaveComplete(Err(e))),
@@ -609,8 +609,8 @@ impl WatermarkPage {
             let image_file_clone = self.image_file.clone();
             let opacity = self.opacity as f64 / 100.0;
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_watermark_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_watermark_thumbnail(
                     &file_clone,
                     0,
                     0,

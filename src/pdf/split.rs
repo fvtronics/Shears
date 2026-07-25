@@ -30,12 +30,10 @@ pub struct SplitOptions {
 }
 
 pub fn split_file<P: AsRef<Path>>(
-    file: &(P, u16),
+    input_path: P,
     output_path: P,
     options: &SplitOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
-
     let doc = load_document(input_path, options.password.as_deref())?;
 
     let total_pages = doc.get_pages().len() as u32;
@@ -177,7 +175,7 @@ mod tests {
             prefix: "split_test".to_string(),
             ..Default::default()
         };
-        split_file(&(input_path, 0), temp_dir.path().to_path_buf(), &options).unwrap();
+        split_file(&input_path, &temp_dir.path().to_path_buf(), &options).unwrap();
 
         let out_path = temp_dir.path().join("split_test_001.pdf");
         assert!(out_path.exists());

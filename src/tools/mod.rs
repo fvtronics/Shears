@@ -286,118 +286,19 @@ pub(super) fn confirm_dialog(
     );
 }
 
-fn parse_page_number(s: &str, max_pages: u32) -> Result<u32, String> {
-    let p = s
-        .trim()
-        .parse::<u32>()
-        .map_err(|_| gettext("Invalid input"))?;
-    if p == 0 {
-        return Err(gettext("Invalid input"));
-    }
-    if p > max_pages {
-        return Err(gettext("Contains out of range pages (Max: {max})")
-            .replace("{max}", &max_pages.to_string()));
-    }
-    Ok(p)
-}
-
-pub(super) fn validate_specific_pages(input: &str, max_pages: u32) -> Result<Vec<u32>, String> {
-    let input = input.trim();
-    if input.is_empty() {
-        return Err(gettext("Please specify pages"));
-    }
-
-    let mut pages = Vec::new();
-
-    for part in input.split(',') {
-        let part = part.trim();
-        if part.is_empty() {
-            continue;
+pub(super) fn translate_page_error(err: shears::pdf::error::PageRangeError) -> String {
+    use shears::pdf::error::PageRangeError;
+    match err {
+        PageRangeError::InvalidInput => gettext("Invalid input"),
+        PageRangeError::OutOfBounds { max, .. } => {
+            gettext("Contains out of range pages (Max: {max})").replace("{max}", &max.to_string())
         }
-
-        if part.contains('-') {
-            return Err(gettext("Ranges are not supported for splitting"));
-        }
-
-        pages.push(parse_page_number(part, max_pages)?);
+        PageRangeError::InvalidRange { start, end } => gettext("Invalid page range: {start}-{end}")
+            .replace("{start}", &start.to_string())
+            .replace("{end}", &end.to_string()),
+        PageRangeError::RangesNotSupported => gettext("Ranges are not supported for splitting"),
+        PageRangeError::Empty => gettext("Please specify pages"),
     }
-
-    if pages.is_empty() {
-        return Err(gettext("Please specify pages"));
-    }
-
-    pages.sort_unstable();
-    pages.dedup();
-
-    Ok(pages)
-}
-
-pub(super) fn validate_page_ranges(input: &str, max_pages: u32) -> Result<Vec<u32>, String> {
-    let input = input.trim();
-    if input.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    let mut pages = Vec::new();
-
-    for part in input.split(',') {
-        let part = part.trim();
-        if part.is_empty() {
-            continue;
-        }
-
-        if let Some((start_str, end_str)) = part.split_once('-') {
-            let start = parse_page_number(start_str, max_pages)?;
-            let end = parse_page_number(end_str, max_pages)?;
-            if start > end {
-                return Err(gettext("Invalid page range: {start}-{end}")
-                    .replace("{start}", &start.to_string())
-                    .replace("{end}", &end.to_string()));
-            }
-            for p in start..=end {
-                pages.push(p);
-            }
-        } else {
-            pages.push(parse_page_number(part, max_pages)?);
-        }
-    }
-
-    pages.sort_unstable();
-    pages.dedup();
-
-    Ok(pages)
-}
-
-pub(super) fn format_page_ranges(pages: &[u32]) -> String {
-    if pages.is_empty() {
-        return String::new();
-    }
-
-    let mut result = Vec::new();
-    let mut start = pages[0];
-    let mut prev = pages[0];
-
-    for &page in &pages[1..] {
-        if page == prev + 1 {
-            prev = page;
-        } else {
-            if start == prev {
-                result.push(start.to_string());
-            } else {
-                result.push(format!("{}-{}", start, prev));
-            }
-            start = page;
-            prev = page;
-        }
-    }
-
-    if start == prev {
-        result.push(start.to_string());
-    } else {
-        result.push(format!("{}-{}", start, prev));
-    }
-
-    result.join(",")
 }
 
 pub(super) fn file_stem(file: &gio::File) -> String {
@@ -440,57 +341,5 @@ mod tests {
 
         state.update_loading(false);
         assert_eq!(state, ToolState::Ready);
-    }
-
-    #[test]
-    fn validate_specific_pages_success_cases() {
-        assert_eq!(
-            validate_specific_pages("3, 1, 5", 10).unwrap(),
-            vec![1, 3, 5]
-        );
-        assert_eq!(validate_specific_pages("2, 2, 3", 5).unwrap(), vec![2, 3]);
-        assert_eq!(validate_specific_pages("1, 2,", 5).unwrap(), vec![1, 2]);
-    }
-
-    #[test]
-    fn validate_specific_pages_error_cases() {
-        assert!(validate_specific_pages("1-3", 5).is_err());
-        assert!(validate_specific_pages("10", 5).is_err());
-        assert!(validate_specific_pages("0", 5).is_err());
-        assert!(validate_specific_pages("abc", 5).is_err());
-        assert!(validate_specific_pages("", 5).is_err());
-        assert!(validate_specific_pages("   ", 5).is_err());
-    }
-
-    #[test]
-    fn validate_page_ranges_success_cases() {
-        assert_eq!(validate_page_ranges("3", 10).unwrap(), vec![3]);
-        assert_eq!(validate_page_ranges("2-5", 10).unwrap(), vec![2, 3, 4, 5]);
-        assert_eq!(
-            validate_page_ranges("1, 3-5, 8", 10).unwrap(),
-            vec![1, 3, 4, 5, 8]
-        );
-        assert_eq!(
-            validate_page_ranges("1-3, 2-4", 10).unwrap(),
-            vec![1, 2, 3, 4]
-        );
-        assert_eq!(validate_page_ranges("3-3", 10).unwrap(), vec![3]);
-        assert!(validate_page_ranges("", 10).unwrap().is_empty());
-    }
-
-    #[test]
-    fn validate_page_ranges_error_cases() {
-        assert!(validate_page_ranges("5-2", 10).is_err());
-        assert!(validate_page_ranges("1-20", 10).is_err());
-    }
-
-    #[test]
-    fn format_page_ranges_output() {
-        assert_eq!(format_page_ranges(&[]), "");
-        assert_eq!(format_page_ranges(&[4]), "4");
-        assert_eq!(format_page_ranges(&[5, 6]), "5-6");
-        assert_eq!(format_page_ranges(&[1, 2, 3, 4, 5]), "1-5");
-        assert_eq!(format_page_ranges(&[1, 3, 5]), "1,3,5");
-        assert_eq!(format_page_ranges(&[1, 2, 3, 7, 8, 12]), "1-3,7-8,12");
     }
 }

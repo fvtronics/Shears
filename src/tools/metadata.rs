@@ -8,13 +8,13 @@ use relm4::{
 use gtk::{gdk, gio};
 
 use crate::modals::password::{PasswordDialog, PasswordDialogMsg, PasswordDialogOutput};
-use crate::pdf::preview::PreviewError;
-use crate::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 use crate::tools::page::ToolPage;
 use crate::tools::{
     PageOutput, PreviewStatus, Tool, ToolOutput, ToolState, file_name, open_pdf_dialog,
     save_pdf_dialog,
 };
+use shears::pdf::preview::PreviewError;
+use shears::pdf::{MetadataOptions, PdfError, PdfMetadata, read_metadata, update_metadata};
 
 pub struct MetadataTool {
     state: ToolState,
@@ -130,7 +130,7 @@ enum MetadataPageMsg {
     SaveComplete(Result<std::path::PathBuf, PdfError>),
     SetModernPdfFormat(bool),
     SetRemoveMetadata(bool),
-    ThumbnailReady(Result<crate::pdf::preview::ThumbnailResult, PreviewError>),
+    ThumbnailReady(Result<shears::pdf::preview::ThumbnailResult, PreviewError>),
     PasswordDialogOutput(PasswordDialogOutput),
     OpenOutput(std::path::PathBuf),
     MetadataReady(Result<PdfMetadata, PdfError>),
@@ -429,8 +429,7 @@ impl Component for MetadataPage {
 
                     let sender = sender.clone();
                     relm4::spawn_blocking(move || {
-                        let result =
-                            update_metadata(&(file_path, 0), output_path.clone(), &options);
+                        let result = update_metadata(&file_path, &output_path, &options);
                         match result {
                             Ok(_) => sender.input(MetadataPageMsg::SaveComplete(Ok(output_path))),
                             Err(e) => sender.input(MetadataPageMsg::SaveComplete(Err(e))),
@@ -547,8 +546,8 @@ impl MetadataPage {
             let sender_clone = sender.clone();
             let file_clone = file.clone();
 
-            if let Err(e) = crate::pdf::preview::thread_pool().push(move || {
-                let result = crate::pdf::preview::generate_thumbnail(
+            if let Err(e) = shears::pdf::preview::thread_pool().push(move || {
+                let result = shears::pdf::preview::generate_thumbnail(
                     &file_clone,
                     0,
                     password.as_deref(),

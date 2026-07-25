@@ -59,12 +59,10 @@ pub struct WatermarkOptions {
 }
 
 pub fn watermark_file<P: AsRef<Path>>(
-    file: &(P, u16),
+    input_path: P,
     output_path: P,
     options: &WatermarkOptions,
 ) -> Result<(), PdfError> {
-    let (input_path, _) = file;
-
     let mut doc = load_document(input_path, options.password.as_deref())?;
 
     let img = image::open(&options.image_path)?;
@@ -468,7 +466,7 @@ mod tests {
             opacity: 100,
             ..Default::default()
         };
-        watermark_file(&(input_pdf.clone(), 0), output_trans.clone(), &opts_trans).unwrap();
+        watermark_file(&input_pdf, &output_trans, &opts_trans).unwrap();
 
         let doc_trans = load_document(&output_trans, None).unwrap();
         let mut found_rgb_with_smask = false;
@@ -506,7 +504,7 @@ mod tests {
             opacity: 100,
             ..Default::default()
         };
-        watermark_file(&(input_pdf.clone(), 0), output_opaque.clone(), &opts_opaque).unwrap();
+        watermark_file(&input_pdf, &output_opaque, &opts_opaque).unwrap();
 
         let doc_opaque = load_document(&output_opaque, None).unwrap();
         for obj in doc_opaque.objects.values() {
@@ -540,7 +538,7 @@ mod tests {
             pages: WatermarkPages::FirstPage,
             ..Default::default()
         };
-        watermark_file(&(input_pdf.clone(), 0), output_first.clone(), &opts_first).unwrap();
+        watermark_file(&input_pdf, &output_first, &opts_first).unwrap();
 
         let doc_first = load_document(&output_first, None).unwrap();
         let page_ids_first: Vec<ObjectId> = doc_first.get_pages().values().copied().collect();
@@ -568,12 +566,7 @@ mod tests {
             specific_pages: vec![2, 4],
             ..Default::default()
         };
-        watermark_file(
-            &(input_pdf.clone(), 0),
-            output_specific.clone(),
-            &opts_specific,
-        )
-        .unwrap();
+        watermark_file(&input_pdf, &output_specific, &opts_specific).unwrap();
 
         let doc_specific = load_document(&output_specific, None).unwrap();
         let page_ids_spec: Vec<ObjectId> = doc_specific.get_pages().values().copied().collect();
