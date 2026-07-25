@@ -9,6 +9,12 @@ option(
   description: 'The build profile for Shears. One of "default" or "development".'
 )
 option(
+  'cli',
+  type: 'boolean',
+  value: false,
+  description: 'Build the command line interface'
+)
+option(
   'cargo-home',
   type: 'string',
   value: '',
