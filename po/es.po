@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-13 20:44-0400\n"
+"POT-Creation-Date: 2026-07-25 07:46-0400\n"
 "PO-Revision-Date: 2026-07-14 16:27+0000\n"
 "Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
@@ -20,7 +20,7 @@ msgstr ""
 "X-Generator: Weblate 2026.6.1\n"
 
 #: data/com.fvtronics.shears.desktop.in.in:2
-#: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:33
+#: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:32
 msgid "Shears"
 msgstr "Shears"
 
@@ -92,67 +92,70 @@ msgid "View and edit PDF metadata"
 msgstr "Visualice y edite los metadatos de un PDF"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
+msgid "Add command line interface that use the PDF backend"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+msgid "Address security concern with PDF passwords in logs"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add undo actions when performing delete operations"
 msgstr "Añadir acciones de deshacer al realizar operaciones de eliminación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+#: data/com.fvtronics.shears.metainfo.xml.in.in:70
 msgid "Add confirmation dialog for destructive operations"
 msgstr ""
 "Añadir un cuadro de diálogo de confirmación para las operaciones de "
 "eliminación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:69
+#: data/com.fvtronics.shears.metainfo.xml.in.in:77
 msgid "Add missing translations for the password dialog"
 msgstr "Se añadieron las traducciones faltantes para el diálogo de contraseña"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:70
+#: data/com.fvtronics.shears.metainfo.xml.in.in:78
 msgid "Update app's brand colors"
 msgstr "Se actualizaron los colores de marca de la aplicación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:72
-#: data/com.fvtronics.shears.metainfo.xml.in.in:81
+#: data/com.fvtronics.shears.metainfo.xml.in.in:80
+#: data/com.fvtronics.shears.metainfo.xml.in.in:89
 msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr "Gracias a Priit Jõerüüt y gallegonovato por sus contribuciones."
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:78
+#: data/com.fvtronics.shears.metainfo.xml.in.in:86
 msgid "Add Estonian translation"
 msgstr "Se añadió una traducción al estonio"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:79
+#: data/com.fvtronics.shears.metainfo.xml.in.in:87
 msgid "Improve Spanish translation"
 msgstr "Se mejoró la traducción al español"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:86
-#: data/com.fvtronics.shears.metainfo.xml.in.in:99
+#: data/com.fvtronics.shears.metainfo.xml.in.in:94
 #: data/com.fvtronics.shears.metainfo.xml.in.in:107
 msgid "New"
 msgstr "Nuevo"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:88
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
 msgid "Add small screen and touchscreen compatibility"
 msgstr "Añadido compatibilidad con pantallas pequeñas y táctiles"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:90
+#: data/com.fvtronics.shears.metainfo.xml.in.in:98
 msgid "Changes"
 msgstr "Cambios"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:92
+#: data/com.fvtronics.shears.metainfo.xml.in.in:100
 msgid "Change app name to Shears"
 msgstr "Renombrada la aplicación como Shears"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:93
+#: data/com.fvtronics.shears.metainfo.xml.in.in:101
 msgid "Improve app responsiveness when resizing it's window"
 msgstr ""
 "Mejorada la capacidad de respuesta de la aplicación al redimensionar su "
 "ventana"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:101
+#: data/com.fvtronics.shears.metainfo.xml.in.in:109
 msgid "Add tool to watermark PDF files"
 msgstr "Añadida una herramienta para añadir una marca de agua a los PDF"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:109
-msgid "Add option to extract specific pages from a PDF file"
-msgstr "Añadida una opción para extraer páginas específicas de un PDF"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
@@ -241,183 +244,183 @@ msgstr "Actualizar detalles del documento"
 msgid "Processing…"
 msgstr "Procesando…"
 
-#: src/tools/merge.rs:102
+#: src/tools/merge.rs:104
 #, rust-format
 msgid "{count} file selected"
 msgid_plural "{count} files selected"
 msgstr[0] "{count} archivo seleccionado"
 msgstr[1] "{count} archivos seleccionados"
 
-#: src/tools/merge.rs:230
+#: src/tools/merge.rs:232
 msgid "Add PDF Files"
 msgstr "Añadir archivos PDF"
 
-#: src/tools/merge.rs:242 src/tools/merge.rs:252
+#: src/tools/merge.rs:244 src/tools/merge.rs:254
 msgid "Clear"
 msgstr "Limpiar"
 
-#: src/tools/merge.rs:243
+#: src/tools/merge.rs:245
 msgid "Clear File List"
 msgstr "Limpiar lista de archivos"
 
-#: src/tools/merge.rs:250
+#: src/tools/merge.rs:252
 msgid "Clear File List?"
 msgstr "¿Borrar la lista de archivos?"
 
-#: src/tools/merge.rs:251
+#: src/tools/merge.rs:253
 msgid "All selected PDF files will be removed from the list."
 msgstr "Todos los archivos PDF seleccionados se eliminarán de la lista."
 
-#: src/tools/merge.rs:262
+#: src/tools/merge.rs:264
 msgid "Merge"
 msgstr "Combinar"
 
-#: src/tools/merge.rs:263
+#: src/tools/merge.rs:265
 msgid "Merge Selected PDFs"
 msgstr "Combinar los PDF seleccionados"
 
-#: src/tools/merge.rs:269
+#: src/tools/merge.rs:271
 msgid "Save Merged PDF"
 msgstr "Guardar archivo combinado"
 
-#: src/tools/merge.rs:278 src/tools/organize.rs:578 src/tools/extract.rs:360
+#: src/tools/merge.rs:280 src/tools/organize.rs:582 src/tools/extract.rs:362
 #: src/tools/split.rs:216 src/tools/metadata.rs:200 src/tools/watermark.rs:230
 #: src/tools/compress.rs:194
 msgid "Advanced Options"
 msgstr "Opciones avanzadas"
 
-#: src/tools/merge.rs:285 src/tools/organize.rs:585 src/tools/extract.rs:367
+#: src/tools/merge.rs:287 src/tools/organize.rs:589 src/tools/extract.rs:369
 msgid "Rotate _all"
 msgstr "Rotar _todo"
 
-#: src/tools/merge.rs:295 src/tools/organize.rs:595 src/tools/extract.rs:377
+#: src/tools/merge.rs:297 src/tools/organize.rs:599 src/tools/extract.rs:379
 #: src/tools/split.rs:223 src/tools/metadata.rs:207 src/tools/watermark.rs:237
 #: src/tools/compress.rs:201
 msgid "_Modern PDF format"
 msgstr "_Formato PDF moderno"
 
-#: src/tools/merge.rs:297 src/tools/organize.rs:597 src/tools/extract.rs:379
+#: src/tools/merge.rs:299 src/tools/organize.rs:601 src/tools/extract.rs:381
 #: src/tools/split.rs:225 src/tools/metadata.rs:209 src/tools/watermark.rs:239
 #: src/tools/compress.rs:203
 msgid "Save with PDF 1.5 object streams"
 msgstr "Guardar con flujos de objetos de PDF 1.5"
 
-#: src/tools/merge.rs:306
+#: src/tools/merge.rs:308
 msgid "_Normalize page size"
 msgstr "Homogeneizar _tamaño de página"
 
-#: src/tools/merge.rs:308
+#: src/tools/merge.rs:310
 msgid "Resize output pages to the largest page size"
 msgstr "Ajustar las páginas resultantes al tamaño máximo de página"
 
-#: src/tools/merge.rs:317 src/tools/organize.rs:606 src/tools/extract.rs:388
+#: src/tools/merge.rs:319 src/tools/organize.rs:610 src/tools/extract.rs:390
 #: src/tools/split.rs:234 src/tools/metadata.rs:218 src/tools/watermark.rs:248
 #: src/tools/compress.rs:212
 msgid "_Remove metadata"
 msgstr "_Eliminar metadatos"
 
-#: src/tools/merge.rs:319 src/tools/organize.rs:608 src/tools/extract.rs:390
+#: src/tools/merge.rs:321 src/tools/organize.rs:612 src/tools/extract.rs:392
 #: src/tools/split.rs:236 src/tools/metadata.rs:220 src/tools/watermark.rs:250
 #: src/tools/compress.rs:214
 msgid "Remove existing metadata before saving"
 msgstr "Eliminar metadatos existentes antes de guardar"
 
-#: src/tools/merge.rs:458
+#: src/tools/merge.rs:463
 msgid "PDFs merged successfully"
 msgstr "PDF combinados correctamente"
 
-#: src/tools/merge.rs:459 src/tools/organize.rs:925 src/tools/extract.rs:627
-#: src/tools/metadata.rs:454 src/tools/watermark.rs:536
+#: src/tools/merge.rs:464 src/tools/organize.rs:929 src/tools/extract.rs:632
+#: src/tools/metadata.rs:453 src/tools/watermark.rs:536
 #: src/tools/compress.rs:413
 msgid "Open File"
 msgstr "Abrir archivo"
 
-#: src/tools/merge.rs:467
+#: src/tools/merge.rs:472
 msgid "Could not save PDF"
 msgstr "Error al guardar el PDF"
 
-#: src/tools/merge.rs:479 src/tools/organize.rs:944 src/tools/extract.rs:646
-#: src/tools/metadata.rs:473 src/tools/watermark.rs:555
+#: src/tools/merge.rs:484 src/tools/organize.rs:948 src/tools/extract.rs:651
+#: src/tools/metadata.rs:472 src/tools/watermark.rs:555
 #: src/tools/compress.rs:432
 msgid "Failed to open output file"
 msgstr "Error al abrir el archivo resultante"
 
-#: src/tools/merge.rs:518 src/tools/organize.rs:248 src/tools/organize.rs:821
+#: src/tools/merge.rs:523 src/tools/organize.rs:250 src/tools/organize.rs:825
 msgid "Blank Page"
 msgstr "Página en blanco"
 
-#: src/tools/merge.rs:633 src/tools/organize.rs:824
+#: src/tools/merge.rs:638 src/tools/organize.rs:828
 #, rust-format
 msgid "Removed \"{filename}\""
 msgstr "Se eliminó \"{filename}\""
 
-#: src/tools/merge.rs:635 src/tools/organize.rs:826
+#: src/tools/merge.rs:640 src/tools/organize.rs:830
 msgid "Undo"
 msgstr "Deshacer"
 
-#: src/tools/merge.rs:956 src/tools/organize.rs:274 src/tools/extract.rs:196
+#: src/tools/merge.rs:961 src/tools/organize.rs:276 src/tools/extract.rs:198
 msgid "Rotate Clockwise"
 msgstr "Girar en sentido horario"
 
-#: src/tools/merge.rs:966
+#: src/tools/merge.rs:971
 msgid "Remove File"
 msgstr "Eliminar archivo"
 
-#: src/tools/merge.rs:980 src/tools/organize.rs:294
+#: src/tools/merge.rs:985 src/tools/organize.rs:296
 msgid "More Options"
 msgstr "Más opciones"
 
-#: src/tools/merge.rs:988
+#: src/tools/merge.rs:993
 msgid "Move _Up"
 msgstr "_Subir"
 
-#: src/tools/merge.rs:989
+#: src/tools/merge.rs:994
 msgid "_Move Down"
 msgstr "_Bajar"
 
-#: src/tools/merge.rs:990 src/tools/organize.rs:304
+#: src/tools/merge.rs:995 src/tools/organize.rs:306
 msgid "_Duplicate"
 msgstr "_Duplicar"
 
-#: src/tools/merge.rs:991 src/tools/organize.rs:305
+#: src/tools/merge.rs:996 src/tools/organize.rs:307
 msgid "_Insert Blank Page After"
 msgstr "_Insertar página en blanco"
 
-#: src/tools/organize.rs:247 src/tools/organize.rs:819 src/tools/extract.rs:187
+#: src/tools/organize.rs:249 src/tools/organize.rs:823 src/tools/extract.rs:189
 msgid "Page"
 msgstr "Página"
 
-#: src/tools/organize.rs:281
+#: src/tools/organize.rs:283
 msgid "Remove Page"
 msgstr "Eliminar página"
 
-#: src/tools/organize.rs:302
+#: src/tools/organize.rs:304
 msgid "Move _Left"
 msgstr "Desplazar a la _izquierda"
 
-#: src/tools/organize.rs:303
+#: src/tools/organize.rs:305
 msgid "Move _Right"
 msgstr "Desplazar a la _derecha"
 
-#: src/tools/organize.rs:524 src/tools/extract.rs:328 src/tools/split.rs:184
+#: src/tools/organize.rs:528 src/tools/extract.rs:330 src/tools/split.rs:184
 #: src/tools/metadata.rs:168 src/tools/watermark.rs:198
 #: src/tools/compress.rs:162
 msgid "Select PDF File"
 msgstr "Añadir un PDF"
 
-#: src/tools/organize.rs:538 src/tools/organize.rs:550
+#: src/tools/organize.rs:542 src/tools/organize.rs:554
 msgid "Reset"
 msgstr "Restablecer"
 
-#: src/tools/organize.rs:539
+#: src/tools/organize.rs:543
 msgid "Reset Page Order and Rotations"
 msgstr "Restablecer el orden y rotación de las páginas"
 
-#: src/tools/organize.rs:548
+#: src/tools/organize.rs:552
 msgid "Reset PDF Pages?"
 msgstr "¿Restablecer las páginas del PDF?"
 
-#: src/tools/organize.rs:549
+#: src/tools/organize.rs:553
 msgid ""
 "All page reordering, deletions, and rotations will be reset to their initial "
 "state."
@@ -425,46 +428,46 @@ msgstr ""
 "Todos los cambios en el orden de las páginas, las eliminaciones y las "
 "rotaciones se restablecerán a su estado inicial."
 
-#: src/tools/organize.rs:560 src/tools/extract.rs:342 src/tools/metadata.rs:182
+#: src/tools/organize.rs:564 src/tools/extract.rs:344 src/tools/metadata.rs:182
 #: src/tools/watermark.rs:212 src/tools/mod.rs:232
 msgid "Save"
 msgstr "Guardar"
 
-#: src/tools/organize.rs:561
+#: src/tools/organize.rs:565
 msgid "Save organized PDF"
 msgstr "Guardar PDF organizado"
 
-#: src/tools/organize.rs:569 src/tools/extract.rs:351 src/tools/metadata.rs:191
+#: src/tools/organize.rs:573 src/tools/extract.rs:353 src/tools/metadata.rs:191
 #: src/tools/watermark.rs:221 src/tools/compress.rs:185
 msgid "Save PDF"
 msgstr "Guardar PDF"
 
-#: src/tools/organize.rs:924
+#: src/tools/organize.rs:928
 msgid "PDF organized successfully"
 msgstr "PDF organizado correctamente"
 
-#: src/tools/organize.rs:934
+#: src/tools/organize.rs:938
 msgid "Failed to organize PDF"
 msgstr "Error al organizar el PDF"
 
-#: src/tools/extract.rs:205
+#: src/tools/extract.rs:207
 msgid "Select page for extraction"
 msgstr "Seleccione la página para extraer"
 
-#: src/tools/extract.rs:343
+#: src/tools/extract.rs:345
 msgid "Save extracted PDF"
 msgstr "Guardar el PDF extraído"
 
-#: src/tools/extract.rs:409 src/tools/split.rs:296 src/tools/split.rs:315
+#: src/tools/extract.rs:411 src/tools/split.rs:296 src/tools/split.rs:315
 #: src/tools/watermark.rs:351 src/tools/watermark.rs:370
 msgid "Pages"
 msgstr "Páginas"
 
-#: src/tools/extract.rs:626
+#: src/tools/extract.rs:631
 msgid "PDF extracted successfully"
 msgstr "PDF extraído correctamente"
 
-#: src/tools/extract.rs:636
+#: src/tools/extract.rs:641
 msgid "Failed to extract PDF"
 msgstr "Error al extraer el PDF"
 
@@ -508,19 +511,19 @@ msgstr "Prefijo de salida"
 msgid "output_file"
 msgstr "archivo_salida"
 
-#: src/tools/split.rs:482
+#: src/tools/split.rs:483
 msgid "Split PDFs saved"
 msgstr "PDF divididos guardados"
 
-#: src/tools/split.rs:483
+#: src/tools/split.rs:484
 msgid "Open Folder"
 msgstr "Abrir carpeta"
 
-#: src/tools/split.rs:492
+#: src/tools/split.rs:493
 msgid "Failed to split PDF"
 msgstr "Error al dividir el PDF"
 
-#: src/tools/split.rs:502
+#: src/tools/split.rs:503
 msgid "Failed to open output folder"
 msgstr "No se pudo abrir la carpeta de destino"
 
@@ -558,19 +561,19 @@ msgstr "El campo 'Productor' se sustituirá al guardar"
 
 #: src/tools/metadata.rs:342 src/tools/metadata.rs:343
 #: src/tools/metadata.rs:383 src/tools/metadata.rs:384
-#: src/tools/metadata.rs:522 src/tools/metadata.rs:527
+#: src/tools/metadata.rs:521 src/tools/metadata.rs:526
 msgid "N/A"
 msgstr "N/A"
 
-#: src/tools/metadata.rs:453
+#: src/tools/metadata.rs:452
 msgid "Metadata saved successfully"
 msgstr "Metadatos guardados correctamente"
 
-#: src/tools/metadata.rs:463
+#: src/tools/metadata.rs:462
 msgid "Failed to save metadata"
 msgstr "Error al guardar los metadatos"
 
-#: src/tools/metadata.rs:536
+#: src/tools/metadata.rs:535
 msgid "Failed to load document's metadata"
 msgstr "Error al cargar los metadatos del documento"
 
@@ -746,50 +749,50 @@ msgstr "Documentos PDF"
 msgid "output.pdf"
 msgstr "salida.pdf"
 
-#: src/tools/mod.rs:271 src/modals/password.rs:53
+#: src/tools/mod.rs:271 src/modals/password.rs:81
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/tools/mod.rs:293 src/tools/mod.rs:295
+#: src/tools/mod.rs:292
 msgid "Invalid input"
 msgstr "Entrada inválida"
 
-#: src/tools/mod.rs:298
+#: src/tools/mod.rs:294
 #, rust-format
 msgid "Contains out of range pages (Max: {max})"
 msgstr "Contiene páginas fuera de rango (Máx: {max})"
 
-#: src/tools/mod.rs:307 src/tools/mod.rs:326
-msgid "Please specify pages"
-msgstr "Por favor, especifique las páginas"
-
-#: src/tools/mod.rs:319
-msgid "Ranges are not supported for splitting"
-msgstr "No se puede dividir usando rangos"
-
-#: src/tools/mod.rs:353
+#: src/tools/mod.rs:296
 #, rust-format
 msgid "Invalid page range: {start}-{end}"
 msgstr "Rango de páginas no válido: {start}-{end}"
 
-#: src/modals/password.rs:47
+#: src/tools/mod.rs:299
+msgid "Ranges are not supported for splitting"
+msgstr "No se puede dividir usando rangos"
+
+#: src/tools/mod.rs:300
+msgid "Please specify pages"
+msgstr "Por favor, especifique las páginas"
+
+#: src/modals/password.rs:75
 msgid "Password Required"
 msgstr "Se necesita una contraseña"
 
-#: src/modals/password.rs:49
+#: src/modals/password.rs:77
 #, rust-format
 msgid "Enter the password for {filename}."
 msgstr "Introduce la contraseña para {filename}."
 
-#: src/modals/password.rs:54
+#: src/modals/password.rs:82
 msgid "Unlock"
 msgstr "Desbloquear"
 
-#: src/modals/password.rs:68
+#: src/modals/password.rs:96
 msgid "Password"
 msgstr "Contraseña"
 
-#: src/modals/password.rs:86
+#: src/modals/password.rs:114
 msgid "Invalid password"
 msgstr "Contraseña inválida"
 
@@ -797,6 +800,9 @@ msgstr "Contraseña inválida"
 #: src/modals/about.rs:26
 msgid "translator-credits"
 msgstr "gallegonovato <gallegonovato@noreply.codeberg.org>"
+
+#~ msgid "Add option to extract specific pages from a PDF file"
+#~ msgstr "Añadida una opción para extraer páginas específicas de un PDF"
 
 #~ msgid "Add section to organize and remove a document's pages"
 #~ msgstr "Añadida sección para organizar y eliminar páginas de un documento"
