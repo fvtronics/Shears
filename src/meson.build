@@ -26,11 +26,13 @@ cargo_env = [
   'SHEARS_VERSION=' + version + version_suffix,
 ]
 
+cli_name = meson.project_name() + '-cli'
+
 cargo_build = custom_target(
   'cargo-build',
   build_by_default: true,
   build_always_stale: true,
-  output: meson.project_name(),
+  output: [meson.project_name(), cli_name],
   console: true,
   install: true,
   install_dir: bindir,
@@ -41,6 +43,8 @@ cargo_build = custom_target(
     cargo, 'build',
     cargo_options,
     '&&',
-    'cp', 'src' / rust_target / meson.project_name(), '@OUTPUT@',
+    'cp', 'src' / rust_target / meson.project_name(), '@OUTPUT0@',
+    '&&',
+    'cp', 'src' / rust_target / cli_name, '@OUTPUT1@',
   ]
 )
