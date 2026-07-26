@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-25 07:46-0400\n"
-"PO-Revision-Date: 2026-07-14 12:38-0400\n"
+"PO-Revision-Date: 2026-07-26 15:07+0000\n"
 "Last-Translator: Priit Jõerüüt <jrtcdbrg@noreply.codeberg.org>\n"
 "Language-Team: Estonian <https://translate.codeberg.org/projects/shears/"
 "shears-ui/et/>\n"
@@ -92,42 +92,44 @@ msgstr "Vaata ja muuda PDF-faili metateavet"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
 msgid "Add command line interface that use the PDF backend"
-msgstr ""
+msgstr "Lisandus käsurealiides, mis kasutab PDF-i taustateenust"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
 msgid "Address security concern with PDF passwords in logs"
 msgstr ""
+"Vajalikud kohendused logidest leitavate PDF-i salasõnade turvalisuse "
+"tagamiseks"
 
 # Translated using Gnome's Dialect, might need a review
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add undo actions when performing delete operations"
-msgstr "Kustutustoimingute tegemisel lisage tagasivõtmistoimingud"
+msgstr "Kustutustoimingute tegemisel lisandus võimalus tegevuse tühistamiseks"
 
 # Translated using Gnome's Dialect, might need a review
 #: data/com.fvtronics.shears.metainfo.xml.in.in:70
 msgid "Add confirmation dialog for destructive operations"
-msgstr "Lisage hävitavate toimingute kinnitusdialoog"
+msgstr "Kustutustegevuste jaoks lisandus kinnitusvaade"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:77
 msgid "Add missing translations for the password dialog"
-msgstr "Lisati paroolidialoogi puuduvad tõlked"
+msgstr "Lisandusid salasõnavaate puuduvad tõlked"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:78
 msgid "Update app's brand colors"
-msgstr "Rakenduse brändi värve värskendati"
+msgstr "Rakenduse kaubamärgi värvide uuendus"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:80
 #: data/com.fvtronics.shears.metainfo.xml.in.in:89
 msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
-msgstr "Aitäh Priit Jõerüüdile ja gallegonovatole panuse eest."
+msgstr "Aitäh Priit Jõerüüdile ja gallegonovatole nende panuse eest."
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:86
 msgid "Add Estonian translation"
-msgstr "Lisa eestikeelne tõlge"
+msgstr "Lisandus eestikeelne tõlge"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:87
 msgid "Improve Spanish translation"
-msgstr "Parandage hispaaniakeelset tõlget"
+msgstr "Täiendus hispaaniakeelne tõlge"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:94
 #: data/com.fvtronics.shears.metainfo.xml.in.in:107
