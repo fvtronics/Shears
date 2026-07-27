@@ -182,8 +182,8 @@ impl Component for CompressPage {
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
-                                save_pdf_dialog(button, Tool::Compress, &gettext("Save PDF"), move |file| {
-                                    sender_clone.input(CompressPageMsg::SaveTo(file));
+                                save_pdf_dialog(button, Tool::Compress, &gettext("Save PDF"), move |res| {
+                                    sender_clone.input(CompressPageMsg::SaveTo(res));
                                 });
                             }
                         },

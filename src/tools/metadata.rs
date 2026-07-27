@@ -188,8 +188,8 @@ impl Component for MetadataPage {
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
-                                save_pdf_dialog(button, Tool::Metadata, &gettext("Save PDF"), move |file| {
-                                    sender_clone.input(MetadataPageMsg::SaveTo(file));
+                                save_pdf_dialog(button, Tool::Metadata, &gettext("Save PDF"), move |res| {
+                                    sender_clone.input(MetadataPageMsg::SaveTo(res));
                                 });
                             }
                         },

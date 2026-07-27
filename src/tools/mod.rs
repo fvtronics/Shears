@@ -171,6 +171,18 @@ impl Tool {
             | Tool::Metadata => gettext("Open PDF"),
         }
     }
+
+    pub fn default_output_name(self) -> String {
+        match self {
+            Tool::Merge => gettext("merged.pdf"),
+            Tool::Split => gettext("split"),
+            Tool::Organize => gettext("organized.pdf"),
+            Tool::Extract => gettext("extracted.pdf"),
+            Tool::Compress => gettext("compressed.pdf"),
+            Tool::Watermark => gettext("watermarked.pdf"),
+            Tool::Metadata => gettext("metadata.pdf"),
+        }
+    }
 }
 
 pub(super) fn pdf_dialog(tool: Tool) -> gtk::FileDialog {
@@ -185,7 +197,7 @@ pub(super) fn pdf_dialog(tool: Tool) -> gtk::FileDialog {
     gtk::FileDialog::builder()
         .title(tool.action_label())
         .accept_label(tool.action_label())
-        .initial_name(gettext("output.pdf"))
+        .initial_name(tool.default_output_name())
         .modal(true)
         .filters(&filters)
         .build()

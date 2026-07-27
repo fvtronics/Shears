@@ -218,8 +218,8 @@ impl Component for WatermarkPage {
 
                             connect_clicked[sender] => move |button| {
                                 let sender_clone = sender.clone();
-                                save_pdf_dialog(button, Tool::Watermark, &gettext("Save PDF"), move |file| {
-                                    sender_clone.input(WatermarkPageMsg::SaveTo(file));
+                                save_pdf_dialog(button, Tool::Watermark, &gettext("Save PDF"), move |res| {
+                                    sender_clone.input(WatermarkPageMsg::SaveTo(res));
                                 });
                             }
                         },

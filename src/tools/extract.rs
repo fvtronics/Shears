@@ -350,8 +350,8 @@ impl Component for ExtractPage {
 
                         connect_clicked[sender] => move |button| {
                             let sender_clone = sender.clone();
-                            save_pdf_dialog(button, Tool::Extract, &gettext("Save PDF"), move |file| {
-                                sender_clone.input(ExtractPageMsg::SaveTo(file));
+                            save_pdf_dialog(button, Tool::Extract, &gettext("Save PDF"), move |res| {
+                                sender_clone.input(ExtractPageMsg::SaveTo(res));
                             });
                         }
                     },

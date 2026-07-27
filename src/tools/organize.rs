@@ -570,8 +570,8 @@ impl Component for OrganizePage {
 
                         connect_clicked[sender] => move |button| {
                             let sender_clone = sender.clone();
-                            save_pdf_dialog(button, Tool::Organize, &gettext("Save PDF"), move |file| {
-                                sender_clone.input(OrganizePageMsg::SaveTo(file));
+                            save_pdf_dialog(button, Tool::Organize, &gettext("Save PDF"), move |res| {
+                                sender_clone.input(OrganizePageMsg::SaveTo(res));
                             });
                         }
                     },
