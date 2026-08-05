@@ -18,7 +18,7 @@ impl SimpleComponent for AboutDialog {
         adw::AboutDialog::builder()
             .application_icon(APP_ID)
             .license_type(gtk::License::Gpl30)
-            .website("https://www.fvtronics.com/en/project/shears")
+            .website("https://www.fvtronics.com/project/shears")
             .issue_url("https://codeberg.org/FVtronics/shears/issues")
             .application_name("Shears")
             .version(VERSION)
