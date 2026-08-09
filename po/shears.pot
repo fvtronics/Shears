@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-25 07:46-0400\n"
+"POT-Creation-Date: 2026-08-09 16:23-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: data/com.fvtronics.shears.desktop.in.in:2
-#: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:32
+#: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:34
 msgid "Shears"
 msgstr ""
 
@@ -86,65 +86,68 @@ msgid "View and edit PDF metadata"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
-msgid "Add command line interface that use the PDF backend"
+msgid "Modified the homepage URL"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
-msgid "Address security concern with PDF passwords in logs"
+msgid "Bump package dependencies"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
-msgid "Add undo actions when performing delete operations"
+msgid "Add command line interface that use the PDF backend"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:70
-msgid "Add confirmation dialog for destructive operations"
+msgid "Address security concern with PDF passwords in logs"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:77
-msgid "Add missing translations for the password dialog"
+msgid "Add undo actions when performing delete operations"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:78
-msgid "Update app's brand colors"
+msgid "Add confirmation dialog for destructive operations"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:80
-#: data/com.fvtronics.shears.metainfo.xml.in.in:89
-msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
+#: data/com.fvtronics.shears.metainfo.xml.in.in:85
+msgid "Add missing translations for the password dialog"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:86
-msgid "Add Estonian translation"
+msgid "Update app's brand colors"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:87
-msgid "Improve Spanish translation"
+#: data/com.fvtronics.shears.metainfo.xml.in.in:88
+#: data/com.fvtronics.shears.metainfo.xml.in.in:97
+msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:94
-#: data/com.fvtronics.shears.metainfo.xml.in.in:107
+msgid "Add Estonian translation"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:95
+msgid "Improve Spanish translation"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:102
 msgid "New"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:104
 msgid "Add small screen and touchscreen compatibility"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:98
+#: data/com.fvtronics.shears.metainfo.xml.in.in:106
 msgid "Changes"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:100
+#: data/com.fvtronics.shears.metainfo.xml.in.in:108
 msgid "Change app name to Shears"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:101
-msgid "Improve app responsiveness when resizing it's window"
-msgstr ""
-
 #: data/com.fvtronics.shears.metainfo.xml.in.in:109
-msgid "Add tool to watermark PDF files"
+msgid "Improve app responsiveness when resizing it's window"
 msgstr ""
 
 #: data/resources/ui/shortcuts.ui:11
@@ -417,7 +420,7 @@ msgid ""
 msgstr ""
 
 #: src/tools/organize.rs:564 src/tools/extract.rs:344 src/tools/metadata.rs:182
-#: src/tools/watermark.rs:212 src/tools/mod.rs:232
+#: src/tools/watermark.rs:212 src/tools/mod.rs:244
 msgid "Save"
 msgstr ""
 
@@ -729,37 +732,61 @@ msgstr ""
 msgid "Open PDF"
 msgstr ""
 
+#: src/tools/mod.rs:177
+msgid "merged.pdf"
+msgstr ""
+
 #: src/tools/mod.rs:178
+msgid "split"
+msgstr ""
+
+#: src/tools/mod.rs:179
+msgid "organized.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:180
+msgid "extracted.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:181
+msgid "compressed.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:182
+msgid "watermarked.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:183
+msgid "metadata.pdf"
+msgstr ""
+
+#: src/tools/mod.rs:190
 msgid "PDF Documents"
 msgstr ""
 
-#: src/tools/mod.rs:188
-msgid "output.pdf"
-msgstr ""
-
-#: src/tools/mod.rs:271 src/modals/password.rs:81
+#: src/tools/mod.rs:283 src/modals/password.rs:81
 msgid "Cancel"
 msgstr ""
 
-#: src/tools/mod.rs:292
+#: src/tools/mod.rs:304
 msgid "Invalid input"
 msgstr ""
 
-#: src/tools/mod.rs:294
+#: src/tools/mod.rs:306
 #, rust-format
 msgid "Contains out of range pages (Max: {max})"
 msgstr ""
 
-#: src/tools/mod.rs:296
+#: src/tools/mod.rs:308
 #, rust-format
 msgid "Invalid page range: {start}-{end}"
 msgstr ""
 
-#: src/tools/mod.rs:299
+#: src/tools/mod.rs:311
 msgid "Ranges are not supported for splitting"
 msgstr ""
 
-#: src/tools/mod.rs:300
+#: src/tools/mod.rs:312
 msgid "Please specify pages"
 msgstr ""
 
