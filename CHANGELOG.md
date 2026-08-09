@@ -1,4 +1,4 @@
 <ul>
-  <li>Add command line interface that use the PDF backend</li>
-  <li>Address security concern with PDF passwords in logs</li>
+  <li>Modified the homepage URL</li>
+  <li>Bump package dependencies</li>
 </ul>
