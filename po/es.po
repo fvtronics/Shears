@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-09 16:23-0400\n"
-"PO-Revision-Date: 2026-07-27 16:07+0000\n"
+"PO-Revision-Date: 2026-08-10 09:57+0000\n"
 "Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
 "shears-ui/es/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.6.1\n"
+"X-Generator: Weblate 2026.8.1\n"
 
 #: data/com.fvtronics.shears.desktop.in.in:2
 #: data/com.fvtronics.shears.metainfo.xml.in.in:7 src/app.rs:100 src/main.rs:34
@@ -93,11 +93,11 @@ msgstr "Visualice y edite los metadatos de un PDF"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
 msgid "Modified the homepage URL"
-msgstr ""
+msgstr "La url de la página de inicio modificada"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
 msgid "Bump package dependencies"
-msgstr ""
+msgstr "Sincronizar dependencias"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Add command line interface that use the PDF backend"
@@ -748,34 +748,31 @@ msgstr "Abrir PDF"
 
 #: src/tools/mod.rs:177
 msgid "merged.pdf"
-msgstr ""
+msgstr "fusionado.pdf"
 
 #: src/tools/mod.rs:178
-#, fuzzy
 msgid "split"
-msgstr "Dividir"
+msgstr "dividir"
 
 #: src/tools/mod.rs:179
 msgid "organized.pdf"
-msgstr ""
+msgstr "organizado.pdf"
 
 #: src/tools/mod.rs:180
 msgid "extracted.pdf"
-msgstr ""
+msgstr "extracto.pdf"
 
 #: src/tools/mod.rs:181
-#, fuzzy
 msgid "compressed.pdf"
-msgstr "Comprimir"
+msgstr "comprimido.pdf"
 
 #: src/tools/mod.rs:182
-#, fuzzy
 msgid "watermarked.pdf"
-msgstr "Guardar PDF con marca de agua"
+msgstr "marca_de_agua.pdf"
 
 #: src/tools/mod.rs:183
 msgid "metadata.pdf"
-msgstr ""
+msgstr "metadatos.pdf"
 
 #: src/tools/mod.rs:190
 msgid "PDF Documents"
