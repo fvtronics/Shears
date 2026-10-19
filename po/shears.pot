@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-09 16:23-0400\n"
+"POT-Creation-Date: 2026-10-18 23:42-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,68 +86,56 @@ msgid "View and edit PDF metadata"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
-msgid "Modified the homepage URL"
+msgid "Improve reliability with damaged or malformed PDFs"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:62
-msgid "Bump package dependencies"
+msgid "Updated Estonian translation, thanks to Priit Jõerüüt"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:69
-msgid "Add command line interface that use the PDF backend"
+msgid "Modified the homepage URL"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:70
-msgid "Address security concern with PDF passwords in logs"
+msgid "Bump package dependencies"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:77
-msgid "Add undo actions when performing delete operations"
+msgid "Add command line interface that use the PDF backend"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:78
-msgid "Add confirmation dialog for destructive operations"
+msgid "Address security concern with PDF passwords in logs"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:85
-msgid "Add missing translations for the password dialog"
+msgid "Add undo actions when performing delete operations"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:86
-msgid "Update app's brand colors"
+msgid "Add confirmation dialog for destructive operations"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:88
-#: data/com.fvtronics.shears.metainfo.xml.in.in:97
-msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
+#: data/com.fvtronics.shears.metainfo.xml.in.in:93
+msgid "Add missing translations for the password dialog"
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:94
-msgid "Add Estonian translation"
+msgid "Update app's brand colors"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:95
-msgid "Improve Spanish translation"
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:105
+msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr ""
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:102
-msgid "New"
+msgid "Add Estonian translation"
 msgstr ""
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:104
-msgid "Add small screen and touchscreen compatibility"
-msgstr ""
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:106
-msgid "Changes"
-msgstr ""
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:108
-msgid "Change app name to Shears"
-msgstr ""
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:109
-msgid "Improve app responsiveness when resizing it's window"
+#: data/com.fvtronics.shears.metainfo.xml.in.in:103
+msgid "Improve Spanish translation"
 msgstr ""
 
 #: data/resources/ui/shortcuts.ui:11

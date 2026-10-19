@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-09 16:23-0400\n"
+"POT-Creation-Date: 2026-10-18 23:42-0400\n"
 "PO-Revision-Date: 2026-10-18 16:27+0000\n"
 "Last-Translator: Priit Jõerüüt <jrtcdbrg@noreply.codeberg.org>\n"
 "Language-Team: Estonian <https://translate.codeberg.org/projects/shears/"
@@ -91,73 +91,61 @@ msgid "View and edit PDF metadata"
 msgstr "Vaata ja muuda PDF-faili metateavet"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
+msgid "Improve reliability with damaged or malformed PDFs"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+msgid "Updated Estonian translation, thanks to Priit Jõerüüt"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Modified the homepage URL"
 msgstr "Kodulehe aadress muutus"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+#: data/com.fvtronics.shears.metainfo.xml.in.in:70
 msgid "Bump package dependencies"
 msgstr "Kaasatud on sõltuvuste uuemad versioonid"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:69
+#: data/com.fvtronics.shears.metainfo.xml.in.in:77
 msgid "Add command line interface that use the PDF backend"
 msgstr "Lisandus käsurealiides, mis kasutab PDF-i taustateenust"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:70
+#: data/com.fvtronics.shears.metainfo.xml.in.in:78
 msgid "Address security concern with PDF passwords in logs"
 msgstr ""
 "Vajalikud kohendused logidest leitavate PDF-i salasõnade turvalisuse "
 "tagamiseks"
 
 # Translated using Gnome's Dialect, might need a review
-#: data/com.fvtronics.shears.metainfo.xml.in.in:77
+#: data/com.fvtronics.shears.metainfo.xml.in.in:85
 msgid "Add undo actions when performing delete operations"
 msgstr "Kustutustoimingute tegemisel lisandus võimalus tegevuse tühistamiseks"
 
 # Translated using Gnome's Dialect, might need a review
-#: data/com.fvtronics.shears.metainfo.xml.in.in:78
+#: data/com.fvtronics.shears.metainfo.xml.in.in:86
 msgid "Add confirmation dialog for destructive operations"
 msgstr "Kustutustegevuste jaoks lisandus kinnitusvaade"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:85
+#: data/com.fvtronics.shears.metainfo.xml.in.in:93
 msgid "Add missing translations for the password dialog"
 msgstr "Lisandusid salasõnavaate puuduvad tõlked"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:86
+#: data/com.fvtronics.shears.metainfo.xml.in.in:94
 msgid "Update app's brand colors"
 msgstr "Rakenduse kaubamärgi värvide uuendus"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:88
-#: data/com.fvtronics.shears.metainfo.xml.in.in:97
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:105
 msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr "Aitäh Priit Jõerüüdile ja gallegonovatole nende panuse eest."
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:94
+#: data/com.fvtronics.shears.metainfo.xml.in.in:102
 msgid "Add Estonian translation"
 msgstr "Lisandus eestikeelne tõlge"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:95
+#: data/com.fvtronics.shears.metainfo.xml.in.in:103
 msgid "Improve Spanish translation"
 msgstr "Täiendus hispaaniakeelne tõlge"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:102
-msgid "New"
-msgstr "Uus"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:104
-msgid "Add small screen and touchscreen compatibility"
-msgstr "Lisandus ühilduvus väikeste ekraanidega ja puuteekraanidega"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:106
-msgid "Changes"
-msgstr "Muudatused"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:108
-msgid "Change app name to Shears"
-msgstr "Rakenduse uus nimi on nüüd Shears"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:109
-msgid "Improve app responsiveness when resizing it's window"
-msgstr "Rakendus reageerib paremini selle suuruse muutmisel"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
@@ -831,6 +819,21 @@ msgstr "Vigane või vale salasõna"
 #: src/modals/about.rs:26
 msgid "translator-credits"
 msgstr "Priit Jõerüüt 2026"
+
+#~ msgid "New"
+#~ msgstr "Uus"
+
+#~ msgid "Add small screen and touchscreen compatibility"
+#~ msgstr "Lisandus ühilduvus väikeste ekraanidega ja puuteekraanidega"
+
+#~ msgid "Changes"
+#~ msgstr "Muudatused"
+
+#~ msgid "Change app name to Shears"
+#~ msgstr "Rakenduse uus nimi on nüüd Shears"
+
+#~ msgid "Improve app responsiveness when resizing it's window"
+#~ msgstr "Rakendus reageerib paremini selle suuruse muutmisel"
 
 #~ msgid "Add tool to watermark PDF files"
 #~ msgstr "Lisa tarvik vesimärkide lisamiseks PDF-faili lehtedele"

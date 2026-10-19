@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: shears\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-09 16:23-0400\n"
+"POT-Creation-Date: 2026-10-18 23:42-0400\n"
 "PO-Revision-Date: 2026-08-10 09:57+0000\n"
 "Last-Translator: gallegonovato <gallegonovato@noreply.codeberg.org>\n"
 "Language-Team: Spanish <https://translate.codeberg.org/projects/shears/"
@@ -92,75 +92,61 @@ msgid "View and edit PDF metadata"
 msgstr "Visualice y edite los metadatos de un PDF"
 
 #: data/com.fvtronics.shears.metainfo.xml.in.in:61
+msgid "Improve reliability with damaged or malformed PDFs"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+msgid "Updated Estonian translation, thanks to Priit Jõerüüt"
+msgstr ""
+
+#: data/com.fvtronics.shears.metainfo.xml.in.in:69
 msgid "Modified the homepage URL"
 msgstr "La url de la página de inicio modificada"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:62
+#: data/com.fvtronics.shears.metainfo.xml.in.in:70
 msgid "Bump package dependencies"
 msgstr "Sincronizar dependencias"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:69
+#: data/com.fvtronics.shears.metainfo.xml.in.in:77
 msgid "Add command line interface that use the PDF backend"
 msgstr "Agregar una interfaz de comandos que utilice el motor de PDF"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:70
+#: data/com.fvtronics.shears.metainfo.xml.in.in:78
 msgid "Address security concern with PDF passwords in logs"
 msgstr ""
 "Abordar los problemas de seguridad relacionados con las contraseñas de los "
 "archivos PDF en los registros"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:77
+#: data/com.fvtronics.shears.metainfo.xml.in.in:85
 msgid "Add undo actions when performing delete operations"
 msgstr "Añadir acciones de deshacer al realizar operaciones de eliminación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:78
+#: data/com.fvtronics.shears.metainfo.xml.in.in:86
 msgid "Add confirmation dialog for destructive operations"
 msgstr ""
 "Añadir un cuadro de diálogo de confirmación para las operaciones de "
 "eliminación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:85
+#: data/com.fvtronics.shears.metainfo.xml.in.in:93
 msgid "Add missing translations for the password dialog"
 msgstr "Se añadieron las traducciones faltantes para el diálogo de contraseña"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:86
+#: data/com.fvtronics.shears.metainfo.xml.in.in:94
 msgid "Update app's brand colors"
 msgstr "Se actualizaron los colores de marca de la aplicación"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:88
-#: data/com.fvtronics.shears.metainfo.xml.in.in:97
+#: data/com.fvtronics.shears.metainfo.xml.in.in:96
+#: data/com.fvtronics.shears.metainfo.xml.in.in:105
 msgid "Thanks to Priit Jõerüüt and gallegonovato for their contributions."
 msgstr "Gracias a Priit Jõerüüt y gallegonovato por sus contribuciones."
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:94
+#: data/com.fvtronics.shears.metainfo.xml.in.in:102
 msgid "Add Estonian translation"
 msgstr "Se añadió una traducción al estonio"
 
-#: data/com.fvtronics.shears.metainfo.xml.in.in:95
+#: data/com.fvtronics.shears.metainfo.xml.in.in:103
 msgid "Improve Spanish translation"
 msgstr "Se mejoró la traducción al español"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:102
-msgid "New"
-msgstr "Nuevo"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:104
-msgid "Add small screen and touchscreen compatibility"
-msgstr "Añadido compatibilidad con pantallas pequeñas y táctiles"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:106
-msgid "Changes"
-msgstr "Cambios"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:108
-msgid "Change app name to Shears"
-msgstr "Renombrada la aplicación como Shears"
-
-#: data/com.fvtronics.shears.metainfo.xml.in.in:109
-msgid "Improve app responsiveness when resizing it's window"
-msgstr ""
-"Mejorada la capacidad de respuesta de la aplicación al redimensionar su "
-"ventana"
 
 #: data/resources/ui/shortcuts.ui:11
 msgctxt "shortcut window"
@@ -829,6 +815,23 @@ msgstr "Contraseña inválida"
 #: src/modals/about.rs:26
 msgid "translator-credits"
 msgstr "gallegonovato <gallegonovato@noreply.codeberg.org>"
+
+#~ msgid "New"
+#~ msgstr "Nuevo"
+
+#~ msgid "Add small screen and touchscreen compatibility"
+#~ msgstr "Añadido compatibilidad con pantallas pequeñas y táctiles"
+
+#~ msgid "Changes"
+#~ msgstr "Cambios"
+
+#~ msgid "Change app name to Shears"
+#~ msgstr "Renombrada la aplicación como Shears"
+
+#~ msgid "Improve app responsiveness when resizing it's window"
+#~ msgstr ""
+#~ "Mejorada la capacidad de respuesta de la aplicación al redimensionar su "
+#~ "ventana"
 
 #~ msgid "Add tool to watermark PDF files"
 #~ msgstr "Añadida una herramienta para añadir una marca de agua a los PDF"
